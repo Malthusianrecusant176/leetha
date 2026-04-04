@@ -99,6 +99,47 @@ class _RateLimiter:
 
 _rate_limiter = _RateLimiter(max_requests=120, window_seconds=60)
 
+
+def _build_device_dict(verdict, host) -> dict:
+    """Map Verdict + Host to the JSON shape the frontend expects."""
+    d = {
+        "mac": verdict.hw_addr if verdict else (host.hw_addr if host else ""),
+        "manufacturer": verdict.vendor if verdict else None,
+        "device_type": verdict.category if verdict else None,
+        "os_family": verdict.platform if verdict else None,
+        "os_version": verdict.platform_version if verdict else None,
+        "hostname": verdict.hostname if verdict else None,
+        "confidence": verdict.certainty if verdict else 0,
+        "model": verdict.model if verdict else None,
+        "ip_v4": host.ip_addr if host else None,
+        "ip_v6": host.ip_v6 if host else None,
+        "first_seen": host.discovered_at.isoformat() if host and host.discovered_at else None,
+        "last_seen": host.last_active.isoformat() if host and host.last_active else None,
+        "alert_status": host.disposition if host else "new",
+        "is_randomized_mac": host.mac_randomized if host else False,
+    }
+    if verdict and verdict.evidence_chain:
+        d["raw_evidence"] = {
+            "chain": [e.to_dict() for e in verdict.evidence_chain[:50]],
+            "source_count": len(set(e.source for e in verdict.evidence_chain)),
+        }
+    else:
+        d["raw_evidence"] = {}
+    return d
+
+
+def _finding_to_alert_dict(finding) -> dict:
+    """Map Finding to the alert JSON shape the frontend expects."""
+    return {
+        "id": finding.id,
+        "device_mac": finding.hw_addr,
+        "alert_type": finding.rule.value,
+        "severity": finding.severity.value,
+        "message": finding.message,
+        "timestamp": finding.timestamp.isoformat(),
+        "acknowledged": finding.resolved,
+    }
+
 @fastapi_app.middleware("http")
 async def rate_limit_middleware(request: Request, call_next):
     if request.url.path.startswith("/api/"):
@@ -469,151 +510,46 @@ async def api_devices(
     raw: bool = False,
 ):
     """Paginated, filtered, sorted device list."""
-    if not raw:
-        # Identity-based view (default)
-        identities = await app_instance.db.list_identities()
+    # Read from new Verdict/Host tables (Store)
+    verdicts = await app_instance.store.verdicts.find_all(limit=500)
+    result = []
+    for v in verdicts:
+        h = await app_instance.store.hosts.find_by_addr(v.hw_addr)
+        result.append(_build_device_dict(v, h))
 
-        # Filter by interface: only show devices with observations on this interface
-        if interface:
-            iface_devices = await app_instance.db.list_devices(interface=interface)
-            iface_macs = {d.mac for d in iface_devices}
-            identities = [i for i in identities if i.primary_mac in iface_macs]
-
-        # Apply search filter
-        if q:
-            q_lower = q.lower()
-            identities = [
-                i for i in identities
-                if q_lower in (i.primary_mac or "").lower()
-                or q_lower in (i.hostname or "").lower()
-                or q_lower in (i.manufacturer or "").lower()
-                or q_lower in (i.ip_v4 or "").lower()
-            ]
-
-        if manufacturer:
-            identities = [i for i in identities if i.manufacturer == manufacturer]
-        if device_type:
-            identities = [i for i in identities if i.device_type == device_type]
-        if os_family:
-            identities = [i for i in identities if i.os_family == os_family]
-
-        total = len(identities)
-        start = (page - 1) * per_page
-        end = start + per_page
-        page_identities = identities[start:end]
-
-        def _clean_hn(d):
-            """Clean mDNS service hostnames in API response."""
-            import re
-            hn = d.get("hostname")
-            if hn and ("._tcp." in hn or "._udp." in hn or hn.endswith(".local")):
-                c = hn.rstrip(".")
-                if "._tcp." in c or "._udp." in c:
-                    parts = c.split("._")
-                    instance = parts[0]
-                    service = parts[1] if len(parts) > 1 else ""
-                    instance = re.sub(r'-[0-9a-f]{12,}$', '', instance, flags=re.IGNORECASE)
-                    if len(instance) <= 5 and service and service not in ("tcp", "udp"):
-                        c = service
-                    else:
-                        c = instance
-                if c.endswith(".local"):
-                    c = c[:-6]
-                d["hostname"] = c.rstrip(".") or hn
-            return d
-
-        serialized_ids = []
-        for i in page_identities:
-            dd = i.to_dict()
-            dd["hostname"] = _sanitize_hostname(dd.get("hostname"))
-            serialized_ids.append(dd)
-
-        return {
-            "devices": serialized_ids,
-            "total": total,
-            "page": page,
-            "per_page": per_page,
-            "pages": (total + per_page - 1) // per_page,
-        }
-
-    # Raw device view (raw=True)
-    from leetha.store.models import Device
-
-    filters = []
-    params = []
-
+    # Apply search filter
     if q:
-        filters.append(
-            "(mac LIKE ? OR ip_v4 LIKE ? OR hostname LIKE ? OR manufacturer LIKE ?)"
-        )
-        search_term = f"%{q}%"
-        params.extend([search_term] * 4)
+        q_lower = q.lower()
+        result = [
+            d for d in result
+            if q_lower in (d.get("mac") or "").lower()
+            or q_lower in (d.get("hostname") or "").lower()
+            or q_lower in (d.get("manufacturer") or "").lower()
+            or q_lower in (d.get("ip_v4") or "").lower()
+        ]
 
     if manufacturer:
-        filters.append("manufacturer = ?")
-        params.append(manufacturer)
-
+        result = [d for d in result if d.get("manufacturer") == manufacturer]
     if device_type:
-        filters.append("device_type = ?")
-        params.append(device_type)
-
+        result = [d for d in result if d.get("device_type") == device_type]
     if os_family:
-        filters.append("os_family = ?")
-        params.append(os_family)
-
+        result = [d for d in result if d.get("os_family") == os_family]
     if alert_status:
-        filters.append("alert_status = ?")
-        params.append(alert_status)
-
-    if interface:
-        filters.append(
-            "mac IN (SELECT DISTINCT device_mac FROM observations WHERE interface = ?)"
-        )
-        params.append(interface)
-
+        result = [d for d in result if d.get("alert_status") == alert_status]
     if confidence_min is not None:
-        filters.append("confidence >= ?")
-        params.append(confidence_min)
+        result = [d for d in result if (d.get("confidence") or 0) >= confidence_min]
 
-    where_clause = f"WHERE {' AND '.join(filters)}" if filters else ""
+    # Sanitize hostnames
+    for d in result:
+        d["hostname"] = _sanitize_hostname(d.get("hostname"))
 
-    count_query = f"SELECT COUNT(*) FROM devices {where_clause}"
-    async with app_instance.db.db.execute(count_query, params) as cursor:
-        total = (await cursor.fetchone())[0]
-
-    offset = (page - 1) * per_page
-    per_page = min(per_page, 100)  # Cap at 100 rows per page
-    _ALLOWED_SORT = {"mac", "ip_v4", "manufacturer", "device_type", "os_family", "hostname", "confidence", "alert_status", "first_seen", "last_seen"}
-    if sort not in _ALLOWED_SORT:
-        sort = "last_seen"
-    if order.upper() not in ("ASC", "DESC"):
-        order = "DESC"
-    order_clause = f"ORDER BY {sort} {order.upper()}"
-    query = f"""
-        SELECT * FROM devices
-        {where_clause}
-        {order_clause}
-        LIMIT ? OFFSET ?
-    """
-    params_with_limit = params + [per_page, offset]
-
-    devices = []
-    async with app_instance.db.db.execute(query, params_with_limit) as cursor:
-        async for row in cursor:
-            dev = Device.from_row(row)
-            # Debug: log if hostname is still dirty
-            if dev.hostname and ("._tcp." in dev.hostname or "._udp." in dev.hostname):
-                logger.warning("DIRTY hostname after from_row: %s -> %s", row["hostname"] if hasattr(row, 'keys') else 'no-keys', dev.hostname)
-            devices.append(dev)
-
-    serialized = []
-    for d in devices:
-        dd = d.to_dict()
-        dd["hostname"] = _sanitize_hostname(dd.get("hostname"))
-        serialized.append(dd)
+    total = len(result)
+    start = (page - 1) * per_page
+    end = start + per_page
+    page_devices = result[start:end]
 
     return {
-        "devices": serialized,
+        "devices": page_devices,
         "total": total,
         "page": page,
         "per_page": per_page,
@@ -839,21 +775,28 @@ async def api_device(mac: str):
     mac = _validate_mac(mac)
     if not mac:
         return JSONResponse(status_code=400, content={"error": "Invalid MAC address format"})
-    device = await app_instance.db.get_device(mac)
-    if device is None:
+    verdict = await app_instance.store.verdicts.find_by_addr(mac)
+    host = await app_instance.store.hosts.find_by_addr(mac)
+    if not verdict and not host:
         return JSONResponse(status_code=404, content={"error": "Device not found"})
-    observations = await app_instance.db.get_observations(mac)
+    device = _build_device_dict(verdict, host)
+    device["hostname"] = _sanitize_hostname(device.get("hostname"))
+    # Include sightings as observations for compatibility
+    try:
+        sightings = await app_instance.store.sightings.for_host(mac)
+    except Exception:
+        sightings = []
     return {
-        "device": device.to_dict(),
+        "device": device,
         "observations": [
             {
-                "source_type": o.source_type,
-                "raw_data": o.raw_data,
-                "match_result": o.match_result,
-                "confidence": o.confidence,
-                "timestamp": str(o.timestamp),
+                "source_type": s.source,
+                "raw_data": json.dumps(s.payload) if isinstance(s.payload, dict) else str(s.payload),
+                "match_result": json.dumps(s.analysis) if isinstance(s.analysis, dict) else str(s.analysis),
+                "confidence": int(s.certainty * 100) if s.certainty <= 1 else int(s.certainty),
+                "timestamp": s.timestamp.isoformat() if s.timestamp else None,
             }
-            for o in observations
+            for s in sightings
         ],
     }
 
@@ -1119,13 +1062,18 @@ async def get_device_detail(mac: str):
         return JSONResponse(status_code=400, content={"error": "Invalid MAC address format"})
     from fastapi import HTTPException
 
-    device = await app_instance.db.get_device(mac)
-    if not device:
+    verdict = await app_instance.store.verdicts.find_by_addr(mac)
+    host = await app_instance.store.hosts.find_by_addr(mac)
+    if not verdict and not host:
         raise HTTPException(404, "Device not found")
 
+    device = _build_device_dict(verdict, host)
+    device["hostname"] = _sanitize_hostname(device.get("hostname"))
+    evidence = device.get("raw_evidence", {})
+
     return {
-        "device": device.to_dict(),
-        "evidence": device.raw_evidence,  # FingerprintMatch list (stored as JSON)
+        "device": device,
+        "evidence": evidence,
     }
 
 
@@ -1821,24 +1769,13 @@ async def get_probe_status(name: str):
 
 @fastapi_app.get("/api/alerts")
 async def api_alerts():
-    alerts = await app_instance.db.list_alerts(acknowledged=False)
-    return [
-        {
-            "id": a.id,
-            "device_mac": a.device_mac,
-            "alert_type": a.alert_type,
-            "severity": a.severity,
-            "message": a.message,
-            "timestamp": str(a.timestamp),
-            "acknowledged": a.acknowledged,
-        }
-        for a in alerts
-    ]
+    findings = await app_instance.store.findings.list_active(limit=100)
+    return [_finding_to_alert_dict(f) for f in findings]
 
 
 @fastapi_app.post("/api/alerts/{alert_id}/acknowledge")
 async def acknowledge_alert(alert_id: int):
-    await app_instance.db.acknowledge_alert(alert_id)
+    await app_instance.store.findings.resolve(alert_id)
     return {"status": "ok"}
 
 
@@ -2196,12 +2133,18 @@ async def api_incident_detail(incident_id: str):
 
 @fastapi_app.get("/api/stats")
 async def api_stats():
-    device_count = await app_instance.db.get_identity_count()
-    alerts = await app_instance.db.list_alerts(acknowledged=False)
+    try:
+        device_count = await app_instance.store.hosts.count()
+        alert_count = await app_instance.store.findings.count_active()
+    except Exception:
+        # Fallback to old tables during transition
+        device_count = await app_instance.db.get_identity_count()
+        alerts = await app_instance.db.list_alerts(acknowledged=False)
+        alert_count = len(alerts)
     capturing_count = len(app_instance.capture_engine.interfaces) if app_instance else 0
     return {
         "device_count": device_count,
-        "alert_count": len(alerts),
+        "alert_count": alert_count,
         "capturing_count": capturing_count,
     }
 
@@ -2210,12 +2153,22 @@ async def api_stats():
 async def api_device_type_stats():
     """Device count by type for dashboard breakdown."""
     try:
-        rows = await app_instance.db.execute_readonly_query(
-            "SELECT COALESCE(device_type, 'unknown') as dtype, COUNT(*) as cnt FROM devices GROUP BY dtype ORDER BY cnt DESC"
+        # Use new verdicts table
+        cursor = await app_instance.store.connection.execute(
+            "SELECT COALESCE(category, 'unknown') as dtype, COUNT(*) as cnt "
+            "FROM verdicts GROUP BY dtype ORDER BY cnt DESC"
         )
-        return {"types": [{"type": r[0], "count": r[1]} for r in rows.get("rows", [])]}
+        rows = await cursor.fetchall()
+        return {"types": [{"type": r[0], "count": r[1]} for r in rows]}
     except Exception:
-        return {"types": []}
+        try:
+            # Fallback to old devices table
+            rows = await app_instance.db.execute_readonly_query(
+                "SELECT COALESCE(device_type, 'unknown') as dtype, COUNT(*) as cnt FROM devices GROUP BY dtype ORDER BY cnt DESC"
+            )
+            return {"types": [{"type": r[0], "count": r[1]} for r in rows.get("rows", [])]}
+        except Exception:
+            return {"types": []}
 
 
 @fastapi_app.get("/api/stats/activity")
@@ -2835,7 +2788,32 @@ async def websocket_endpoint(websocket: WebSocket):
             if isinstance(event, dict) and event.get("type") in ("import_progress", "import_complete"):
                 await websocket.send_json(event)
                 continue
-            device = event["device"]
+
+            # New pipeline events have {"type": "device_update", "mac": ..., "verdict": {...}}
+            if isinstance(event, dict) and event.get("type") == "device_update" and "verdict" in event:
+                verdict_data = event["verdict"]
+                # Build device-shaped dict for frontend compatibility
+                device_dict = {
+                    "mac": event.get("mac", verdict_data.get("hw_addr", "")),
+                    "manufacturer": verdict_data.get("vendor"),
+                    "device_type": verdict_data.get("category"),
+                    "os_family": verdict_data.get("platform"),
+                    "os_version": verdict_data.get("platform_version"),
+                    "hostname": verdict_data.get("hostname"),
+                    "confidence": verdict_data.get("certainty", 0),
+                    "model": verdict_data.get("model"),
+                }
+                await websocket.send_json({
+                    "type": "device_update",
+                    "device": device_dict,
+                    "alerts": [],
+                    "packet": None,
+                    "matches": [],
+                })
+                continue
+
+            # Legacy event format: {"device": Device, "alerts": [...], ...}
+            device = event.get("device")
             alerts_data = event.get("alerts", [])
             packet = event.get("packet")
             matches = event.get("matches", [])
@@ -2855,12 +2833,12 @@ async def websocket_endpoint(websocket: WebSocket):
                 }
 
             await websocket.send_json({
-                "type": event["type"],
-                "device": device.to_dict() if device else None,
+                "type": event.get("type", "device_update"),
+                "device": device.to_dict() if hasattr(device, 'to_dict') else device,
                 "alerts": [
                     {"type": a.alert_type, "severity": a.severity, "message": a.message}
                     for a in alerts_data
-                ],
+                ] if alerts_data else [],
                 "packet": packet_info,
                 "matches": [
                     {
@@ -2871,7 +2849,7 @@ async def websocket_endpoint(websocket: WebSocket):
                         "device_type": m.device_type,
                     }
                     for m in matches
-                ],
+                ] if matches else [],
             })
     except (WebSocketDisconnect, Exception):
         app_instance.unsubscribe(events)
@@ -2899,6 +2877,12 @@ async def websocket_console(websocket: WebSocket):
             if isinstance(event, dict) and event.get("type") in ("import_progress", "import_complete"):
                 await websocket.send_json(event)
                 continue
+
+            # New pipeline events: {"type": "device_update", "mac": ..., "verdict": {...}}
+            # Console WS requires packet data — skip verdict-only events
+            if isinstance(event, dict) and event.get("type") == "device_update" and "verdict" in event and "packet" not in event:
+                continue
+
             device = event.get("device")
             packet = event.get("packet")
             matches = event.get("matches", [])
@@ -2906,6 +2890,23 @@ async def websocket_console(websocket: WebSocket):
 
             if not packet:
                 continue
+
+            # Build device dict — handle both Device objects and Verdict dicts
+            if device and hasattr(device, "manufacturer"):
+                device_dict = {
+                    "manufacturer": device.manufacturer,
+                    "device_type": getattr(device, "device_type", None) or getattr(device, "category", None),
+                    "os_family": getattr(device, "os_family", None) or getattr(device, "platform", None),
+                    "os_version": getattr(device, "os_version", None) or getattr(device, "platform_version", None),
+                    "hostname": getattr(device, "hostname", None),
+                    "confidence": getattr(device, "confidence", 0) or getattr(device, "certainty", 0),
+                    "is_randomized_mac": getattr(device, "is_randomized_mac", False) or getattr(device, "mac_randomized", False),
+                    "correlated_mac": getattr(device, "correlated_mac", None) or getattr(device, "real_hw_addr", None),
+                }
+            elif isinstance(device, dict):
+                device_dict = device
+            else:
+                device_dict = {}
 
             await websocket.send_json({
                 "protocol": packet.protocol,
@@ -2918,16 +2919,7 @@ async def websocket_console(websocket: WebSocket):
                 "network": packet.network,
                 "data": {k: str(v) if not isinstance(v, (str, int, float, bool, type(None))) else v
                          for k, v in (packet.data or {}).items()},
-                "device": {
-                    "manufacturer": device.manufacturer,
-                    "device_type": device.device_type,
-                    "os_family": device.os_family,
-                    "os_version": device.os_version,
-                    "hostname": device.hostname,
-                    "confidence": device.confidence,
-                    "is_randomized_mac": device.is_randomized_mac,
-                    "correlated_mac": device.correlated_mac,
-                } if device else {},
+                "device": device_dict,
                 "matches": [
                     {
                         "source": m.source,
@@ -2940,7 +2932,7 @@ async def websocket_console(websocket: WebSocket):
                         "model": m.model,
                     }
                     for m in matches
-                ],
+                ] if matches else [],
                 "alerts": [
                     {
                         "alert_type": str(a.alert_type),
@@ -2948,7 +2940,7 @@ async def websocket_console(websocket: WebSocket):
                         "message": a.message,
                     }
                     for a in alerts_list
-                ],
+                ] if alerts_list else [],
             })
     except (WebSocketDisconnect, Exception):
         app_instance.unsubscribe(events)
