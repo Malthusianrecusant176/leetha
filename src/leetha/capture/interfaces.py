@@ -11,7 +11,6 @@ import ipaddress
 import json as _json
 import logging
 import socket
-import subprocess
 import tempfile
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -297,17 +296,10 @@ def read_routing_table() -> list[RoutingEntry]:
     Uses ``ip -j route`` for structured JSON output.  Returns an empty list
     when the command is unavailable or fails.
     """
+    from leetha.platform import get_routes as _platform_routes
     try:
-        completed = subprocess.run(
-            ["ip", "-j", "route"],
-            capture_output=True,
-            text=True,
-            timeout=5,
-        )
-        if completed.returncode != 0:
-            return []
-        raw_entries = _json.loads(completed.stdout)
-    except (FileNotFoundError, subprocess.TimeoutExpired, _json.JSONDecodeError):
+        raw_entries = _platform_routes()
+    except Exception:
         return []
 
     return [

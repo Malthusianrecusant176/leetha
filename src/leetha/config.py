@@ -3,24 +3,10 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from pathlib import Path
 import os
-import pwd
-
-
 def _real_home() -> Path:
-    """Return the invoking user's home directory, even under sudo.
-
-    When leetha re-execs itself via ``sudo``, ``$HOME`` changes to
-    ``/root``.  ``SUDO_USER`` is set by sudo to the original user,
-    so we resolve their home from the password database.  This keeps
-    the database and token files in a single, consistent location.
-    """
-    sudo_user = os.environ.get("SUDO_USER")
-    if sudo_user:
-        try:
-            return Path(pwd.getpwnam(sudo_user).pw_dir)
-        except KeyError:
-            pass
-    return Path.home()
+    """Return the invoking user's home directory, even under sudo."""
+    from leetha.platform import get_home_dir
+    return get_home_dir()
 
 from leetha.capture.interfaces import InterfaceConfig
 

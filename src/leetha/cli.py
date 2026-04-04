@@ -1,7 +1,7 @@
 import argparse
 import asyncio
 import os
-import socket
+
 import sys
 
 
@@ -215,34 +215,14 @@ def _needs_capture(args: argparse.Namespace) -> bool:
 
 def _has_capture_privilege() -> bool:
     """Return True if the process can open a raw packet socket."""
-    if os.getuid() == 0:
-        return True
-    if hasattr(socket, "AF_PACKET"):
-        # Linux: try opening a raw packet socket
-        try:
-            s = socket.socket(socket.AF_PACKET, socket.SOCK_RAW)
-            s.close()
-            return True
-        except (PermissionError, OSError):
-            return False
-    # macOS/BSD: check access to BPF device
-    import glob
-    return any(os.access(d, os.R_OK) for d in glob.glob("/dev/bpf*"))
+    from leetha.platform import has_capture_privilege
+    return has_capture_privilege()
 
 
 def _escalate_privileges():
-    """Re-exec the current command under sudo."""
-    print("leetha: packet capture requires root – re-running with sudo …")
-    try:
-        os.execvp("sudo", ["sudo", sys.executable] + sys.argv)
-    except FileNotFoundError:
-        print(
-            "error: sudo not found. Run as root or grant CAP_NET_RAW:\n"
-            "  sudo setcap cap_net_raw+ep "
-            + sys.executable,
-            file=sys.stderr,
-        )
-        sys.exit(1)
+    """Re-exec the current command with elevated privileges."""
+    from leetha.platform import escalate_privileges
+    escalate_privileges()
 
 
 def handle_probe(args):

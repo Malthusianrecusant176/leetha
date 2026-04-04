@@ -225,15 +225,11 @@ class PacketCapture:
         # scapy's promisc flag only sets SO_PROMISC on the socket; setting
         # it on the interface ensures the NIC driver forwards all frames.
         if use_promisc:
-            try:
-                import subprocess
-                subprocess.run(
-                    ["ip", "link", "set", dev_name, "promisc", "on"],
-                    capture_output=True, timeout=5,
-                )
+            from leetha.platform import set_promiscuous
+            if set_promiscuous(dev_name):
                 log.debug("Set %s to promiscuous mode at OS level", dev_name)
-            except Exception:
-                log.debug("Could not set promisc via ip link on %s", dev_name)
+            else:
+                log.debug("Could not set promisc on %s (platform may handle it)", dev_name)
 
         log.info(
             "Sniffing %s  mode=%s  promisc=%s  bpf=%s",
