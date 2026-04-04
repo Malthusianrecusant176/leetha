@@ -15,7 +15,8 @@ _SERVICE_CATEGORIES: dict[str, str] = {
     "ipp": "printer", "jetdirect": "printer", "lpd": "printer",
     "mqtt": "server", "amqp": "server",
     "sip": "server",
-    "rtsp": "server",
+    "rtsp": "ip_camera",
+    "unifiprotect": "ip_camera",
     "ldap": "server",
     "cassandra": "server", "elasticsearch": "server",
     "docker_api": "server", "kubernetes_api": "server",
@@ -47,6 +48,8 @@ _SOFTWARE_VENDORS: dict[str, str] = {
     "docker": "Docker",
     "kubernetes": "Kubernetes",
     "rabbitmq": "RabbitMQ",
+    "unifi protect": "Ubiquiti",
+    "ubiquiti": "Ubiquiti",
 }
 
 _SSH_OS_HINTS: dict[str, str] = {

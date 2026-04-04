@@ -35,7 +35,9 @@ _SERVICE_PORTS: dict[str, list[int]] = {
     "AMQP": [5672],
     # VoIP / Streaming
     "SIP": [5060, 5061],
-    "RTSP": [554, 8554],
+    "RTSP": [554, 7447, 8554],
+    # UniFi Protect
+    "UniFiProtect": [7443, 7444],
     # Directory
     "LDAP": [389, 636],
     # Databases

@@ -453,7 +453,7 @@ UBIQUITI_MAC_PREFIXES: Dict[str, Tuple[str, str, Optional[str]]] = {
     "24:5A:4C": ("access_point", "Network Equipment", "UniFi AP"),
     "44:D9:E7": ("access_point", "Network Equipment", "UniFi AP"),
     "DC:9F:DB": ("access_point", "Network Equipment", "UniFi AP"),
-    "E0:63:DA": ("access_point", "Network Equipment", "UniFi AP"),
+    "E0:63:DA": ("network_device", "Network Equipment", "Ubiquiti"),  # Shared OUI: APs, cameras, doorbells
     "04:18:D6": ("access_point", "Network Equipment", "UniFi AP"),
     "9C:05:D6": ("access_point", "Network Equipment", "UniFi AP"),  # U6 series
     "E8:78:29": ("access_point", "Network Equipment", "UniFi AP"),

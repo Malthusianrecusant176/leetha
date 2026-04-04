@@ -928,20 +928,36 @@
     "certainty": 90
   },
   {
-    "match": "unifi[_-]",
-    "category": "access_point",
+    "match": "(?i)(uvc|cam|doorbell|protect).*ubnt|ubnt.*(cam|doorbell|protect)",
+    "category": "ip_camera",
     "vendor": "Ubiquiti",
+    "platform": "UniFi Protect",
+    "model": null,
+    "certainty": 88
+  },
+  {
+    "match": "(?i)doorbell",
+    "category": "doorbell",
+    "vendor": null,
     "platform": null,
     "model": null,
     "certainty": 85
   },
   {
-    "match": "^ubnt",
-    "category": "router",
+    "match": "unifi[_-]",
+    "category": "network_device",
     "vendor": "Ubiquiti",
     "platform": null,
     "model": null,
-    "certainty": 85
+    "certainty": 80
+  },
+  {
+    "match": "^ubnt",
+    "category": "network_device",
+    "vendor": "Ubiquiti",
+    "platform": null,
+    "model": null,
+    "certainty": 80
   },
   {
     "match": "mikrotik",

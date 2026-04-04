@@ -445,6 +445,30 @@ def _match_pptp(payload: bytes) -> dict | None:
     return {"service": "pptp", "raw_banner": payload[:32].hex()}
 
 
+def _match_unifiprotect(payload: bytes) -> dict | None:
+    """UniFi Protect HTTPS — TLS or HTTP response from Protect controller/camera."""
+    # TLS ServerHello starts with 0x16 (handshake) then version
+    if payload[0] == 0x16 and len(payload) >= 5:
+        return {
+            "service": "unifiprotect",
+            "software": "UniFi Protect",
+            "raw_banner": payload[:8].hex(),
+        }
+    # HTTP response
+    text = payload.decode("ascii", errors="replace")
+    if text.startswith("HTTP/"):
+        result: dict = {
+            "service": "unifiprotect",
+            "software": "UniFi Protect",
+            "raw_banner": text[:256].strip(),
+        }
+        m = re.search(r"Server:\s*(.+?)(?:\r?\n)", text)
+        if m:
+            result["software"] = m.group(1).strip()
+        return result
+    return None
+
+
 # ---------------------------------------------------------------------------
 # Dispatch table
 # ---------------------------------------------------------------------------
@@ -480,6 +504,7 @@ _MATCHERS: dict[str, Callable[[bytes], dict | None]] = {
     "socks": _match_socks,
     "bgp": _match_bgp,
     "pptp": _match_pptp,
+    "unifiprotect": _match_unifiprotect,
 }
 
 

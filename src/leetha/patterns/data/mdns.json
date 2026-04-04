@@ -413,6 +413,30 @@
       "vendor": "OpenMediaVault",
       "platform": "Linux",
       "certainty": 85
+    },
+    "_ubnt._tcp": {
+      "category": "network_device",
+      "vendor": "Ubiquiti",
+      "platform": null,
+      "certainty": 90
+    },
+    "_unifi._tcp": {
+      "category": "network_device",
+      "vendor": "Ubiquiti",
+      "platform": null,
+      "certainty": 90
+    },
+    "_uprotect._tcp": {
+      "category": "ip_camera",
+      "vendor": "Ubiquiti",
+      "platform": "UniFi Protect",
+      "certainty": 92
+    },
+    "_rtsp._tcp": {
+      "category": "ip_camera",
+      "vendor": null,
+      "platform": null,
+      "certainty": 70
     }
   },
   "names": [

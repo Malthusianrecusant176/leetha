@@ -312,5 +312,27 @@
   {
     "condition": "domain in domain_lower",
     "certainty": 0
+  },
+  {
+    "condition": "\"ui.com\" in domain_lower or \"ubnt.com\" in domain_lower or \"unifi.com\" in domain_lower",
+    "domains": [
+      "ui.com",
+      "ubnt.com",
+      "unifi.com"
+    ],
+    "vendor": "Ubiquiti",
+    "note": "Ubiquiti/UniFi device (cameras, APs, doorbells, gateways)",
+    "certainty": 65
+  },
+  {
+    "condition": "\"trace.svc.ui.com\" in domain_lower or \"protect.ui.com\" in domain_lower",
+    "domains": [
+      "trace.svc.ui.com",
+      "protect.ui.com"
+    ],
+    "vendor": "Ubiquiti",
+    "category": "ip_camera",
+    "note": "UniFi Protect device (camera, doorbell, NVR)",
+    "certainty": 80
   }
 ]
