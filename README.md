@@ -1,146 +1,284 @@
+<div align="center">
+
 # Leetha
 
-Passive network fingerprinting and analysis engine. Identifies devices on your network by analyzing broadcast traffic, DHCP exchanges, mDNS announcements, DNS queries, TLS handshakes, and L2 management protocols — combining passive observation with active service probing.
+### Passive Network Fingerprinting and Analysis Engine
 
+[![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
+[![License: GPL v3](https://img.shields.io/badge/license-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
+[![Tests](https://img.shields.io/badge/tests-453%20passing-brightgreen.svg)](#testing)
+
+</div>
+
+**Leetha identifies devices on your network by analyzing broadcast traffic and protocol exchanges** -- combining passive observation with active service probing to build a comprehensive device inventory, detect anomalies, and map your attack surface. No agents, no credentials, no device cooperation required.
+
+> *Named after **K7-Leetha**, the sentient necroplasmic symbiote from Todd McFarlane's Spawn. The suit bonds with its host, silently observing and adapting to every threat in its environment -- much like this tool bonds with your network, passively learning every device and anomaly without ever revealing its presence.*
+
+---
+
+## Why Leetha
+
+- **Passive-first design** -- identifies devices without sending a single packet; active probing is optional
+- **Multi-evidence fusion** -- weighted certainty scoring across 15+ protocol sources with agreement boosting when independent sources corroborate
+- **30 protocol banner matchers** -- passively reads service banners (SSH, MySQL, SMB, RDP, MQTT, RTSP, and more) from observed traffic
+- **315 active probe plugins** -- protocol-specific request/response parsing, not just banner grabs
+- **11.5 million fingerprint signatures** -- synced from 12 upstream databases including IEEE OUI, Huginn-Muninn, p0f, JA3/JA4
+- **Real-time web dashboard** -- host inventory, detection triage, network topology, and attack surface analysis via WebSocket
+- **Behavioral detection** -- DNS vendor affinity drift, identity shift alerts, MAC spoofing detection, DHCP anomaly analysis
+- **OT / ICS / SCADA support** -- passive identification of Modbus, BACnet, EtherNet/IP, CoAP, MQTT, and industrial device fingerprinting
+
+## How It Works
+
+```
+Network Traffic
+      |
+      v
+Capture Engine -----> Parser Chain (20 protocol parsers)
+(per-interface          |
+ scapy threads)    CapturedPacket
+                        |
+                Registry-Based Processors
+                (Network, Services, Names,
+                 Infrastructure, IoT/SCADA,
+                 Banners, Behavioral)
+                        |
+                     Evidence
+                        |
+                  Verdict Engine
+            (weighted certainty fusion
+             + agreement boosting)
+                        |
+           +------------+------------+
+           v            v            v
+      Host Store   Finding Rules  Active Probes
+      (SQLite)     (8 rule types) (315 plugins)
+           |
+      Web Dashboard / Console / API
+```
+
+1. **Capture** -- per-interface threads with BPF filters parse traffic through an ordered protocol chain
+2. **Process** -- registered processors extract evidence from captured packets
+3. **Fuse** -- verdict engine combines all evidence per host using weighted certainty and agreement boosting
+4. **Store** -- host identity, evidence chain, and findings persisted to SQLite with configurable retention
+5. **Detect** -- finding rules evaluate each host for anomalies, spoofing, and identity drift
+6. **Probe** -- optional active probing sends protocol-specific requests for service confirmation
 
 ## Quick Start
 
 Requires **Python 3.11+** and **root/sudo** for packet capture.
 
 ```bash
-# Sync fingerprint databases (optional, improves accuracy)
+# Install
+pip install leetha
+
+# Sync fingerprint databases (recommended, ~880 MB)
 leetha sync
 
 # Launch the web dashboard
 sudo leetha --web
 
-# Interactive console
+# Interactive console on a specific interface
 sudo leetha -i eth0
+
+# Multi-interface capture
+sudo leetha -i eth0 -i wlan0
 ```
 
 Open `http://localhost:8080` to view discovered devices in real-time.
 
-## Usage
+## Network Stack Analysis
 
-```bash
-sudo leetha --web -i eth0          # Web dashboard on a specific interface
-sudo leetha -i eth0 -i wlan0       # Multi-interface capture
-sudo leetha --live --decode -i eth0 # Live packet stream with protocol decode
-leetha probe 192.168.1.1:22        # Actively probe a service
-leetha interfaces list              # Manage saved interfaces
-```
+| Layer | Protocol | Leetha Analysis |
+|-------|----------|-----------------|
+| 2 | Ethernet | ARP bindings, MAC vendor resolution, randomization detection |
+| 2 | LLDP, CDP, STP | Switch/AP/router identification, network topology |
+| 3 | ICMPv6 | Router advertisements, neighbor discovery, IPv6 host detection |
+| 4 | TCP SYN | p0f-style OS fingerprinting (TTL, window, MSS, options) |
+| 4 | TCP Banners | Passive service identification from 30 protocols (SSH, MySQL, SMB, RDP, ...) |
+| 7 | DHCPv4 / DHCPv6 | Device fingerprinting via Option 55/60, vendor class, ORO, DUID |
+| 7 | DNS / mDNS | Hostname resolution, vendor affinity profiling, exclusive service detection |
+| 7 | SSDP / WS-Discovery | UPnP device type, manufacturer, model identification |
+| 7 | TLS ClientHello | JA3 and JA4 fingerprinting, SNI extraction |
+| 7 | HTTP | User-Agent parsing, platform and browser detection |
+| 7 | SNMP | System description, OID-based device classification |
+| 7 | MQTT, CoAP, Modbus, BACnet, EtherNet/IP | IoT and OT device identification |
+| 7 | SIP, RTSP | VoIP phone and IP camera detection |
+| 7 | LLMNR / NetBIOS | Windows hostname and workgroup resolution |
 
-## Features
+## Detection Capabilities
 
-- **Passive fingerprinting** — DHCP, mDNS, DNS, SSDP, NetBIOS, ICMPv6, ARP, and TLS dissectors
-- **Active probing** — 300+ protocol-specific probe plugins
-- **Verdict engine** — Weighted certainty scoring with agreement boosting across all evidence per host
-- **Web dashboard** — Real-time host inventory, split-pane detection triage, network topology, attack surface analysis, and configuration
-- **Interactive console** — Command-driven workflow with live packet streaming
-- **Attack surface analysis** — Exposed service identification and multi-step attack chain mapping
-- **DHCP anomaly detection** — Rogue DHCP servers, MAC spoofing, starvation attacks
-- **IoT/SCADA awareness** — Passive identification of industrial and IoT protocols (Modbus, BACnet, MQTT, CoAP)
-- **Fingerprint database sync** — 12 upstream databases (~880 MB): IEEE OUI, p0f TCP signatures, Huginn-Muninn (MAC vendors, DHCP fingerprints, device hierarchy, DHCPv6), IANA enterprise IDs, JA3/JA4 TLS fingerprints
-- **Identity shift detection** — CRITICAL alerts when a device's fingerprint class changes unexpectedly (category, vendor, or platform change indicates MAC spoofing or device swap)
-- **Behavioral drift monitoring** — Tracks DNS vendor affinity per host over time; detects when a device's query profile shifts from one vendor ecosystem to another
-- **Randomized MAC handling** — Identifies Apple, Android, and Windows devices despite MAC randomization using exclusive mDNS services (_apple-mobdev2._tcp, _companion-link._tcp) and DHCP Option 61 correlation
-- **Container/VM/cloud awareness** — Identifies Docker containers, Proxmox/VMware/Hyper-V VMs, Kubernetes nodes, and cloud instances (AWS, GCP, Azure, DigitalOcean) from MAC OUI, hostname patterns, and DNS queries
-- **API security** — Rate limiting (120 req/min), MAC address validation, query size limits, HTML sanitization on wiki content
+### Device Categories
 
-## How It Works
+| Category | Examples |
+|----------|----------|
+| **Network Infrastructure** | Routers, switches, access points, firewalls, load balancers, mesh routers |
+| **Compute** | Servers, workstations, laptops, desktops, hypervisors, virtual machines, containers, cloud instances |
+| **Mobile** | Phones, tablets (Apple, Android, Windows with MAC randomization handling) |
+| **OT / ICS / SCADA** | PLCs (Siemens S7, Allen-Bradley, Beckhoff), RTUs, HMIs, building automation controllers, EV charging stations |
+| **IoT / Smart Home** | Cameras, doorbells, thermostats, smart locks, smart plugs, smart lighting, robot vacuums, sensors |
+| **Entertainment** | Smart TVs (Samsung, LG, Roku), game consoles, streaming devices, media players, smart speakers |
+| **Storage** | NAS devices (Synology, QNAP, TrueNAS, Unraid, OpenMediaVault) |
+| **Printers** | Network printers, scanners (IPP, JetDirect, LPD) |
+| **VoIP** | IP phones, PBX systems, SIP endpoints |
+| **Security** | Docker APIs (unencrypted), Kubernetes APIs, SOCKS proxies, VPN concentrators |
 
-```
-Network Traffic --> Capture Engine (scapy, per-interface threads)
-                          |
-                    Parser Chain
-          (ARP, DHCP, DNS, TLS, LLDP, CDP, SNMP, ...)
-                          |
-                    CapturedPacket
-                          |
-              Registry-Based Processors
-     (Network, Services, Names, Infrastructure, IoT/SCADA)
-                          |
-                       Evidence
-                          |
-                    Verdict Engine
-              (weighted certainty + agreement boost)
-                          |
-          +---------------+---------------+
-          v               v               v
-     Host Store      Finding Rules    Active Probes
-     (SQLite)        (8 rule types)   (315 plugins)
-          |
-     Web Dashboard
-```
+### Passive Banner Identification
 
-1. **Capture** — Listens on selected interfaces, parsing protocols through an ordered chain
-2. **Process** — Registered processors extract evidence from captured packets
-3. **Fuse** — Verdict engine combines all evidence per host using weighted certainty
-4. **Store** — Host identity, evidence chain, and findings persisted to SQLite
-5. **Detect** — Finding rules evaluate each host for anomalies and threats
-6. **Re-evaluate** — 60 seconds after startup, devices classified before fingerprint databases loaded are automatically re-fingerprinted
+Leetha passively captures service banners from observed TCP traffic without sending any packets:
+
+| Protocol | Ports | What Is Identified |
+|----------|-------|--------------------|
+| SSH | 22 | Software, version, OS hints (OpenSSH, Dropbear) |
+| MySQL / MariaDB | 3306 | Server version, auth plugin, MariaDB detection |
+| PostgreSQL | 5432 | Server version from ParameterStatus |
+| MSSQL | 1433 | TDS prelogin response |
+| MongoDB | 27017 | Wire protocol version, server version |
+| Redis | 6379 | RESP protocol, version from INFO |
+| SMB | 445, 139 | SMB1/SMB2 dialect, server GUID |
+| RDP | 3389 | X.224 negotiation, NLA/TLS capability |
+| SMTP | 25, 465, 587 | MTA software (Postfix, Exim, Exchange) |
+| IMAP / POP3 | 143, 110 | Server software (Dovecot, Cyrus) |
+| FTP | 21 | Server software and version |
+| MQTT | 1883 | CONNACK response, broker identification |
+| RTSP | 554 | IP camera detection (Hikvision, Dahua, Axis) |
+| SIP | 5060 | VoIP phone vendor identification |
+| LDAP | 389, 636 | Directory server detection |
+| Elasticsearch | 9200 | Cluster name, version |
+| Docker API | 2375 | API version, OS (security finding if unencrypted) |
+| SOCKS | 1080 | Proxy detection (SOCKS4/5), open proxy finding |
+| BGP | 179 | Router identification, AS number extraction |
+| VNC, Telnet, IRC | Various | Protocol version, login banners |
+
+### Finding Rules
+
+| Rule | Severity | Description |
+|------|----------|-------------|
+| `new_host` | INFO | New device discovered on the network |
+| `identity_shift` | CRITICAL / HIGH | Device fingerprint class changed (category, vendor, or platform) |
+| `addr_conflict` | WARNING | Multiple MACs claiming the same IP address |
+| `low_certainty` | INFO | Device identification below confidence threshold |
+| `stale_source` | INFO | Evidence source has not been seen recently |
+| `randomized_addr` | INFO | MAC address randomization detected |
+| `dhcp_anomaly` | HIGH | Rogue DHCP server, starvation attack, or relay-agent injection |
+| `behavioral_drift` | WARNING | DNS vendor affinity shifted from one ecosystem to another |
+
+### Fingerprint Sources
+
+| Source | Records | Data Provided |
+|--------|---------|---------------|
+| Huginn-Muninn MAC Vendors | 10.1M | MAC to vendor/device mapping |
+| Huginn DHCP Vendors | 425K | DHCP vendor class identifiers |
+| Huginn DHCP Signatures | 368K | DHCP option fingerprints |
+| Huginn-Muninn Devices | 116K | Device profiles (model, category, OS) |
+| IEEE OUI | 86K+ | MAC manufacturer lookup |
+| Huginn DHCPv6 Enterprise | 58K | DHCPv6 enterprise identifiers |
+| IANA Enterprise Numbers | 50K+ | SNMP/protocol enterprise OIDs |
+| Huginn DHCPv6 | 40K | DHCPv6 fingerprints |
+| JA3 TLS Fingerprints | Database | TLS client identification with matching |
+| JA4+ TLS Fingerprints | Database | Modern TLS client identification with matching |
+| p0f TCP Signatures | Database | TCP/IP stack OS fingerprinting |
+| Custom Vendor Patterns | 4,645 | Banner and protocol-specific identification |
 
 ## Architecture
 
 ```
 src/leetha/
-├── core/             Application orchestrator and processing pipeline
-├── capture/
-│   ├── engine.py     Packet capture (per-interface threads)
-│   └── protocols/    Split protocol parsers (ARP, DHCP, DNS, TLS, L2, ...)
-├── processors/       Registry-based packet processors
-│   ├── network.py    ARP, DHCP, DHCPv6, ICMPv6 — host discovery
-│   ├── services.py   TCP SYN, TLS, HTTP User-Agent — OS/service fingerprinting
-│   ├── names.py      DNS, mDNS, SSDP, NetBIOS — hostname and service resolution
-│   ├── infrastructure.py  LLDP, CDP, STP, SNMP — network device identification
-│   ├── iot_scada.py  Modbus, BACnet, CoAP, MQTT — industrial/IoT protocols
-│   ├── passive.py    IP observed — TTL-based OS hints
-│   └── active.py     Active probe results
-├── evidence/         Evidence models and verdict computation engine
-├── rules/            Registry-based finding rules
-│   ├── discovery.py  new_host, low_certainty
-│   ├── drift.py      identity_shift (category/vendor/platform change detection)
-│   ├── behavioral.py behavioral_drift (DNS vendor affinity monitoring)
-│   ├── anomaly.py    dhcp_anomaly, stale_source
-│   └── randomization.py  randomized_addr (MAC randomization detection)
-├── patterns/
-│   ├── loader.py     JSON pattern loader with validation and caching
-│   └── data/         Fingerprint pattern databases (JSON)
-├── probe/
-│   ├── base.py       ServiceProbe plugin interface
-│   ├── connection.py ServiceConnection socket wrapper
-│   └── plugins/      315 service identification plugins
-├── store/            Repository-pattern SQLite persistence
-├── analysis/         Attack surface analysis, DHCP anomaly detection
-├── sync/             Fingerprint database sync from upstream feeds
-├── ui/
-│   ├── web/          FastAPI web dashboard with WebSocket updates
-│   └── live.py       Live packet stream viewer
-├── cli.py            Entry point and argument parsing
-└── console.py        Interactive console (REPL)
+  capture/
+    engine.py            Packet capture (per-interface scapy threads, BPF filters)
+    protocols/           20 protocol parsers (ARP, DHCP, DNS, TLS, L2, banners, ...)
+    banner/              Passive TCP banner capture (30 service matchers, connection tracking)
+    dedup.py             TTL-based LRU deduplication cache
+  processors/            Registry-based packet processors
+    network.py           ARP, DHCP, DHCPv6, ICMPv6 discovery
+    services.py          TCP SYN, TLS, HTTP User-Agent fingerprinting
+    names.py             DNS, mDNS, SSDP, NetBIOS hostname/service resolution
+    infrastructure.py    LLDP, CDP, STP, SNMP network device identification
+    iot_scada.py         Modbus, BACnet, CoAP, MQTT, EtherNet/IP
+    banner.py            Passive service banner evidence emission
+    behavioral.py        DNS vendor affinity tracking
+  evidence/              Evidence models and verdict computation engine
+  fingerprint/           Device identification, OS intelligence, MAC analysis
+  patterns/              JSON pattern loader, compiled regex matching, category index
+  rules/                 Finding rules (identity shift, behavioral drift, DHCP anomaly, ...)
+  probe/                 315 active service identification plugins
+  store/                 SQLite persistence with retention policies
+  analysis/              Attack surface analysis, spoofing detection, DHCP anomaly detection
+  sync/                  Fingerprint database sync with streaming JSON parsers
+  topology.py            Network topology graph (gateway, core switch, AP, VM detection)
+  pipeline.py            MAC-sharded packet dispatch with bounded queues
+  ui/
+    web/                 FastAPI dashboard with WebSocket real-time updates
+    live.py              Live packet stream viewer
+  console.py             Interactive REPL console
+  cli.py                 Entry point and argument parsing
 ```
 
-## Detection Capabilities
+## Performance and Resource Management
 
-**Protocols analyzed:** ARP, DHCPv4, DHCPv6, DNS, mDNS/Bonjour, SSDP/UPnP, NetBIOS/LLMNR, TLS (JA3/JA4), HTTP User-Agent, TCP SYN (p0f-style), ICMPv6, LLDP, CDP, STP, SNMP
+| Component | Mechanism | Bound |
+|-----------|-----------|-------|
+| Worker queues | Bounded asyncio queues, drop-and-count on overflow | 10K packets per shard |
+| Packet dedup | TTL-based LRU cache (300s TTL, 50K entries) | Stable memory, no state loss |
+| Pattern matching | Pre-compiled regexes with category-indexed lookup | O(k) per match, not O(n) |
+| Evidence chains | Capped at 20 per source, 200 total per device | Bounded per host |
+| Database | Configurable retention (7d observations, 30d alerts) | Pruned periodically |
+| Sync downloads | Streaming JSON parsers (ijson support) | O(item) memory, not O(file) |
+| Batch writes | Grouped SQLite transactions (50 ops, 100ms window) | Amortized I/O |
 
-**Device categories identified:**
-- **Network infrastructure:** Routers, switches, access points, firewalls, load balancers, mesh routers
-- **Compute:** Servers, workstations, laptops, desktops, hypervisors, virtual machines, containers, cloud instances
-- **Mobile:** Phones, tablets
-- **Entertainment:** Smart TVs, game consoles (PlayStation, Xbox, Nintendo), streaming devices (Roku, Chromecast, Apple TV), media players, smart speakers
-- **IoT/Smart Home:** Cameras, doorbells, thermostats, smart locks, smart plugs, smart lighting, robot vacuums, microcontrollers, 3D printers
-- **Storage:** NAS devices (Synology, QNAP, TrueNAS, Unraid, OpenMediaVault)
-- **Office:** Printers, scanners
+## Testing
 
-**Finding rules:** new_host, identity_shift, addr_conflict, low_certainty, stale_source, randomized_addr, dhcp_anomaly, behavioral_drift
+```bash
+# Run full test suite
+PYTHONPATH=src python -m pytest spec/ -v
+
+# Run specific test group
+PYTHONPATH=src python -m pytest spec/capture/ -v
+PYTHONPATH=src python -m pytest spec/processors/ -v
+PYTHONPATH=src python -m pytest spec/evidence/ -v
+```
 
 ## Documentation
 
-See [docs/wiki/](docs/wiki/Home.md) for detailed guides on installation, configuration, fingerprint sources, CLI reference, and the web dashboard.
+See [docs/wiki/](docs/wiki/Home.md) for detailed guides:
+
+- [Getting Started](docs/wiki/Getting-Started.md)
+- [How It Works](docs/wiki/How-It-Works.md)
+- [Passive Network Discovery](docs/wiki/Passive-Network-Discovery.md)
+- [Active Probing](docs/wiki/Active-Probing.md)
+- [Fingerprint Sources](docs/wiki/Fingerprint-Sources.md)
+- [CLI Reference](docs/wiki/CLI-Reference.md)
+- [Web Dashboard](docs/wiki/Web-Dashboard.md)
+- [Attack Surface Analysis](docs/wiki/Attack-Surface-Analysis.md)
+- [Spoofing Detection](docs/wiki/Spoofing-Detection.md)
 
 ## Disclaimer
 
-Leetha is a passive network analysis tool intended for **authorized use only** on networks you own or have explicit permission to monitor. Device identification relies on heuristic pattern matching against broadcast traffic and protocol fingerprints  results are probabilistic, not definitive. Detections surface suspicious activity patterns for analyst review; they are **not confirmed threats** and should always be validated independently before taking action.
+Leetha is a passive network analysis tool intended for **authorized use only** on networks you own or have explicit written permission to monitor.
 
-This tool is provided as-is for educational, research, and defensive security purposes. The authors assume no liability for misuse, false positives, missed detections, or any actions taken based on its output. Unauthorized network monitoring may violate local, state, or federal law. Always ensure compliance with applicable regulations and organizational policies before deploying.
+
+- **No warranty.** This tool is provided as-is for educational, research, and defensive security purposes. The authors assume no liability for misuse, false positives, missed detections, or any actions taken based on its output.
+- **Legal compliance required.** Unauthorized network monitoring may violate local, state, or federal law. Passive packet capture in promiscuous mode may be subject to wiretapping statutes in some jurisdictions. Always ensure compliance with applicable regulations, organizational policies, and rules of engagement before deploying.
+- **Not a substitute for professional assessment.** Leetha is a supplementary tool for network visibility. It does not replace vulnerability scanners, penetration tests, or qualified security assessments.
+
+## Credits
+
+### Upstream Data Sources
+
+Leetha's fingerprinting accuracy depends on data generously maintained by these projects:
+
+- **[Huginn-Muninn](https://github.com/fingerbank/Huginn-Muninn)** by **[Ringmaster](https://github.com/Ringmaster)** -- MAC vendor database, DHCP fingerprints, device hierarchy, and DHCPv6 patterns. The backbone of leetha's device identification.
+- **[IEEE OUI Registry](https://standards-oui.ieee.org/)** -- Official MAC address manufacturer assignments.
+- **[p0f](https://lcamtuf.coredump.cx/p0f3/)** -- TCP/IP stack fingerprinting signatures by Michal Zalewski. The foundation for passive OS detection.
+- **[JA3](https://github.com/salesforce/ja3)** -- TLS client fingerprinting method by Salesforce.
+- **[JA4+](https://github.com/FoxIO-LLC/ja4)** -- Next-generation TLS fingerprinting by FoxIO, LLC. JA4 methodology and specification are Copyright (c) 2023, FoxIO, LLC.
+- **[IANA](https://www.iana.org/assignments/enterprise-numbers/)** -- Enterprise number assignments for SNMP and protocol OIDs.
+
+### Inspiration
+
+- **[p0f](https://lcamtuf.coredump.cx/p0f3/)** by Michal Zalewski -- pioneered passive TCP/IP fingerprinting. Leetha's TCP SYN analysis draws from p0f's methodology.
+
+
+## License
+
+[GNU General Public License v3.0](LICENSE)
+</div>
