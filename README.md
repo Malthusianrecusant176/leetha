@@ -65,7 +65,7 @@ Capture Engine -----> Parser Chain (20 protocol parsers)
 
 ## Quick Start
 
-Requires **Python 3.11+** and **root/sudo** for packet capture.
+Requires **Python 3.11+** and packet capture privileges (root, sudo, or `CAP_NET_RAW`).
 
 ```bash
 # Install
@@ -75,16 +75,109 @@ pip install leetha
 leetha sync
 
 # Launch the web dashboard
-sudo leetha --web
+sudo $(which leetha) --web
 
 # Interactive console on a specific interface
-sudo leetha -i eth0
+sudo $(which leetha) -i eth0
 
 # Multi-interface capture
-sudo leetha -i eth0 -i wlan0
+sudo $(which leetha) -i eth0 -i wlan0
 ```
 
 Open `http://localhost:8080` to view discovered devices in real-time.
+
+## Installation
+
+### pip (all platforms)
+
+```bash
+pip install leetha
+```
+
+### pipx (isolated install, recommended)
+
+```bash
+pipx install leetha
+```
+
+### Docker
+
+```bash
+docker run --net=host --cap-add=NET_RAW ghcr.io/tjnull/leetha:latest --web
+```
+
+### From source
+
+```bash
+git clone https://github.com/tjnull/leetha.git
+cd leetha
+pip install -e .
+```
+
+## Capture Privileges
+
+Leetha needs raw socket access to capture network traffic. There are three ways to grant this:
+
+### Option 1: Linux capabilities (recommended)
+
+Grant `CAP_NET_RAW` to the Python binary. Leetha runs as your normal user -- no root, no sudo, no file ownership issues.
+
+```bash
+# Find your Python binary
+which python3
+
+# Grant capture capability
+sudo setcap cap_net_raw+ep $(which python3)
+
+# Run leetha without sudo
+leetha --web -i eth0
+```
+
+To remove the capability later:
+
+```bash
+sudo setcap -r $(which python3)
+```
+
+### Option 2: sudo
+
+Use `$(which leetha)` because sudo resets your PATH and won't find user-installed commands.
+
+```bash
+sudo $(which leetha) --web -i eth0
+```
+
+When running under sudo, leetha automatically chowns its data directory back to the original user (via `SUDO_UID`/`SUDO_GID`) so files remain accessible without sudo on subsequent runs.
+
+### Option 3: Docker
+
+Docker with `--cap-add=NET_RAW` and `--net=host` gives the container capture access without granting root to the host.
+
+```bash
+docker run -d \
+  --name leetha \
+  --net=host \
+  --cap-add=NET_RAW \
+  -v leetha-data:/home/appuser/.local/share/leetha \
+  ghcr.io/tjnull/leetha:latest --web
+```
+
+### macOS
+
+On macOS, packet capture requires access to BPF devices. Run with sudo or adjust BPF permissions:
+
+```bash
+# With sudo
+sudo leetha --web -i en0
+
+# Or grant BPF access to your user (persistent across reboots)
+sudo chgrp staff /dev/bpf*
+sudo chmod g+r /dev/bpf*
+```
+
+### Windows
+
+Windows requires [Npcap](https://npcap.com) installed for packet capture. Download and install Npcap, then run leetha from an Administrator command prompt. The live terminal viewer is not available on Windows -- use `--web` for the dashboard.
 
 ## Network Stack Analysis
 
