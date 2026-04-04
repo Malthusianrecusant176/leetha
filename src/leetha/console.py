@@ -281,6 +281,27 @@ class LeethaConsole:
         if hasattr(readline, "set_auto_history"):
             readline.set_auto_history(True)
 
+        # Auto-start capture if interfaces were provided via CLI (-i flag).
+        # This happens after sudo re-exec: the user already selected an
+        # interface, got prompted for password, and now we have privileges.
+        if self.interfaces and self.app is None:
+            self.app = LeethaApp(interfaces=self.interfaces)
+            await self.app.start()
+            if self.app.capture_engine._workers:
+                names = ", ".join(f"[cyan]{i.name}[/cyan]" for i in self.interfaces)
+                self._success(f"Capture started on {names}")
+                self.console.print()
+                self.console.print("  [bold white]What's next?[/bold white]")
+                self.console.print()
+                for cmd, desc in [
+                    ("start web",  "Open the browser-based dashboard"),
+                    ("start cli", "Stream packets with fingerprint reasoning"),
+                    ("devices",   "View discovered devices"),
+                    ("alerts",    "View active security alerts"),
+                ]:
+                    self.console.print(f"    [bold cyan]{cmd:<12s}[/bold cyan] [dim]{desc}[/dim]")
+                self.console.print()
+
         # Auto-execute initial command (from startup wizard)
         if self.initial_command:
             cmd = self.initial_command
@@ -401,10 +422,16 @@ class LeethaConsole:
             f"[dim]│[/dim]  [dim]Path:[/dim] [dim white]{self.config.db_path}[/dim white]"
         )
 
-        # Auto-detect and display interfaces
+        # Auto-detect and display interfaces (skip full table if already selected)
         self.console.print()
+        if self.interfaces:
+            # Compact display when interfaces are pre-selected (e.g., after sudo re-exec)
+            iface_names = ", ".join(f"[cyan]{i.name}[/cyan]" for i in self.interfaces)
+            self.console.print(f"  [dim]Interface:[/dim] {iface_names}")
+            return
+
         detected = self._detect_interfaces()
-        selected_names = {i.name for i in self.interfaces} if self.interfaces else set()
+        selected_names: set[str] = set()
 
         if detected:
             table = Table(
