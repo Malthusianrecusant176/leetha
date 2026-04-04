@@ -1034,5 +1034,79 @@
     "manufacturer": "Google",
     "os_family": "Google TV",
     "confidence": 90
+  },
+  {
+    "pattern": "^Vizio",
+    "device_type": "smart_tv",
+    "manufacturer": "Vizio",
+    "confidence": 90
+  },
+  {
+    "pattern": "^Hisense",
+    "device_type": "smart_tv",
+    "manufacturer": "Hisense",
+    "confidence": 90
+  },
+  {
+    "pattern": "^TCL",
+    "device_type": "smart_tv",
+    "manufacturer": "TCL",
+    "confidence": 88
+  },
+  {
+    "pattern": "^Sony.*Bravia|^BRAVIA",
+    "device_type": "smart_tv",
+    "manufacturer": "Sony",
+    "confidence": 90
+  },
+  {
+    "pattern": "(?i)^chrome[_-]?os|^cros",
+    "device_type": "laptop",
+    "manufacturer": "Google",
+    "os_family": "ChromeOS",
+    "confidence": 88
+  },
+  {
+    "pattern": "(?i)^tuya|^smartlife",
+    "device_type": "iot_device",
+    "manufacturer": "Tuya",
+    "confidence": 80
+  },
+  {
+    "pattern": "(?i)^fire.*(tablet|hd)|^kindle.*fire",
+    "device_type": "tablet",
+    "manufacturer": "Amazon",
+    "os_family": "Fire OS",
+    "confidence": 85
+  },
+  {
+    "pattern": "(?i)^meross",
+    "device_type": "smart_home",
+    "manufacturer": "Meross",
+    "confidence": 82
+  },
+  {
+    "pattern": "(?i)^lutron|^caseta",
+    "device_type": "smart_home",
+    "manufacturer": "Lutron",
+    "confidence": 85
+  },
+  {
+    "pattern": "(?i)^unraid",
+    "device_type": "nas",
+    "manufacturer": "Unraid",
+    "confidence": 85
+  },
+  {
+    "pattern": "(?i)^hubitat",
+    "device_type": "smart_home",
+    "manufacturer": "Hubitat",
+    "confidence": 90
+  },
+  {
+    "pattern": "(?i)^matter|^thread",
+    "device_type": "smart_home",
+    "manufacturer": null,
+    "confidence": 60
   }
 ]

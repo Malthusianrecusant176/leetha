@@ -592,6 +592,102 @@
     "certainty": 80
   },
   {
+    "match": "(?i)^vizio[_-]",
+    "category": "smart_tv",
+    "vendor": "Vizio",
+    "platform": "SmartCast",
+    "model": null,
+    "certainty": 85
+  },
+  {
+    "match": "(?i)^hisense[_-]",
+    "category": "smart_tv",
+    "vendor": "Hisense",
+    "platform": null,
+    "model": null,
+    "certainty": 85
+  },
+  {
+    "match": "(?i)^tcl[_-]",
+    "category": "smart_tv",
+    "vendor": "TCL",
+    "platform": null,
+    "model": null,
+    "certainty": 82
+  },
+  {
+    "match": "(?i)^bravia",
+    "category": "smart_tv",
+    "vendor": "Sony",
+    "platform": "Android TV",
+    "model": null,
+    "certainty": 85
+  },
+  {
+    "match": "(?i)^chromebook[_-]|^chrome[_-]os",
+    "category": "laptop",
+    "vendor": "Google",
+    "platform": "ChromeOS",
+    "model": null,
+    "certainty": 85
+  },
+  {
+    "match": "(?i)^MFC[_-]?\\d|^DCP[_-]?\\d",
+    "category": "printer",
+    "vendor": "Brother",
+    "platform": null,
+    "model": null,
+    "certainty": 82
+  },
+  {
+    "match": "(?i)^CANON[A-Z]*\\d|^LBP\\d|^MF\\d",
+    "category": "printer",
+    "vendor": "Canon",
+    "platform": null,
+    "model": null,
+    "certainty": 82
+  },
+  {
+    "match": "(?i)^XEROX|^WC\\d{4}",
+    "category": "printer",
+    "vendor": "Xerox",
+    "platform": null,
+    "model": null,
+    "certainty": 82
+  },
+  {
+    "match": "(?i)^NPI[0-9A-F]{6}",
+    "category": "printer",
+    "vendor": "HP",
+    "platform": null,
+    "model": null,
+    "certainty": 85
+  },
+  {
+    "match": "(?i)^Tower|^Unraid",
+    "category": "nas",
+    "vendor": "Unraid",
+    "platform": "Linux",
+    "model": null,
+    "certainty": 80
+  },
+  {
+    "match": "(?i)^Fire[_-]?HD|^KFTT|^KFT[A-Z]",
+    "category": "tablet",
+    "vendor": "Amazon",
+    "platform": "Fire OS",
+    "model": null,
+    "certainty": 85
+  },
+  {
+    "match": "(?i)^Orbi[_-]",
+    "category": "router",
+    "vendor": "Netgear",
+    "platform": null,
+    "model": "Orbi",
+    "certainty": 85
+  },
+  {
     "match": "^DESKTOP-[A-Z0-9]{5,8}$",
     "category": "workstation",
     "vendor": "Microsoft",
