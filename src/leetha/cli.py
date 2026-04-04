@@ -215,12 +215,19 @@ def _needs_capture(args: argparse.Namespace) -> bool:
 
 def _has_capture_privilege() -> bool:
     """Return True if the process can open a raw packet socket."""
-    try:
-        s = socket.socket(socket.AF_PACKET, socket.SOCK_RAW)
-        s.close()
+    if os.getuid() == 0:
         return True
-    except (PermissionError, OSError):
-        return False
+    if hasattr(socket, "AF_PACKET"):
+        # Linux: try opening a raw packet socket
+        try:
+            s = socket.socket(socket.AF_PACKET, socket.SOCK_RAW)
+            s.close()
+            return True
+        except (PermissionError, OSError):
+            return False
+    # macOS/BSD: check access to BPF device
+    import glob
+    return any(os.access(d, os.R_OK) for d in glob.glob("/dev/bpf*"))
 
 
 def _escalate_privileges():
