@@ -255,6 +255,10 @@ class PacketCapture:
     # to suppress the flood of duplicate observations.
     _ip_observed_seen: set[tuple[str, int | None]] = set()
 
+    # Track which server MAC+port combos we've already emitted a
+    # service_banner for, to suppress duplicate banner events.
+    _banner_seen: set[tuple[str, int]] = set()
+
     def _ingest(self, frame, dev_name: str = "") -> None:
         """Buffer raw bytes, classify the frame, and push to async queue."""
         self._packet_buffer.append(bytes(frame))
@@ -262,6 +266,17 @@ class PacketCapture:
         result = self._classify(frame)
         if result is None:
             return
+
+        # Suppress duplicate service banners -- only enqueue the first
+        # banner per server MAC + server port combo.
+        if result.protocol == "service_banner":
+            server_port = result.fields.get("server_port", 0)
+            key = (result.hw_addr, server_port)
+            if key in self._banner_seen:
+                return
+            self._banner_seen.add(key)
+            if len(self._banner_seen) > 50_000:
+                self._banner_seen.clear()
 
         # Suppress duplicate ip_observed — only enqueue the first
         # observation per MAC+dst_port pair. Other protocols always pass.
