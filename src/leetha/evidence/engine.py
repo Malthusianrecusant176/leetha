@@ -76,6 +76,25 @@ _SOURCE_WEIGHTS: dict[str, float] = {
     "dns_server": 0.50,
     "ntp": 0.55,
     "ssdp_server": 0.65,
+    # Fingerprint lookup sources (from fingerprint/lookup.py)
+    "banner": 0.75,
+    "banner_cache": 0.70,
+    "dhcp": 0.80,
+    "dhcp_vendor": 0.80,
+    "huginn_device": 0.85,
+    "huginn_dhcp": 0.80,
+    "huginn_dhcp_vendor": 0.80,
+    "huginn_dhcpv6": 0.75,
+    "huginn_dhcpv6_enterprise": 0.75,
+    "icmpv6": 0.60,
+    "ja3": 0.75,
+    "ja4": 0.75,
+    "tcp": 0.65,
+    "ttl": 0.15,
+    "ssdp_upnp": 0.65,
+    "mdns_service_map": 0.70,
+    "manual": 0.99,
+    "active_probe": 0.85,
 }
 
 # Agreement boost: when N independent sources agree, multiply certainty

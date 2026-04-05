@@ -26,6 +26,7 @@ from leetha.probe.plugins.beegfs import BeeGFSProbePlugin
 from leetha.probe.plugins.bgp import BGPProbePlugin
 from leetha.probe.plugins.boundary import BoundaryProbePlugin
 from leetha.probe.plugins.calico import CalicoProbePlugin
+from leetha.probe.plugins.canopen import CANopenProbePlugin
 from leetha.probe.plugins.cas import CASProbePlugin
 from leetha.probe.plugins.cassandra import CassandraProbePlugin
 from leetha.probe.plugins.ceph import CephProbePlugin
@@ -63,6 +64,8 @@ from leetha.probe.plugins.enip import ENIPProbePlugin
 from leetha.probe.plugins.envoy_admin import EnvoyAdminProbePlugin
 from leetha.probe.plugins.epics import EPICSProbePlugin
 from leetha.probe.plugins.etcd import EtcdProbePlugin
+from leetha.probe.plugins.ethercat import EtherCATProbePlugin
+from leetha.probe.plugins.ff_hse import FFHSEProbePlugin
 from leetha.probe.plugins.fhir import FHIRProbePlugin
 from leetha.probe.plugins.finger import FingerProbePlugin
 from leetha.probe.plugins.fins import FINSProbePlugin
@@ -75,6 +78,7 @@ from leetha.probe.plugins.freeipa import FreeIPAProbePlugin
 from leetha.probe.plugins.ftp import FTPProbePlugin
 from leetha.probe.plugins.ge_srtp import GESRTPProbePlugin
 from leetha.probe.plugins.git_proto import GitProtoProbePlugin
+from leetha.probe.plugins.gradio_app import GradioProbePlugin
 from leetha.probe.plugins.gitlab import GitLabProbePlugin
 from leetha.probe.plugins.globalprotect import GlobalProtectProbePlugin
 from leetha.probe.plugins.globus import GlobusProbePlugin
@@ -99,6 +103,7 @@ from leetha.probe.plugins.hl7_mllp import HL7MLLPProbePlugin
 from leetha.probe.plugins.hls import HLSProbePlugin
 from leetha.probe.plugins.home_assistant import HomeAssistantProbePlugin
 from leetha.probe.plugins.homekit import HomeKitProbePlugin
+from leetha.probe.plugins.huggingface_tgi import HuggingFaceTGIProbePlugin
 from leetha.probe.plugins.http import HTTPProbePlugin
 from leetha.probe.plugins.http_proxy import HTTPProxyProbePlugin
 from leetha.probe.plugins.hue_bridge import HueBridgeProbePlugin
@@ -106,10 +111,12 @@ from leetha.probe.plugins.hyperv import HyperVProbePlugin
 from leetha.probe.plugins.iax2 import IAX2ProbePlugin
 from leetha.probe.plugins.icecast import IcecastProbePlugin
 from leetha.probe.plugins.iec104 import IEC104ProbePlugin
+from leetha.probe.plugins.iec61850 import IEC61850ProbePlugin
 from leetha.probe.plugins.ike import IKEProbePlugin
 from leetha.probe.plugins.imap import IMAPProbePlugin
 from leetha.probe.plugins.ims_connect import IMSConnectProbePlugin
 from leetha.probe.plugins.influxdb import InfluxDBProbePlugin
+from leetha.probe.plugins.iolink import IOLinkProbePlugin
 from leetha.probe.plugins.ipfix import IPFIXProbePlugin
 from leetha.probe.plugins.ipmi import IPMIProbePlugin
 from leetha.probe.plugins.ipp import IPPProbePlugin
@@ -133,6 +140,7 @@ from leetha.probe.plugins.l2tp import L2TPProbePlugin
 from leetha.probe.plugins.ldap import LDAPProbePlugin
 from leetha.probe.plugins.libvirt import LibvirtProbePlugin
 from leetha.probe.plugins.link16 import Link16ProbePlugin
+from leetha.probe.plugins.litellm import LiteLLMProbePlugin
 from leetha.probe.plugins.linkerd import LinkerdProbePlugin
 from leetha.probe.plugins.llmnr import LLMNRProbePlugin
 from leetha.probe.plugins.lmtp import LMTPProbePlugin
@@ -151,6 +159,7 @@ from leetha.probe.plugins.mikrotik import MikroTikProbePlugin
 from leetha.probe.plugins.milter import MilterProbePlugin
 from leetha.probe.plugins.minio import MinIOProbePlugin
 from leetha.probe.plugins.modbus import ModbusProbePlugin
+from leetha.probe.plugins.modbus_rtu import ModbusRTUProbePlugin
 from leetha.probe.plugins.mongodb import MongoDBProbePlugin
 from leetha.probe.plugins.mpd import MPDProbePlugin
 from leetha.probe.plugins.mpi import MPIProbePlugin
@@ -176,6 +185,8 @@ from leetha.probe.plugins.nuclio import NuclioProbePlugin
 from leetha.probe.plugins.nutanix import NutanixProbePlugin
 from leetha.probe.plugins.nx import NXProbePlugin
 from leetha.probe.plugins.oauth2 import OAuth2ProbePlugin
+from leetha.probe.plugins.ollama import OllamaProbePlugin
+from leetha.probe.plugins.openai_compat import OpenAICompatProbePlugin
 from leetha.probe.plugins.onvif import ONVIFProbePlugin
 from leetha.probe.plugins.opcda import OPCDAProbePlugin
 from leetha.probe.plugins.opcua import OPCUAProbePlugin
@@ -257,6 +268,7 @@ from leetha.probe.plugins.spiffe import SPIFFEProbePlugin
 from leetha.probe.plugins.splunk_hec import SplunkHECProbePlugin
 from leetha.probe.plugins.ssdp import SSDPProbePlugin
 from leetha.probe.plugins.ssh import SSHProbePlugin
+from leetha.probe.plugins.stable_diffusion import StableDiffusionProbePlugin
 from leetha.probe.plugins.sstp import SSTPProbePlugin
 from leetha.probe.plugins.stanag import STANAG4586ProbePlugin
 from leetha.probe.plugins.statsd import StatsDProbePlugin
@@ -281,6 +293,7 @@ from leetha.probe.plugins.tn3270 import TN3270ProbePlugin
 from leetha.probe.plugins.tn5250 import TN5250ProbePlugin
 from leetha.probe.plugins.tplink import TPLinkProbePlugin
 from leetha.probe.plugins.traefik_api import TraefikAPIProbePlugin
+from leetha.probe.plugins.triton import TritonProbePlugin
 from leetha.probe.plugins.truenas import TrueNASProbePlugin
 from leetha.probe.plugins.tuya import TuyaProbePlugin
 from leetha.probe.plugins.unifi import UniFiProbePlugin
@@ -288,6 +301,7 @@ from leetha.probe.plugins.unraid import UnraidProbePlugin
 from leetha.probe.plugins.vault import VaultProbePlugin
 from leetha.probe.plugins.veeam import VeeamProbePlugin
 from leetha.probe.plugins.virtualbox_web import VirtualBoxWebProbePlugin
+from leetha.probe.plugins.vllm import VllmProbePlugin
 from leetha.probe.plugins.visa import VISAProbePlugin
 from leetha.probe.plugins.vmware_esxi import VMwareESXiProbePlugin
 from leetha.probe.plugins.vnc import VNCProbePlugin
@@ -329,6 +343,7 @@ PLUGINS = [
     BGPProbePlugin,
     BoundaryProbePlugin,
     CalicoProbePlugin,
+    CANopenProbePlugin,
     CASProbePlugin,
     CassandraProbePlugin,
     CephProbePlugin,
@@ -366,6 +381,8 @@ PLUGINS = [
     EnvoyAdminProbePlugin,
     EPICSProbePlugin,
     EtcdProbePlugin,
+    EtherCATProbePlugin,
+    FFHSEProbePlugin,
     FHIRProbePlugin,
     FingerProbePlugin,
     FINSProbePlugin,
@@ -379,6 +396,7 @@ PLUGINS = [
     GESRTPProbePlugin,
     GitProtoProbePlugin,
     GitLabProbePlugin,
+    GradioProbePlugin,
     GlobalProtectProbePlugin,
     GlobusProbePlugin,
     GlusterFSProbePlugin,
@@ -402,6 +420,7 @@ PLUGINS = [
     HLSProbePlugin,
     HomeAssistantProbePlugin,
     HomeKitProbePlugin,
+    HuggingFaceTGIProbePlugin,
     HTTPProbePlugin,
     HTTPProxyProbePlugin,
     HueBridgeProbePlugin,
@@ -409,10 +428,12 @@ PLUGINS = [
     IAX2ProbePlugin,
     IcecastProbePlugin,
     IEC104ProbePlugin,
+    IEC61850ProbePlugin,
     IKEProbePlugin,
     IMAPProbePlugin,
     IMSConnectProbePlugin,
     InfluxDBProbePlugin,
+    IOLinkProbePlugin,
     IPFIXProbePlugin,
     IPMIProbePlugin,
     IPPProbePlugin,
@@ -437,6 +458,7 @@ PLUGINS = [
     LibvirtProbePlugin,
     Link16ProbePlugin,
     LinkerdProbePlugin,
+    LiteLLMProbePlugin,
     LLMNRProbePlugin,
     LMTPProbePlugin,
     LPDProbePlugin,
@@ -454,6 +476,7 @@ PLUGINS = [
     MilterProbePlugin,
     MinIOProbePlugin,
     ModbusProbePlugin,
+    ModbusRTUProbePlugin,
     MongoDBProbePlugin,
     MPDProbePlugin,
     MPIProbePlugin,
@@ -479,9 +502,11 @@ PLUGINS = [
     NutanixProbePlugin,
     NXProbePlugin,
     OAuth2ProbePlugin,
+    OllamaProbePlugin,
     ONVIFProbePlugin,
     OPCDAProbePlugin,
     OPCUAProbePlugin,
+    OpenAICompatProbePlugin,
     OpenFaaSProbePlugin,
     OpenHABProbePlugin,
     OpenShiftProbePlugin,
@@ -560,6 +585,7 @@ PLUGINS = [
     SplunkHECProbePlugin,
     SSDPProbePlugin,
     SSHProbePlugin,
+    StableDiffusionProbePlugin,
     SSTPProbePlugin,
     STANAG4586ProbePlugin,
     StatsDProbePlugin,
@@ -584,6 +610,7 @@ PLUGINS = [
     TN5250ProbePlugin,
     TPLinkProbePlugin,
     TraefikAPIProbePlugin,
+    TritonProbePlugin,
     TrueNASProbePlugin,
     TuyaProbePlugin,
     UniFiProbePlugin,
@@ -592,6 +619,7 @@ PLUGINS = [
     VeeamProbePlugin,
     VirtualBoxWebProbePlugin,
     VISAProbePlugin,
+    VllmProbePlugin,
     VMwareESXiProbePlugin,
     VNCProbePlugin,
     VTAMProbePlugin,

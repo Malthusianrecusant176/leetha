@@ -398,11 +398,23 @@ class LeethaApp:
             if anomalies:
                 loop = asyncio.get_event_loop()
                 asyncio.run_coroutine_threadsafe(
-                    self.alert_engine.process_dhcp_anomalies(anomalies),
+                    self._write_dhcp_anomaly_findings(anomalies),
                     loop,
                 )
         except Exception:
             logger.debug("DHCP anomaly processing failed", exc_info=True)
+
+    async def _write_dhcp_anomaly_findings(self, anomalies: list[dict]):
+        """Convert DHCP anomalies to findings and write to store."""
+        from leetha.store.models import Finding, FindingRule, AlertSeverity
+        for anomaly in anomalies:
+            finding = Finding(
+                hw_addr=anomaly.get("src_mac", "00:00:00:00:00:00"),
+                rule=FindingRule.DHCP_ANOMALY,
+                severity=AlertSeverity.WARNING,
+                message=f"DHCP anomaly on option '{anomaly.get('option', '?')}': {anomaly.get('reason', 'unknown')}",
+            )
+            await self.store.findings.add(finding)
 
     # Sharded pipeline (worker_count > 1)
 
@@ -479,6 +491,7 @@ class LeethaApp:
 
     async def _on_arp_packet(self, packet):
         """Run spoofing detection on ARP packets."""
+        from leetha.store.models import Finding, FindingRule, AlertSeverity, AlertType
         try:
             alerts = await self.spoofing_detector.process_arp(
                 src_mac=packet.hw_addr,
@@ -488,8 +501,20 @@ class LeethaApp:
                 op=packet.fields.get("op", 0),
                 interface=packet.interface or "unknown",
             )
+            # Map old AlertType to new FindingRule
+            _ALERT_TO_FINDING = {
+                AlertType.SPOOFING: FindingRule.IDENTITY_SHIFT,
+                AlertType.MAC_SPOOFING: FindingRule.IDENTITY_SHIFT,
+            }
             for alert in alerts:
-                await self.db.add_alert(alert)
+                rule = _ALERT_TO_FINDING.get(alert.alert_type, FindingRule.IDENTITY_SHIFT)
+                finding = Finding(
+                    hw_addr=alert.device_mac,
+                    rule=rule,
+                    severity=AlertSeverity(alert.severity.value),
+                    message=alert.message,
+                )
+                await self.store.findings.add(finding)
         except Exception:
             logger.debug("ARP spoofing check failed", exc_info=True)
 
