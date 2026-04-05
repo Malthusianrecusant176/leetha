@@ -159,8 +159,13 @@ class NetworkDiscoveryProcessor(Processor):
         icmp_type = packet.get("icmpv6_type", "")
         evidence = []
         if icmp_type == "router_advertisement":
+            # RAs are a legitimate routing signal — only devices configured
+            # as IPv6 routers should send them. But misconfigured hosts and
+            # rogue RAs exist, so keep certainty moderate. This should not
+            # overpower stronger device-type evidence from OUI, DHCP options,
+            # banners, or hostname patterns.
             evidence.append(Evidence(
-                source="icmpv6_ra", method="heuristic", certainty=0.60,
+                source="icmpv6_ra", method="heuristic", certainty=0.50,
                 category="router",
                 raw={"hop_limit": packet.get("hop_limit"), "managed": packet.get("managed")},
             ))

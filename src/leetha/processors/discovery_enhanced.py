@@ -23,12 +23,20 @@ class EnhancedDiscoveryProcessor(Processor):
         return []
 
     def _analyze_dhcp_server(self, packet: CapturedPacket) -> list[Evidence]:
-        """DHCP OFFER/ACK → device is a DHCP server (very likely a router/gateway)."""
+        """DHCP OFFER/ACK → device serves DHCP.
+
+        Running a DHCP server is a network role, not a device type. Many
+        non-routers serve DHCP: NAS boxes (OpenMediaVault, TrueNAS),
+        Pi-hole, Linux servers, domain controllers. We record the role
+        as infrastructure evidence but do NOT assert category=router —
+        that requires stronger proof (LLDP/CDP, actual routing protocols,
+        or ICMPv6 Router Advertisements from a device with router OUI).
+        """
         return [Evidence(
             source="dhcp_server",
-            method="exact",
-            certainty=0.92,
-            category="router",
+            method="heuristic",
+            certainty=0.55,
+            category="infrastructure",
             raw={
                 "role": "dhcp_server",
                 "message_type": packet.get("message_type"),
@@ -38,12 +46,17 @@ class EnhancedDiscoveryProcessor(Processor):
         )]
 
     def _analyze_dns_server(self, packet: CapturedPacket) -> list[Evidence]:
-        """DNS response → device is a DNS resolver (likely a router/gateway)."""
+        """DNS response → device resolves DNS.
+
+        Serving DNS is extremely common for non-routers: Pi-hole, AD
+        domain controllers, NAS appliances, any Linux box running
+        dnsmasq/unbound. Do NOT classify as router — record the service
+        role only.
+        """
         return [Evidence(
             source="dns_server",
             method="heuristic",
-            certainty=0.80,
-            category="router",
+            certainty=0.40,
             raw={
                 "role": "dns_server",
                 "answer_count": packet.get("answer_count", 0),
