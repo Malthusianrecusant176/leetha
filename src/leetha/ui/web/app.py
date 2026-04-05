@@ -354,8 +354,19 @@ async def run_query(request: Request):
 
 @fastapi_app.delete("/api/settings/db")
 async def clear_database():
+    # Clear old tables
     await app_instance.db.clear_all_devices()
-    return {"status": "ok", "message": "All devices cleared."}
+    # Clear new tables (verdicts, hosts, findings, sightings)
+    conn = app_instance.store.connection
+    await conn.execute("DELETE FROM verdicts")
+    await conn.execute("DELETE FROM hosts")
+    await conn.execute("DELETE FROM findings")
+    await conn.execute("DELETE FROM sightings")
+    await conn.commit()
+    # Clear in-memory evidence buffers
+    if app_instance.pipeline:
+        app_instance.pipeline._evidence_buffer.clear()
+    return {"status": "ok", "message": "All devices and findings cleared."}
 
 
 # --- Wiki / Information pages ---
