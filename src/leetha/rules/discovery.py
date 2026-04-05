@@ -10,8 +10,10 @@ class NewHostRule(RuleBase):
     severity = "info"
 
     async def evaluate(self, host: Host, verdict: Verdict, store) -> Finding | None:
-        existing = await store.hosts.find_by_addr(host.hw_addr)
-        if existing is None or existing.disposition == "new":
+        # Only fire on truly new hosts (disposition still "new").
+        # The pipeline transitions disposition to "known" after rules run,
+        # so this will only fire once per host.
+        if host.disposition == "new":
             return Finding(
                 hw_addr=host.hw_addr,
                 rule=FindingRule.NEW_HOST,

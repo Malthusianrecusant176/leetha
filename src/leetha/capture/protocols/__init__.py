@@ -33,6 +33,7 @@ from leetha.capture.protocols.iot_scada import parse_bacnet as _new_parse_bacnet
 from leetha.capture.protocols.iot_scada import parse_coap as _new_parse_coap
 from leetha.capture.protocols.iot_scada import parse_mqtt as _new_parse_mqtt
 from leetha.capture.protocols.iot_scada import parse_enip as _new_parse_enip
+from leetha.capture.protocols.tcp_syn import parse_tcp_syn as _new_parse_tcp_syn
 from leetha.capture.protocols.banner import parse_service_banner as _new_parse_service_banner
 
 # Ordered parser chain -- most specific first, fallback last
@@ -40,7 +41,7 @@ PARSER_CHAIN = [
     _new_parse_lldp, _new_parse_cdp, _new_parse_stp,
     _new_parse_arp,
     _new_parse_dhcp_server, _new_parse_dhcpv4, _new_parse_dhcpv6,
-    _new_parse_tls_client_hello, _new_parse_http_useragent,
+    _new_parse_tcp_syn, _new_parse_tls_client_hello, _new_parse_http_useragent,
     _new_parse_dns, _new_parse_dns_answer,
     _new_parse_mdns, _new_parse_ssdp, _new_parse_llmnr_netbios,
     _new_parse_ws_discovery,

@@ -191,6 +191,10 @@ class Pipeline:
             if len(client_id) == 17 and client_id.count(":") == 5:
                 real_mac = client_id
 
+        # Preserve existing disposition so we don't reset "known" back to "new"
+        existing_host = await self.store.hosts.find_by_addr(hw_addr)
+        disposition = existing_host.disposition if existing_host else "new"
+
         host = Host(
             hw_addr=hw_addr,
             ip_addr=ip_v4,
@@ -198,19 +202,12 @@ class Pipeline:
             last_active=datetime.now(),
             mac_randomized=mac_random,
             real_hw_addr=real_mac,
+            disposition=disposition,
         )
         await self.store.hosts.upsert(host)
 
-        # 5. Store verdict
-        await self.store.verdicts.upsert(verdict)
-
-        if self._on_verdict:
-            try:
-                await self._on_verdict(hw_addr, verdict, packet)
-            except Exception:
-                logger.debug("Verdict callback failed", exc_info=True)
-
-        # 6. Evaluate finding rules
+        # 5. Evaluate finding rules BEFORE storing verdict
+        #    so identity_shift can compare old vs new verdict
         for rule in self._rule_instances:
             try:
                 finding = await rule.evaluate(host, verdict, self.store)
@@ -218,6 +215,20 @@ class Pipeline:
                     await self.store.findings.add(finding)
             except Exception:
                 logger.debug("Rule %s failed", type(rule).__name__, exc_info=True)
+
+        # 6. Transition disposition from "new" to "known" after rules
+        if host.disposition == "new":
+            host.disposition = "known"
+            await self.store.hosts.upsert(host)
+
+        # 7. Store verdict AFTER rules (so identity_shift sees the old verdict)
+        await self.store.verdicts.upsert(verdict)
+
+        if self._on_verdict:
+            try:
+                await self._on_verdict(hw_addr, verdict, packet)
+            except Exception:
+                logger.debug("Verdict callback failed", exc_info=True)
 
     def _fingerprint_lookup(self, protocol: str, packet: CapturedPacket) -> list:
         """Run protocol-specific fingerprint database lookups.
