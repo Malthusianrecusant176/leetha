@@ -526,7 +526,7 @@ async def api_devices(
 ):
     """Paginated, filtered, sorted device list."""
     # Read from new Verdict/Host tables (Store)
-    verdicts = await app_instance.store.verdicts.find_all(limit=500)
+    verdicts = await app_instance.store.verdicts.find_all(limit=10000)
     result = []
     for v in verdicts:
         h = await app_instance.store.hosts.find_by_addr(v.hw_addr)
@@ -553,6 +553,26 @@ async def api_devices(
         result = [d for d in result if d.get("alert_status") == alert_status]
     if confidence_min is not None:
         result = [d for d in result if (d.get("confidence") or 0) >= confidence_min]
+
+    # TODO: filter by interface — requires joining sightings table to check
+    # which MACs have been seen on a given interface. Low priority.
+
+    # Apply sorting
+    sort_key = sort or "last_seen"
+    reverse = (order == "desc") if order else True  # default descending
+
+    sort_map = {
+        "last_seen": lambda d: d.get("last_seen") or "",
+        "first_seen": lambda d: d.get("first_seen") or "",
+        "confidence": lambda d: d.get("confidence", 0),
+        "mac": lambda d: d.get("mac", ""),
+        "manufacturer": lambda d: d.get("manufacturer") or "",
+        "device_type": lambda d: d.get("device_type") or "",
+        "hostname": lambda d: d.get("hostname") or "",
+    }
+
+    if sort_key in sort_map:
+        result.sort(key=sort_map[sort_key], reverse=reverse)
 
     # Sanitize hostnames
     for d in result:
@@ -1010,7 +1030,11 @@ async def delete_custom_pattern(pattern_type: str, index: int):
 async def api_run_validation():
     """Trigger a validation run."""
     from leetha.analysis.validator import run_validation
-    report = await run_validation(app_instance.db, app_instance.config.cache_dir)
+    try:
+        report = await run_validation(app_instance.db, app_instance.config.cache_dir)
+    except Exception:
+        report = {"status": "unavailable", "message": "Validation requires migration to new data model"}
+        return report
 
     # Save report
     report_path = app_instance.config.data_dir / "validation_report.json"
@@ -1513,7 +1537,24 @@ async def _get_cached_attack_surface():
         try:
             _attack_surface_cache = await analyze_attack_surface(app_instance.db, data_dir, interface=interface)
         except Exception:
-            _attack_surface_cache = {"chains": [], "services": [], "summary": {}}
+            # Fallback: build basic analysis from new store when old tables are unavailable
+            try:
+                verdicts = await app_instance.store.verdicts.find_all(limit=1000)
+                device_dicts = []
+                for v in verdicts:
+                    h = await app_instance.store.hosts.find_by_addr(v.hw_addr)
+                    device_dicts.append(_build_device_dict(v, h))
+                _attack_surface_cache = {
+                    "total_hosts": len(device_dicts),
+                    "services": [],
+                    "chains": [],
+                    "summary": {
+                        "total_hosts": len(device_dicts),
+                        "note": "Full attack surface analysis requires active probing data",
+                    },
+                }
+            except Exception:
+                _attack_surface_cache = {"chains": [], "services": [], "summary": {}}
         _attack_surface_cache_ts = now
     return _attack_surface_cache
 
@@ -2859,9 +2900,16 @@ async def websocket_endpoint(websocket: WebSocket):
             # New pipeline events have {"type": "device_update", "mac": ..., "verdict": {...}}
             if isinstance(event, dict) and event.get("type") == "device_update" and "verdict" in event:
                 verdict_data = event["verdict"]
+                mac = event.get("mac", verdict_data.get("hw_addr", ""))
+                # Fetch host for complete data (IP, timestamps, disposition)
+                host = None
+                try:
+                    host = await app_instance.store.hosts.find_by_addr(mac) if app_instance.store else None
+                except Exception:
+                    pass
                 # Build device-shaped dict for frontend compatibility
                 device_dict = {
-                    "mac": event.get("mac", verdict_data.get("hw_addr", "")),
+                    "mac": mac,
                     "manufacturer": verdict_data.get("vendor"),
                     "device_type": verdict_data.get("category"),
                     "os_family": verdict_data.get("platform"),
@@ -2869,12 +2917,20 @@ async def websocket_endpoint(websocket: WebSocket):
                     "hostname": verdict_data.get("hostname"),
                     "confidence": verdict_data.get("certainty", 0),
                     "model": verdict_data.get("model"),
+                    "ip_v4": host.ip_addr if host else None,
+                    "ip_v6": host.ip_v6 if host else None,
+                    "first_seen": host.discovered_at.isoformat() if host and host.discovered_at else None,
+                    "last_seen": host.last_active.isoformat() if host and host.last_active else None,
+                    "alert_status": host.disposition if host else "new",
+                    "is_randomized_mac": host.mac_randomized if host else False,
                 }
+                # Include packet data from the event if available
+                packet_info = event.get("packet")
                 await websocket.send_json({
                     "type": "device_update",
                     "device": device_dict,
                     "alerts": [],
-                    "packet": None,
+                    "packet": packet_info,
                     "matches": [],
                 })
                 continue
