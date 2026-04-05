@@ -31,7 +31,7 @@ class VirtualBoxWebProbePlugin(ServiceProbe):
 
             request = (
                 f"POST / HTTP/1.1\r\n"
-                f"Host: {host}:{port}\r\n"
+                f"Host: {conn.host}:{conn.port}\r\n"
                 f"Content-Type: text/xml;charset=UTF-8\r\n"
                 f"SOAPAction: \"\"\r\n"
                 f"Content-Length: {len(soap_body)}\r\n"

@@ -16,7 +16,7 @@ class MGCPProbePlugin(ServiceProbe):
     def identify(self, conn: ServiceConnection) -> ServiceIdentity | None:
         try:
             # AUEP (AuditEndpoint) command
-            command = f"AUEP 1234 *@{host} MGCP 1.0\r\n\r\n"
+            command = f"AUEP 1234 *@{conn.host} MGCP 1.0\r\n\r\n"
             conn.write(command.encode("utf-8"))
             data = conn.read(4096)
             if not data:

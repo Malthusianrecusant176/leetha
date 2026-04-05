@@ -80,7 +80,7 @@ class KerberosProbePlugin(ServiceProbe):
         """Receive exactly n bytes."""
         buf = b""
         while len(buf) < n:
-            chunk = conn.read(n - len(buf))
+            chunk = sock.recv(n - len(buf))
             if not chunk:
                 return None
             buf += chunk

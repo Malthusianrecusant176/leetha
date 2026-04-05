@@ -25,8 +25,8 @@ class ClickHouseProbePlugin(ServiceProbe):
     def _probe_http(self, sock: socket.socket, host: str, port: int) -> ServiceIdentity | None:
         """Probe ClickHouse HTTP interface via /ping."""
         request = f"GET /ping HTTP/1.0\r\nHost: {host}\r\nConnection: close\r\n\r\n"
-        conn.write(request.encode())
-        data = conn.read(4096)
+        sock.sendall(request.encode())
+        data = sock.recv(4096)
         if not data:
             return None
 
@@ -72,8 +72,8 @@ class ClickHouseProbePlugin(ServiceProbe):
         # Password (string)
         packet += self._encode_string(b"")
 
-        conn.write(packet)
-        data = conn.read(4096)
+        sock.sendall(packet)
+        data = sock.recv(4096)
         if not data or len(data) < 2:
             return None
 

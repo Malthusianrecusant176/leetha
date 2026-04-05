@@ -17,7 +17,7 @@ class RspamdProbePlugin(ServiceProbe):
         try:
             request = (
                 f"GET /stat HTTP/1.0\r\n"
-                f"Host: {host}\r\n"
+                f"Host: {conn.host}\r\n"
                 f"Connection: close\r\n"
                 f"\r\n"
             )

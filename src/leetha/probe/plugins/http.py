@@ -19,7 +19,7 @@ class HTTPProbePlugin(ServiceProbe):
 
     def identify(self, conn: ServiceConnection) -> ServiceIdentity | None:
         try:
-            request = f"HEAD / HTTP/1.0\r\nHost: {host}\r\nConnection: close\r\n\r\n"
+            request = f"HEAD / HTTP/1.0\r\nHost: {conn.host}\r\nConnection: close\r\n\r\n"
             conn.write(request.encode())
             data = conn.read(4096)
             if not data:

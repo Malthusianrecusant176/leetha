@@ -795,7 +795,8 @@ class LeethaConsole:
             await self.app.stop()
             self.app = None
             self._warn("Capture requires elevated privileges — re-launching with sudo")
-            import os, sys
+            import os
+            import sys
             leetha_bin = os.path.abspath(sys.argv[0])
             iface_args = []
             for iface in self.interfaces:
@@ -846,7 +847,8 @@ class LeethaConsole:
             await self.app.stop()
             self.app = None
             self._warn("Capture requires elevated privileges — re-launching with sudo")
-            import os, sys
+            import os
+            import sys
             leetha_bin = os.path.abspath(sys.argv[0])
             iface_args = []
             for iface in self.interfaces:

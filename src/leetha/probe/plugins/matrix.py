@@ -18,7 +18,7 @@ class MatrixProbePlugin(ServiceProbe):
             # Send HTTP GET request to Matrix federation version endpoint
             request = (
                 f"GET /_matrix/federation/v1/version HTTP/1.1\r\n"
-                f"Host: {host}\r\n"
+                f"Host: {conn.host}\r\n"
                 f"Accept: application/json\r\n"
                 f"Connection: close\r\n"
                 f"\r\n"

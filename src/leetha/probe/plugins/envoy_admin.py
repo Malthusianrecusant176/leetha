@@ -15,7 +15,7 @@ class EnvoyAdminProbePlugin(ServiceProbe):
         try:
             request = (
                 f"GET /server_info HTTP/1.0\r\n"
-                f"Host: {host}:{port}\r\n"
+                f"Host: {conn.host}:{conn.port}\r\n"
                 f"Connection: close\r\n"
                 f"\r\n"
             )

@@ -3029,46 +3029,6 @@ async def api_capture_restart(bpf_filter: str = ""):
     return {"status": "restarted", "bpf_filter": bpf_filter or "(default)"}
 
 
-@fastapi_app.get("/api/capture/export")
-async def export_pcap():
-    """Export captured packets as PCAP file."""
-    from scapy.utils import wrpcap
-    from starlette.responses import Response
-    import tempfile
-    import os
-
-    packets = list(app_instance.capture_engine._packet_buffer)
-    if not packets:
-        return JSONResponse(status_code=404, content={"error": "No packets captured"})
-
-    # Write to temp file using scapy
-    from scapy.all import Ether
-    pkts = []
-    for raw in packets:
-        try:
-            pkts.append(Ether(raw))
-        except Exception:
-            pass
-
-    if not pkts:
-        return JSONResponse(status_code=404, content={"error": "No valid packets"})
-
-    with tempfile.NamedTemporaryFile(suffix=".pcap", delete=False) as f:
-        wrpcap(f.name, pkts)
-        pcap_path = f.name
-
-    with open(pcap_path, "rb") as f:
-        pcap_bytes = f.read()
-
-    os.unlink(pcap_path)
-
-    return Response(
-        content=pcap_bytes,
-        media_type="application/vnd.tcpdump.pcap",
-        headers={"Content-Disposition": "attachment; filename=leetha-capture.pcap"},
-    )
-
-
 @fastapi_app.get("/api/sync/sources")
 async def api_sync_sources():
     """Return the list of available fingerprint data sources."""

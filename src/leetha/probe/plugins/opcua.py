@@ -13,7 +13,7 @@ class OPCUAProbePlugin(ServiceProbe):
 
     def identify(self, conn: ServiceConnection) -> ServiceIdentity | None:
         try:
-            endpoint_url = f"opc.tcp://{host}:{port}".encode("utf-8")
+            endpoint_url = f"opc.tcp://{conn.host}:{conn.port}".encode("utf-8")
 
             # OPC UA Hello message
             # Message type: "HEL" + reserved byte "F" (Final)

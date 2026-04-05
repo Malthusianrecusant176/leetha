@@ -30,7 +30,7 @@ class HyperVProbePlugin(ServiceProbe):
 
             request = (
                 f"POST /wsman HTTP/1.1\r\n"
-                f"Host: {host}:{port}\r\n"
+                f"Host: {conn.host}:{conn.port}\r\n"
                 f"Content-Type: application/soap+xml;charset=UTF-8\r\n"
                 f"Content-Length: {len(soap_body)}\r\n"
                 f"Connection: close\r\n"

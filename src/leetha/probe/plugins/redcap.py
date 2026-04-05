@@ -21,7 +21,7 @@ class REDCapProbePlugin(ServiceProbe):
         try:
             request = (
                 f"GET / HTTP/1.1\r\n"
-                f"Host: {host}\r\n"
+                f"Host: {conn.host}\r\n"
                 f"Connection: close\r\n"
                 f"\r\n"
             )

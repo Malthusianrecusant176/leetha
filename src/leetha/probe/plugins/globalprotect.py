@@ -28,7 +28,7 @@ class GlobalProtectProbePlugin(ServiceProbe):
             # Send HTTP GET to GlobalProtect login page
             request = (
                 f"GET /global-protect/login.esp HTTP/1.1\r\n"
-                f"Host: {host}\r\n"
+                f"Host: {conn.host}\r\n"
                 f"User-Agent: PAN GlobalProtect\r\n"
                 f"Connection: close\r\n"
                 f"\r\n"

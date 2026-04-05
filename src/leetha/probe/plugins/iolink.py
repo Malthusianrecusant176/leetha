@@ -47,8 +47,8 @@ class IOLinkProbePlugin(ServiceProbe):
                 f"\r\n"
             ).encode()
 
-            conn.write(request)
-            data = conn.read(8192)
+            sock.sendall(request)
+            data = sock.recv(8192)
             if not data:
                 return None
 
@@ -70,7 +70,7 @@ class IOLinkProbePlugin(ServiceProbe):
             except (json.JSONDecodeError, ValueError):
                 return None
 
-            # Extract conn.port data — look for a list of conn.port entries
+            # Extract port data — look for a list of port entries
             ports = None
             if isinstance(payload, dict):
                 # Try common keys

@@ -19,7 +19,7 @@ class HomeKitProbePlugin(ServiceProbe):
         try:
             request = (
                 f"GET /accessories HTTP/1.1\r\n"
-                f"Host: {host}:{port}\r\n"
+                f"Host: {conn.host}:{conn.port}\r\n"
                 f"Content-Type: application/hap+json\r\n"
                 f"Connection: close\r\n"
                 f"\r\n"

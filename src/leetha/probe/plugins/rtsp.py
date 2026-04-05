@@ -20,7 +20,7 @@ class RTSPProbePlugin(ServiceProbe):
     def identify(self, conn: ServiceConnection) -> ServiceIdentity | None:
         try:
             request = (
-                f"OPTIONS rtsp://{host}:{port}/ RTSP/1.0\r\n"
+                f"OPTIONS rtsp://{conn.host}:{conn.port}/ RTSP/1.0\r\n"
                 f"CSeq: 1\r\n"
                 f"\r\n"
             )

@@ -20,7 +20,7 @@ class XNATProbePlugin(ServiceProbe):
         try:
             request = (
                 f"GET /data/JSESSION HTTP/1.1\r\n"
-                f"Host: {host}\r\n"
+                f"Host: {conn.host}\r\n"
                 f"Connection: close\r\n"
                 f"\r\n"
             )

@@ -17,10 +17,10 @@ class SIPProbePlugin(ServiceProbe):
     def identify(self, conn: ServiceConnection) -> ServiceIdentity | None:
         try:
             request = (
-                f"OPTIONS sip:test@{host} SIP/2.0\r\n"
-                f"Via: SIP/2.0/UDP {host}:{port};branch=z9hG4bK-leetha\r\n"
+                f"OPTIONS sip:test@{conn.host} SIP/2.0\r\n"
+                f"Via: SIP/2.0/UDP {conn.host}:{conn.port};branch=z9hG4bK-leetha\r\n"
                 f"From: <sip:leetha@localhost>;tag=leetha\r\n"
-                f"To: <sip:test@{host}>\r\n"
+                f"To: <sip:test@{conn.host}>\r\n"
                 f"Call-ID: leetha@localhost\r\n"
                 f"CSeq: 1 OPTIONS\r\n"
                 f"Max-Forwards: 0\r\n"

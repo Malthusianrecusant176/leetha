@@ -18,7 +18,7 @@ class WebDAVProbePlugin(ServiceProbe):
             # Send PROPFIND request
             request = (
                 f"PROPFIND / HTTP/1.1\r\n"
-                f"Host: {host}\r\n"
+                f"Host: {conn.host}\r\n"
                 f"Depth: 0\r\n"
                 f"Content-Length: 0\r\n"
                 f"Connection: close\r\n"

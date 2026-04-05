@@ -21,7 +21,7 @@ class GraphQLProbePlugin(ServiceProbe):
             body = self.INTROSPECTION_QUERY
             request = (
                 f"POST /graphql HTTP/1.1\r\n"
-                f"Host: {host}\r\n"
+                f"Host: {conn.host}\r\n"
                 f"Content-Type: application/json\r\n"
                 f"Content-Length: {len(body)}\r\n"
                 f"Accept: application/json\r\n"

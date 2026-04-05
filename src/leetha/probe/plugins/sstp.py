@@ -19,7 +19,7 @@ class SSTPProbePlugin(ServiceProbe):
             sstp_uri = "/sra_{BA195980-CD49-458b-9E23-C84EE0ADCD75}/"
             request = (
                 f"SSTP_DUPLEX_POST {sstp_uri} HTTP/1.1\r\n"
-                f"Host: {host}\r\n"
+                f"Host: {conn.host}\r\n"
                 f"Content-Length: 18446744073709551615\r\n"
                 f"SSTPCORRELATIONID: {{leetha0000-0000-0000-0000-000000000000}}\r\n"
                 f"\r\n"

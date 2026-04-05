@@ -21,7 +21,7 @@ class FHIRProbePlugin(ServiceProbe):
         try:
             request = (
                 f"GET /metadata HTTP/1.1\r\n"
-                f"Host: {host}\r\n"
+                f"Host: {conn.host}\r\n"
                 f"Accept: application/fhir+json\r\n"
                 f"Connection: close\r\n"
                 f"\r\n"

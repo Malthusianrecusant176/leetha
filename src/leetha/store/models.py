@@ -67,7 +67,6 @@ class Device:
     @classmethod
     def from_row(cls, row):
         """Create Device from SQLite row (supports both named and positional access)."""
-        import json
         import re
         from datetime import datetime
 

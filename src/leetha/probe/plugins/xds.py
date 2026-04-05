@@ -37,7 +37,7 @@ class XDSProbePlugin(ServiceProbe):
             )
             request = (
                 f"POST /xds/iti18 HTTP/1.1\r\n"
-                f"Host: {host}\r\n"
+                f"Host: {conn.host}\r\n"
                 f"Content-Type: application/soap+xml; charset=utf-8\r\n"
                 f"Content-Length: {len(soap_body)}\r\n"
                 f"Connection: close\r\n"

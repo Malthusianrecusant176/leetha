@@ -24,7 +24,7 @@ class NTLMProbePlugin(ServiceProbe):
             # Send HTTP request with NTLM Type 1
             request = (
                 f"GET / HTTP/1.1\r\n"
-                f"Host: {host}\r\n"
+                f"Host: {conn.host}\r\n"
                 f"Authorization: NTLM {ntlm_b64}\r\n"
                 f"Connection: keep-alive\r\n"
                 f"\r\n"

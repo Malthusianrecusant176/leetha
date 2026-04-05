@@ -19,7 +19,7 @@ class CICSProbePlugin(ServiceProbe):
         try:
             request = (
                 f"GET /CICSSystemManagement HTTP/1.0\r\n"
-                f"Host: {host}\r\n"
+                f"Host: {conn.host}\r\n"
                 f"Connection: close\r\n"
                 f"\r\n"
             )

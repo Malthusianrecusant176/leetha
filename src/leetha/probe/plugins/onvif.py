@@ -30,7 +30,7 @@ class ONVIFProbePlugin(ServiceProbe):
             body = self._SOAP_ENVELOPE.encode()
             request = (
                 f"POST /onvif/device_service HTTP/1.0\r\n"
-                f"Host: {host}:{port}\r\n"
+                f"Host: {conn.host}:{conn.port}\r\n"
                 f"Content-Type: application/soap+xml; charset=utf-8\r\n"
                 f"Content-Length: {len(body)}\r\n"
                 f"Connection: close\r\n"

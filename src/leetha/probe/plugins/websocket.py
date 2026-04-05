@@ -23,7 +23,7 @@ class WebSocketProbePlugin(ServiceProbe):
             # Send WebSocket upgrade request
             request = (
                 f"GET / HTTP/1.1\r\n"
-                f"Host: {host}\r\n"
+                f"Host: {conn.host}\r\n"
                 f"Upgrade: websocket\r\n"
                 f"Connection: Upgrade\r\n"
                 f"Sec-WebSocket-Key: {self.WS_KEY}\r\n"

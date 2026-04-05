@@ -20,7 +20,7 @@ class RancherProbePlugin(ServiceProbe):
         try:
             request = (
                 f"GET /v3 HTTP/1.1\r\n"
-                f"Host: {host}:{port}\r\n"
+                f"Host: {conn.host}:{conn.port}\r\n"
                 f"Connection: close\r\n"
                 f"\r\n"
             )

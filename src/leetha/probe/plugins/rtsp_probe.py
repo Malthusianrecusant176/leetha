@@ -17,7 +17,7 @@ class RtspProbePlugin(ServiceProbe):
         try:
             # Send RTSP OPTIONS request
             request = (
-                f"OPTIONS rtsp://{host} RTSP/1.0\r\n"
+                f"OPTIONS rtsp://{conn.host} RTSP/1.0\r\n"
                 f"CSeq: 1\r\n"
                 f"\r\n"
             )

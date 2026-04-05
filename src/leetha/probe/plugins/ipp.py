@@ -36,7 +36,7 @@ class IPPProbePlugin(ServiceProbe):
             ipp_body += b"en"
 
             # printer-uri
-            printer_uri = f"ipp://{host}:{631}/".encode()
+            printer_uri = f"ipp://{conn.host}:{631}/".encode()
             ipp_body += b"\x45"  # uri type
             ipp_body += struct.pack(">H", 11)  # name-length
             ipp_body += b"printer-uri"
@@ -49,7 +49,7 @@ class IPPProbePlugin(ServiceProbe):
             # Wrap in HTTP POST
             http_request = (
                 f"POST / HTTP/1.1\r\n"
-                f"Host: {host}:{631}\r\n"
+                f"Host: {conn.host}:{631}\r\n"
                 f"Content-Type: application/ipp\r\n"
                 f"Content-Length: {len(ipp_body)}\r\n"
                 f"\r\n"

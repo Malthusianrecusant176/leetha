@@ -22,7 +22,7 @@ class ACMEProbePlugin(ServiceProbe):
             # Send HTTP GET to ACME directory endpoint
             request = (
                 f"GET /directory HTTP/1.1\r\n"
-                f"Host: {host}\r\n"
+                f"Host: {conn.host}\r\n"
                 f"Accept: application/json\r\n"
                 f"Connection: close\r\n"
                 f"\r\n"

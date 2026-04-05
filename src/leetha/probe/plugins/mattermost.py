@@ -18,7 +18,7 @@ class MattermostProbePlugin(ServiceProbe):
             # Send HTTP GET to Mattermost system ping endpoint
             request = (
                 f"GET /api/v4/system/ping HTTP/1.1\r\n"
-                f"Host: {host}\r\n"
+                f"Host: {conn.host}\r\n"
                 f"Accept: application/json\r\n"
                 f"Connection: close\r\n"
                 f"\r\n"

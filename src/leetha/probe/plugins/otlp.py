@@ -32,8 +32,8 @@ class OTLPProbePlugin(ServiceProbe):
             f"Connection: close\r\n"
             f"\r\n"
         )
-        conn.write(request.encode("utf-8"))
-        data = conn.read(8192)
+        sock.sendall(request.encode("utf-8"))
+        data = sock.recv(8192)
         if not data:
             return None
 
@@ -72,9 +72,9 @@ class OTLPProbePlugin(ServiceProbe):
         )
 
     def _probe_grpc(self, sock: socket.socket, host: str, port: int) -> ServiceIdentity | None:
-        """Probe gRPC conn.port by sending HTTP/2 connection preface."""
-        conn.write(self._GRPC_PREFACE + self._GRPC_SETTINGS)
-        data = conn.read(4096)
+        """Probe gRPC port by sending HTTP/2 connection preface."""
+        sock.sendall(self._GRPC_PREFACE + self._GRPC_SETTINGS)
+        data = sock.recv(4096)
         if not data or len(data) < 9:
             return None
 
