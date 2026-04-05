@@ -28,7 +28,11 @@ interface DeviceInfo {
 }
 interface DeviceDetailResponse { device: DeviceInfo; evidence: Array<Record<string, unknown>>; }
 interface Observation { id: number; timestamp: string; source_type: string; confidence: number | null; }
-interface ServiceResult { port: number; protocol: string; result: string | Record<string, unknown>; }
+interface ServiceResult {
+  port?: number; protocol: string; result?: string | Record<string, unknown>;
+  service?: string; banner?: string; sni?: string; timestamp?: string;
+  details?: Record<string, unknown>;
+}
 
 function formatTs(ts: string | null): string {
   if (!ts) return "-";
@@ -263,20 +267,48 @@ export function DeviceDrawer({ mac, open, onClose }: DeviceDrawerProps) {
                 <Section title={`Detected Services (${services.length})`}>
                   <div className="space-y-3">
                     {services.map((svc, i) => {
-                      let parsed: Record<string, unknown> = {};
-                      try { parsed = typeof svc.result === "string" ? JSON.parse(svc.result) : (svc.result as Record<string, unknown>); } catch { /* */ }
-                      const name = String(parsed.service ?? "?").replace(/_/g, " ");
-                      const ver = parsed.version ? `v${parsed.version}` : null;
-                      const conf = Number(parsed.confidence) || 0;
-                      const meta = (parsed.metadata ?? {}) as Record<string, unknown>;
+                      // Handle both new sightings-based format and old probe result format
+                      let name: string;
+                      let ver: string | null = null;
+                      let conf = 0;
+                      let meta: Record<string, unknown> = {};
+
+                      if (svc.service) {
+                        // New format: {service, protocol, port, banner, sni, details}
+                        name = String(svc.service).replace(/_/g, " ");
+                        const details = svc.details ?? {};
+                        meta = {};
+                        if (svc.banner) meta["banner"] = svc.banner;
+                        if (svc.sni) meta["sni"] = svc.sni;
+                        for (const [k, v] of Object.entries(details)) {
+                          if (!["service", "service_type", "port", "dst_port", "raw_banner", "server", "sni"].includes(k) && v) {
+                            meta[k] = v;
+                          }
+                        }
+                      } else if (svc.result) {
+                        // Old probe format: {port, protocol, result: JSON string}
+                        let parsed: Record<string, unknown> = {};
+                        try { parsed = typeof svc.result === "string" ? JSON.parse(svc.result) : (svc.result as Record<string, unknown>); } catch { /* */ }
+                        name = String(parsed?.service ?? "?").replace(/_/g, " ");
+                        ver = parsed?.version ? `v${parsed.version}` : null;
+                        conf = Number(parsed?.confidence) || 0;
+                        meta = (parsed?.metadata ?? {}) as Record<string, unknown>;
+                      } else {
+                        name = svc.protocol ?? "unknown";
+                      }
+
                       const metaKeys = Object.keys(meta).filter((k) => k !== "version").slice(0, 4);
                       return (
                         <div key={i} className="rounded-lg bg-card border border-border p-4">
                           <div className="flex items-center gap-4">
-                            <span className="text-base font-bold font-data text-primary">{svc.port}/{svc.protocol ?? "tcp"}</span>
+                            {svc.port ? (
+                              <span className="text-base font-bold font-data text-primary">{svc.port}/{svc.protocol ?? "tcp"}</span>
+                            ) : (
+                              <span className="text-base font-bold font-data text-primary">{svc.protocol ?? "?"}</span>
+                            )}
                             <span className="text-sm font-medium flex-1">{name}</span>
                             {ver && <span className="text-xs text-muted-foreground">{ver}</span>}
-                            <span className="text-sm font-bold" style={{ color: confColor(conf) }}>{conf}%</span>
+                            {conf > 0 && <span className="text-sm font-bold" style={{ color: confColor(conf) }}>{conf}%</span>}
                           </div>
                           {metaKeys.length > 0 && (
                             <div className="flex flex-wrap gap-2 mt-2">
