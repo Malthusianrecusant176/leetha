@@ -169,6 +169,18 @@ class NameResolutionProcessor(Processor):
                     source="mdns_service", method="pattern", certainty=0.70,
                     raw={"service_type": service_type, "name": name},
                 ))
+                # General mDNS service pattern matching
+                from leetha.patterns.matching import match_mdns_service
+                mdns_match = match_mdns_service(service_type, name)
+                if mdns_match:
+                    evidence.append(Evidence(
+                        source="mdns_service", method="pattern",
+                        certainty=mdns_match.get("confidence", 0.70),
+                        vendor=mdns_match.get("manufacturer"),
+                        category=mdns_match.get("device_type"),
+                        platform=mdns_match.get("os_family"),
+                        raw={"service_type": service_type, "match": mdns_match},
+                    ))
 
         if txt_records:
             model = txt_records.get("model") or txt_records.get("md")
@@ -203,6 +215,19 @@ class NameResolutionProcessor(Processor):
                 raw={"query_name": query_name, "query_type": query_type,
                      "netbios_suffix": netbios_suffix},
             ))
+            # Hostname pattern matching on NetBIOS name
+            from leetha.patterns.matching import match_hostname
+            host_match = match_hostname(query_name)
+            if host_match:
+                evidence.append(Evidence(
+                    source="netbios", method="pattern",
+                    certainty=host_match.get("confidence", 0.65),
+                    vendor=host_match.get("manufacturer"),
+                    category=host_match.get("device_type"),
+                    platform=host_match.get("os_family"),
+                    hostname=query_name,
+                    raw={"query_name": query_name, "match": host_match},
+                ))
         return evidence
 
     def _analyze_ssdp(self, packet: CapturedPacket) -> list[Evidence]:
@@ -215,4 +240,16 @@ class NameResolutionProcessor(Processor):
                 source="ssdp_server", method="pattern", certainty=0.65,
                 raw={"server": server, "st": st},
             ))
+            # SSDP SERVER header pattern matching
+            from leetha.patterns.matching import match_ssdp_server
+            ssdp_match = match_ssdp_server(server)
+            if ssdp_match:
+                evidence.append(Evidence(
+                    source="ssdp_server", method="pattern",
+                    certainty=ssdp_match.get("confidence", 0.65),
+                    vendor=ssdp_match.get("manufacturer"),
+                    category=ssdp_match.get("device_type"),
+                    platform=ssdp_match.get("os_family"),
+                    raw={"server": server, "match": ssdp_match},
+                ))
         return evidence
