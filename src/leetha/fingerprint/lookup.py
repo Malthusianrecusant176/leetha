@@ -1240,21 +1240,19 @@ class SignatureMatcher:
     # ------------------------------------------------------------------
 
     def match_ttl(self, ttl_value: int) -> FingerprintMatch | None:
-        """Heuristic OS family guess based on initial TTL.
+        """Record the observed TTL for evidence without guessing OS.
 
-        TTL 64 is shared by Linux, iOS, macOS, FreeBSD, and Android —
-        far too ambiguous to assign an OS.  We only emit os_family for
-        TTL 128 (Windows) and TTL 255 (network equipment) which are
-        reliable indicators.  For TTL 64, we return None and let
-        higher-quality evidence (DHCP, hostname, mDNS, User-Agent)
-        determine the platform.
+        TTL is NOT a reliable platform indicator:
+        - TTL 64: Linux, iOS, macOS, Android, FreeBSD, most embedded
+        - TTL 128: Windows, but ALSO UniFi OS, many routers/switches
+        - TTL 255: Cisco, Juniper, other network devices
+
+        We record the TTL value as raw evidence but never set os_family.
+        Real platform identification comes from DHCP, mDNS, DNS, banners.
         """
         if ttl_value <= 0:
             return None
         if ttl_value <= 64:
-            # TTL 64 is ambiguous — do NOT guess any OS.
-            # Return a match with no os_family so it doesn't pollute
-            # the verdict with a wrong guess.
             return FingerprintMatch(
                 source="ttl",
                 match_type="heuristic",
@@ -1265,8 +1263,7 @@ class SignatureMatcher:
             return FingerprintMatch(
                 source="ttl",
                 match_type="heuristic",
-                confidence=0.35,
-                os_family="Windows",
+                confidence=0.10,
                 raw_data={"ttl": ttl_value, "initial_ttl": 128},
             )
         else:

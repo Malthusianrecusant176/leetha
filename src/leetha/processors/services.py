@@ -106,10 +106,16 @@ class ServiceFingerprintProcessor(Processor):
     def _ttl_os_hint(ttl: int) -> str | None:
         """Derive an OS hint from the initial TTL value.
 
-        TTL 64 is shared by Linux, iOS, macOS, Android, FreeBSD —
-        too ambiguous to return any OS. Only TTL 128 (Windows) is
-        reliable enough to hint at.
+        TTL is NOT a reliable platform indicator:
+        - TTL 64: Linux, iOS, macOS, Android, FreeBSD, most embedded devices
+        - TTL 128: Windows, but ALSO Ubiquiti UniFi OS, many routers/switches
+        - TTL 255: Network devices (Cisco, etc.)
+
+        We return None for all values — TTL alone should never set platform.
+        Real platform identification comes from DHCP, mDNS, DNS, User-Agent.
         """
+        # Do not set platform from TTL — too many false positives
+        return None
         if ttl <= 64:
             return None  # ambiguous — don't guess
         elif ttl <= 128:

@@ -41,14 +41,17 @@ class PassiveObserverProcessor(Processor):
 
     @staticmethod
     def _ttl_os_hint(ttl: int) -> str | None:
-        """Derive an OS hint from the initial TTL value.
+        """TTL is not a reliable platform indicator.
 
-        TTL 64 is shared by Linux, iOS, macOS, Android, FreeBSD —
-        too ambiguous to return any OS. Only TTL 128 (Windows) is
-        reliable enough to hint at.
+        TTL 64: Linux, macOS, iOS, Android, FreeBSD, most embedded devices.
+        TTL 128: Windows, but ALSO UniFi OS, many routers, switches, gateways.
+        TTL 255: Network devices.
+
+        Returns None — platform should come from DHCP, mDNS, DNS, User-Agent.
         """
+        return None
         if ttl <= 64:
-            return None  # ambiguous — don't guess
+            return None
         elif ttl <= 128:
             return "Windows"
         return None
