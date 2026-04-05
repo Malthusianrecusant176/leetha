@@ -398,6 +398,11 @@ class LeethaApp:
                         await self._prune_sightings()
                     except Exception:
                         logger.debug("Sightings pruning failed", exc_info=True)
+                    # Prune old fingerprint snapshots
+                    try:
+                        await self.store.snapshots.prune(max_per_mac=50)
+                    except Exception:
+                        logger.debug("Snapshot pruning failed", exc_info=True)
         except asyncio.CancelledError:
             return
 

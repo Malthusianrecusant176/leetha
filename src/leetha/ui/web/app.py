@@ -118,6 +118,7 @@ def _build_device_dict(verdict, host) -> dict:
         "alert_status": host.disposition if host else "new",
         "is_randomized_mac": host.mac_randomized if host else False,
         "correlated_mac": host.real_hw_addr if host else None,
+        "identity_id": host.identity_id if host and hasattr(host, 'identity_id') else None,
     }
     if verdict and verdict.evidence_chain:
         d["raw_evidence"] = {
@@ -373,6 +374,8 @@ async def clear_database():
     await conn.execute("DELETE FROM hosts")
     await conn.execute("DELETE FROM findings")
     await conn.execute("DELETE FROM sightings")
+    await conn.execute("DELETE FROM fingerprint_snapshots")
+    await conn.execute("DELETE FROM identities")
     await conn.commit()
     # Clear in-memory evidence buffers
     if app_instance.pipeline:
