@@ -16,10 +16,16 @@ def store():
 
 
 def _get_rule():
-    """Get IdentityShiftRule from the live module (survives importlib.reload)."""
-    import leetha.rules.drift  # ensure imported
+    """Get IdentityShiftRule with cooldown disabled for testing.
+
+    The module-level _last_fired dict survives importlib.reload() from
+    other test files, making cooldown state unpredictable. We set the
+    cooldown to 0 on the live module so all evaluate() calls fire.
+    """
+    import leetha.rules.drift
     mod = sys.modules["leetha.rules.drift"]
     mod._last_fired.clear()
+    mod._COOLDOWN_SECONDS = 0  # disable cooldown for tests
     return mod.IdentityShiftRule()
 
 

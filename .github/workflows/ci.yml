@@ -10,53 +10,6 @@ permissions:
   contents: read
 
 jobs:
-  test:
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - os: ubuntu-latest
-            python: "3.11"
-            label: "Leetha Linux py3.11"
-          - os: ubuntu-latest
-            python: "3.12"
-            label: "Leetha Linux py3.12"
-          - os: ubuntu-latest
-            python: "3.13"
-            label: "Leetha Linux py3.13"
-          - os: macos-latest
-            python: "3.11"
-            label: "Leetha macOS"
-          - os: windows-latest
-            python: "3.11"
-            label: "Leetha Windows"
-
-    runs-on: ${{ matrix.os }}
-    name: ${{ matrix.label }}
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ matrix.python }}
-
-      - name: Create frontend dist placeholder
-        run: python -c "import pathlib; d=pathlib.Path('src/leetha/ui/web/dist'); d.mkdir(parents=True,exist_ok=True); (d/'index.html').write_text('<html></html>')"
-
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -e .
-          pip install pytest pytest-asyncio ruff httpx
-
-      - name: Run tests
-        env:
-          PYTHONPATH: src
-        run: python -m pytest spec/ -v --tb=short
-        shell: bash
-
   lint:
     runs-on: ubuntu-latest
     name: Leetha Lint
@@ -67,3 +20,136 @@ jobs:
           python-version: "3.11"
       - run: pip install ruff
       - run: ruff check src/
+
+  test-linux:
+    runs-on: ubuntu-latest
+    name: Leetha Linux Tests
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Create frontend dist placeholder
+        run: python -c "import pathlib; d=pathlib.Path('src/leetha/ui/web/dist'); d.mkdir(parents=True,exist_ok=True); (d/'index.html').write_text('<html></html>')"
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .
+          pip install pytest pytest-asyncio httpx
+      - name: Run tests
+        env:
+          PYTHONPATH: src
+        run: python -m pytest spec/ -v --tb=short
+
+  test-macos:
+    runs-on: macos-latest
+    name: Leetha macOS Tests
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Create frontend dist placeholder
+        run: python -c "import pathlib; d=pathlib.Path('src/leetha/ui/web/dist'); d.mkdir(parents=True,exist_ok=True); (d/'index.html').write_text('<html></html>')"
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .
+          pip install pytest pytest-asyncio httpx
+      - name: Run tests
+        env:
+          PYTHONPATH: src
+        run: python -m pytest spec/ -v --tb=short
+
+  test-windows:
+    runs-on: windows-latest
+    name: Leetha Windows Tests
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Create frontend dist placeholder
+        run: python -c "import pathlib; d=pathlib.Path('src/leetha/ui/web/dist'); d.mkdir(parents=True,exist_ok=True); (d/'index.html').write_text('<html></html>')"
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .
+          pip install pytest pytest-asyncio httpx
+      - name: Run tests
+        env:
+          PYTHONPATH: src
+        run: python -m pytest spec/ -v --tb=short
+        shell: bash
+
+  build-frontend:
+    runs-on: ubuntu-latest
+    name: Build Leetha Frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - run: cd frontend && bun install --frozen-lockfile && bun run build
+      - uses: actions/upload-artifact@v4
+        with:
+          name: frontend-dist
+          path: src/leetha/ui/web/dist/
+
+  build-deb:
+    needs: [test-linux, build-frontend]
+    runs-on: ubuntu-latest
+    name: Build Leetha Deb
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - uses: actions/download-artifact@v4
+        with:
+          name: frontend-dist
+          path: src/leetha/ui/web/dist/
+      - run: |
+          sudo apt-get update && sudo apt-get install -y ruby ruby-dev
+          sudo gem install fpm
+      - run: |
+          pip install .
+          fpm -s python -t deb \
+            --name leetha \
+            --version 0.1.0 \
+            --depends python3 \
+            --depends libpcap0.8 \
+            --description "Passive network fingerprinting and analysis engine" \
+            .
+      - uses: actions/upload-artifact@v4
+        with:
+          name: leetha-deb
+          path: "*.deb"
+
+  build-rpm:
+    needs: [test-linux, build-frontend]
+    runs-on: ubuntu-latest
+    name: Build Leetha RPM
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - uses: actions/download-artifact@v4
+        with:
+          name: frontend-dist
+          path: src/leetha/ui/web/dist/
+      - run: |
+          sudo apt-get update && sudo apt-get install -y ruby ruby-dev rpm
+          sudo gem install fpm
+      - run: |
+          pip install .
+          fpm -s python -t rpm \
+            --name leetha \
+            --version 0.1.0 \
+            --depends python3 \
+            --depends libpcap \
+            --description "Passive network fingerprinting and analysis engine" \
+            .
+      - uses: actions/upload-artifact@v4
+        with:
+          name: leetha-rpm
+          path: "*.rpm"
