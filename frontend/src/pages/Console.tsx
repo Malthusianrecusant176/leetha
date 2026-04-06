@@ -169,7 +169,7 @@ const PacketEntry = memo(function PacketEntry({ packet }: { packet: ConsolePacke
       )}
 
       {/* Row 4: Alerts */}
-      {packet.alerts.length > 0 && packet.alerts.map((a, i) => (
+      {(packet.alerts?.length ?? 0) > 0 && packet.alerts.map((a, i) => (
         <div key={i} className={cn("pl-[76px] mt-1 text-xs font-medium", a.severity === "critical" || a.severity === "high" ? "text-red-400" : "text-yellow-400")}>
           <span className="uppercase mr-1">▲ {a.severity}</span> {a.alert_type}: {a.message}
         </div>
@@ -285,7 +285,7 @@ function NetworkOverviewTab({ packets }: { packets: ConsolePacket[] }) {
       if (p.src_ip) srcIps[p.src_ip] = (srcIps[p.src_ip] ?? 0) + 1;
       if (p.dst_ip) dstIps[p.dst_ip] = (dstIps[p.dst_ip] ?? 0) + 1;
       if (p.device?.hostname) names[p.src_mac] = p.device.hostname;
-      alerts += p.alerts.length;
+      alerts += p.alerts?.length ?? 0;
     }
     return {
       proto: Object.entries(proto).sort((a, b) => b[1] - a[1]),
