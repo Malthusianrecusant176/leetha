@@ -92,6 +92,11 @@ class _RateLimiter:
         reqs = self._requests[client_ip]
         # Remove old entries
         reqs[:] = [t for t in reqs if now - t < self._window]
+        # Periodic cleanup of stale IPs
+        if len(self._requests) > 1000:
+            stale_ips = [ip for ip, times in self._requests.items() if not times]
+            for ip in stale_ips:
+                del self._requests[ip]
         if len(reqs) >= self._max:
             return False
         reqs.append(now)

@@ -271,7 +271,7 @@ const ProtocolStats = memo(function ProtocolStats({ packets }: { packets: Consol
 //  Tab: Network Overview
 // ═══════════════════════════════════════════
 
-function NetworkOverviewTab({ packets }: { packets: ConsolePacket[] }) {
+function NetworkOverviewTab({ packets, sessionPackets }: { packets: ConsolePacket[]; sessionPackets: number }) {
   const { data: statsData } = useQuery({
     queryKey: ["console-stats"], queryFn: fetchStats,
     staleTime: 10000, refetchInterval: 15000,
@@ -312,7 +312,7 @@ function NetworkOverviewTab({ packets }: { packets: ConsolePacket[] }) {
     <div className="flex-1 overflow-y-auto p-1 space-y-4">
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {([
-          ["Packets (session)", packets.length, false],
+          ["Packets (session)", sessionPackets, false],
           ["Total Sightings", totalSightings, false],
           ["Unique Hosts", statsData?.device_count ?? 0, false],
           ["Protocols", protocols.length, false],
@@ -493,6 +493,8 @@ export default function Console() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const pausedRef = useRef(false);
   const renderTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const totalPacketCountRef = useRef(0);
+  const [totalPacketCount, setTotalPacketCount] = useState(0);
   pausedRef.current = paused;
 
   const { data: captureStatus } = useQuery<CaptureStatus>({
@@ -529,15 +531,19 @@ export default function Console() {
           return;
         }
         if (data.type === "finding_created") return;
-        if (pausedRef.current) return;
         if (!data.protocol) return;
+        totalPacketCountRef.current += 1;
+        if (pausedRef.current) return;
         packetsRef.current.push(data);
         if (packetsRef.current.length > MAX_PACKETS) packetsRef.current = packetsRef.current.slice(-MAX_PACKETS);
         // Throttle: update state max 2x/sec
         if (!renderTimer.current) {
           renderTimer.current = setTimeout(() => {
             renderTimer.current = null;
-            if (mounted) setPackets([...packetsRef.current]);
+            if (mounted) {
+              setPackets([...packetsRef.current]);
+              setTotalPacketCount(totalPacketCountRef.current);
+            }
           }, 500);
         }
       } catch { /* ignore */ }
@@ -547,7 +553,12 @@ export default function Console() {
     return () => { mounted = false; ws.close(); if (renderTimer.current) clearTimeout(renderTimer.current); };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const handleClear = useCallback(() => { packetsRef.current = []; setPackets([]); }, []);
+  const handleClear = useCallback(() => {
+    packetsRef.current = [];
+    setPackets([]);
+    totalPacketCountRef.current = 0;
+    setTotalPacketCount(0);
+  }, []);
 
   const handleFileUpload = async (file: File) => {
     setImporting(true);
@@ -622,7 +633,7 @@ export default function Console() {
         )}
       </div>
       {activeTab === "stream" && <LiveStreamTab packets={packets} paused={paused} setPaused={setPaused} autoScroll={autoScroll} setAutoScroll={setAutoScroll} protocolFilter={protocolFilter} setProtocolFilter={setProtocolFilter} macFilter={macFilter} setMacFilter={setMacFilter} ipFilter={ipFilter} setIpFilter={setIpFilter} textFilter={textFilter} setTextFilter={setTextFilter} onClear={handleClear} />}
-      {activeTab === "overview" && <NetworkOverviewTab packets={packets} />}
+      {activeTab === "overview" && <NetworkOverviewTab packets={packets} sessionPackets={totalPacketCount} />}
       {activeTab === "filters" && <FilterBuilderTab captureStatus={captureStatus} />}
       {activeTab === "capture" && <CaptureConfigTab captureStatus={captureStatus} />}
     </div>

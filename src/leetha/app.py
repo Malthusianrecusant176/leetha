@@ -595,6 +595,7 @@ class LeethaApp:
             if cursor.rowcount > 0:
                 logger.info("Pruned %d sightings older than %d days",
                            cursor.rowcount, retention_days)
+                await self.store.connection.execute("PRAGMA wal_checkpoint(TRUNCATE)")
         except Exception:
             logger.debug("Sighting prune failed", exc_info=True)
 
@@ -635,6 +636,7 @@ class LeethaApp:
                 "timestamp": finding.timestamp.isoformat() if hasattr(finding, "timestamp") and finding.timestamp else None,
             },
         }
+        stale = []
         for sub in self.event_subscribers:
             try:
                 sub.put_nowait(event)
@@ -646,7 +648,9 @@ class LeethaApp:
                 try:
                     sub.put_nowait(event)
                 except asyncio.QueueFull:
-                    pass
+                    stale.append(sub)
+        for sub in stale:
+            self.event_subscribers.remove(sub)
 
     # Sharded pipeline (worker_count > 1)
 

@@ -116,7 +116,7 @@ def cap_evidence(
 
     result = []
     for source, items in by_source.items():
-        items.sort(key=lambda e: e.observed_at, reverse=True)
+        items.sort(key=lambda e: e.certainty, reverse=True)
         result.extend(items[:max_per_source])
 
     result.sort(key=lambda e: e.observed_at, reverse=True)

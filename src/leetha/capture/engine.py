@@ -87,7 +87,7 @@ class PacketCapture:
         self._event_loop: asyncio.AbstractEventLoop | None = None
 
         # ring buffer of raw bytes for PCAP export
-        self._packet_buffer: deque = deque(maxlen=10_000)
+        self._packet_buffer: deque = deque(maxlen=2_000)
 
         # TTL-based dedup caches (replace old class-level sets)
         self._ip_observed_dedup = TTLDedup(max_entries=50_000, ttl_seconds=300.0)

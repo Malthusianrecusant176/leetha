@@ -26,6 +26,10 @@ class SightingRepository:
         """)
         await self._conn.execute(
             "CREATE INDEX IF NOT EXISTS idx_sightings_hw ON sightings(hw_addr)")
+        await self._conn.execute(
+            "CREATE INDEX IF NOT EXISTS idx_sightings_ts ON sightings(timestamp)")
+        await self._conn.execute(
+            "CREATE INDEX IF NOT EXISTS idx_sightings_source ON sightings(source)")
         await self._conn.commit()
 
     async def record(self, sighting: Sighting) -> None:
