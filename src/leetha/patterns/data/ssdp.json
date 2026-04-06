@@ -100,6 +100,27 @@
       "confidence": 85
     },
     {
+      "pattern": "MiniDLNA/([\\d.]+)",
+      "os_version_group": 1,
+      "device_type": "media_server",
+      "manufacturer": "MiniDLNA",
+      "confidence": 75
+    },
+    {
+      "pattern": "Jellyfin/([\\d.]+)|Jellyfin\\s+Server",
+      "os_version_group": 1,
+      "device_type": "media_server",
+      "manufacturer": "Jellyfin",
+      "confidence": 80
+    },
+    {
+      "pattern": "Emby/([\\d.]+)|Emby\\s+Server",
+      "os_version_group": 1,
+      "device_type": "media_server",
+      "manufacturer": "Emby",
+      "confidence": 80
+    },
+    {
       "pattern": "MiniUPnP[dD]?/([\\d.]+)",
       "os_version_group": 1,
       "device_type": "network_device",

@@ -1672,6 +1672,70 @@
     "certainty": 88
   },
   {
+    "match": "(?i)^nas[_-]",
+    "category": "nas",
+    "vendor": null,
+    "platform": "Linux",
+    "model": null,
+    "certainty": 75
+  },
+  {
+    "match": "(?i)^nas$",
+    "category": "nas",
+    "vendor": null,
+    "platform": "Linux",
+    "model": null,
+    "certainty": 70
+  },
+  {
+    "match": "(?i)^fileserver",
+    "category": "nas",
+    "vendor": null,
+    "platform": null,
+    "model": null,
+    "certainty": 75
+  },
+  {
+    "match": "(?i)^storage[_-]",
+    "category": "nas",
+    "vendor": null,
+    "platform": null,
+    "model": null,
+    "certainty": 70
+  },
+  {
+    "match": "(?i)^backup[_-]",
+    "category": "nas",
+    "vendor": null,
+    "platform": null,
+    "model": null,
+    "certainty": 65
+  },
+  {
+    "match": "(?i)^(LATITUDE|XPS|INSPIRON|VOSTRO)[_-]?\\d",
+    "category": "laptop",
+    "vendor": "Dell",
+    "platform": "Windows",
+    "model": null,
+    "certainty": 88
+  },
+  {
+    "match": "(?i)^OPTIPLEX[_-]?\\d",
+    "category": "desktop",
+    "vendor": "Dell",
+    "platform": "Windows",
+    "model": null,
+    "certainty": 88
+  },
+  {
+    "match": "(?i)^POWEREDGE[_-]?[RTM]?\\d",
+    "category": "server",
+    "vendor": "Dell",
+    "platform": "Linux",
+    "model": null,
+    "certainty": 90
+  },
+  {
     "match": "(?i)^alexa[_-]",
     "category": "smart_speaker",
     "vendor": "Amazon",

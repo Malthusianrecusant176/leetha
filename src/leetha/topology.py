@@ -2041,6 +2041,7 @@ def build_topology_graph(
         subnet = n.get("subnet")
         mac = n["id"]
         conn_type = n.get("connection_type", "unknown")
+        dt = (n.get("type") or "").lower()
 
         # LLDP-known link — always preferred
         lldp_parent = None
@@ -2060,8 +2061,9 @@ def build_topology_graph(
             # Bridged VM → connect to its hypervisor host
             host_mac = vm_to_host[mac]
             edges.append({"source": host_mac, "target": mac, "type": "vm_link"})
-        elif conn_type == "wireless":
+        elif conn_type == "wireless" or (conn_type == "unknown" and aps and not all_switches):
             # Wireless → connect through an AP
+            # Unknown with APs but no switches → assume wireless (home networks)
             ap_target = None
             if subnet and subnet in ap_by_subnet:
                 subnet_aps = ap_by_subnet[subnet]
@@ -2074,8 +2076,29 @@ def build_topology_graph(
                 edges.append({"source": ap_target, "target": mac, "type": "wireless_link"})
             elif core_switch_mac:
                 edges.append({"source": core_switch_mac, "target": mac, "type": "wireless_link"})
-        elif all_switches and conn_type in ("wired", "unknown"):
-            # Wired/unknown → distribute across all switches using MAC hash
+        elif conn_type == "unknown" and aps:
+            # Unknown with both APs and switches — route through AP if device
+            # type suggests a client device (not infrastructure)
+            is_client = dt not in _INFRA_TYPES if dt else True
+            if is_client:
+                ap_target = None
+                if subnet and subnet in ap_by_subnet:
+                    subnet_aps = ap_by_subnet[subnet]
+                    ap_target = subnet_aps[hash(mac) % len(subnet_aps)]
+                elif aps:
+                    ap_target = aps[ap_round_robin_idx % len(aps)]["id"]
+                    ap_round_robin_idx += 1
+                if ap_target:
+                    edges.append({"source": ap_target, "target": mac, "type": "wireless_link"})
+                elif core_switch_mac:
+                    edges.append({"source": core_switch_mac, "target": mac, "type": "client_link"})
+            elif all_switches:
+                target_switch = all_switches[hash(mac) % len(all_switches)]
+                edges.append({"source": target_switch, "target": mac, "type": "client_link"})
+            elif core_switch_mac:
+                edges.append({"source": core_switch_mac, "target": mac, "type": "client_link"})
+        elif all_switches and conn_type == "wired":
+            # Definitively wired → distribute across switches
             target_switch = all_switches[hash(mac) % len(all_switches)]
             edges.append({"source": target_switch, "target": mac, "type": "client_link"})
         elif core_switch_mac:
