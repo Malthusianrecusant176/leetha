@@ -42,6 +42,9 @@ class LeethaConfig:
     # Sync
     sync_interval_days: int = 7
 
+    # Unix socket
+    socket_path: str | None = None  # e.g. /tmp/leetha.sock
+
     # Active probing
     probe_enabled: bool = False
     probe_max_concurrent: int = 10

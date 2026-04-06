@@ -174,6 +174,11 @@ class LeethaApp:
         # Start periodic analysis loop (stale source checks, etc.)
         self._tasks.append(asyncio.create_task(self._analysis_loop()))
 
+        # Start Unix socket server if configured
+        if self.config.socket_path:
+            self._tasks.append(asyncio.create_task(
+                self.start_unix_socket(self.config.socket_path)))
+
         # If interfaces were provided at construction time, start capture
         # immediately (CLI mode with -i flag).
         if self.config.interfaces:
@@ -332,6 +337,77 @@ class LeethaApp:
         """Unsubscribe from events."""
         if q in self.event_subscribers:
             self.event_subscribers.remove(q)
+
+    # ------------------------------------------------------------------
+    # Unix socket event server
+    # ------------------------------------------------------------------
+
+    async def start_unix_socket(self, socket_path: str = "/tmp/leetha.sock"):
+        """Start a Unix domain socket server that streams events as newline-delimited JSON.
+
+        Clients connect and receive the same real-time events as the WebSocket
+        endpoints. Each event is a JSON object followed by a newline.
+
+        Usage:
+            socat - UNIX-CONNECT:/tmp/leetha.sock
+            nc -U /tmp/leetha.sock
+            python: sock.connect("/tmp/leetha.sock"); for line in sock.makefile(): ...
+        """
+        import json
+        import os
+
+        # Remove stale socket file from previous run
+        try:
+            os.unlink(socket_path)
+        except FileNotFoundError:
+            pass
+
+        async def _handle_client(reader: asyncio.StreamReader, writer: asyncio.StreamWriter):
+            """Stream events to a single connected client."""
+            queue = self.subscribe()
+            peer = writer.get_extra_info("peername") or socket_path
+            logger.info("Unix socket client connected: %s", peer)
+            try:
+                while self._running:
+                    try:
+                        event = await asyncio.wait_for(queue.get(), timeout=1.0)
+                    except asyncio.TimeoutError:
+                        continue
+                    try:
+                        line = json.dumps(event, default=str) + "\n"
+                        writer.write(line.encode())
+                        await writer.drain()
+                    except (ConnectionError, BrokenPipeError, OSError):
+                        break
+            except asyncio.CancelledError:
+                pass
+            finally:
+                self.unsubscribe(queue)
+                try:
+                    writer.close()
+                    await writer.wait_closed()
+                except Exception:
+                    pass
+                logger.info("Unix socket client disconnected: %s", peer)
+
+        try:
+            server = await asyncio.start_unix_server(_handle_client, path=socket_path)
+            # Make socket world-readable so non-root clients can connect
+            os.chmod(socket_path, 0o666)
+            logger.info("Unix socket listening on %s", socket_path)
+            self._unix_socket_server = server
+            self._unix_socket_path = socket_path
+            async with server:
+                await server.serve_forever()
+        except asyncio.CancelledError:
+            pass
+        except Exception:
+            logger.warning("Unix socket server failed", exc_info=True)
+        finally:
+            try:
+                os.unlink(socket_path)
+            except FileNotFoundError:
+                pass
 
     async def _process_loop(self):
         """Single-worker packet processing loop using new Pipeline."""

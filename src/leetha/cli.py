@@ -97,6 +97,12 @@ console commands:
         "--probe", action="store_true", default=False,
         help="Enable active probing alongside passive capture",
     )
+    parser.add_argument(
+        "--socket",
+        default=None,
+        metavar="PATH",
+        help="Listen on a Unix domain socket for event streaming (e.g. /tmp/leetha.sock)",
+    )
 
     sub = parser.add_subparsers(dest="command")
 
@@ -323,11 +329,13 @@ def main():
         from leetha.cli_import import run_import
         asyncio.run(run_import(args))
         return
-    # Enable active probing if --probe flag is set
+    # Apply optional flags to config
+    from leetha.config import get_config
+    config = get_config()
     if getattr(args, "probe", False):
-        from leetha.config import get_config
-        config = get_config()
         config.probe_enabled = True
+    if getattr(args, "socket", None):
+        config.socket_path = args.socket
 
     # Build InterfaceConfig list from all -i args
     from leetha.capture.interfaces import InterfaceConfig
