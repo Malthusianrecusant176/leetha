@@ -17,17 +17,22 @@ jobs:
         include:
           - os: ubuntu-latest
             python: "3.11"
+            label: "Leetha Linux py3.11"
           - os: ubuntu-latest
             python: "3.12"
+            label: "Leetha Linux py3.12"
           - os: ubuntu-latest
             python: "3.13"
+            label: "Leetha Linux py3.13"
           - os: macos-latest
             python: "3.11"
+            label: "Leetha macOS"
           - os: windows-latest
             python: "3.11"
+            label: "Leetha Windows"
 
     runs-on: ${{ matrix.os }}
-    name: test (${{ matrix.os }}, py${{ matrix.python }})
+    name: ${{ matrix.label }}
 
     steps:
       - uses: actions/checkout@v4
@@ -54,6 +59,7 @@ jobs:
 
   lint:
     runs-on: ubuntu-latest
+    name: Leetha Lint
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5

@@ -32,8 +32,8 @@ def _host(hw="aa:bb:cc:dd:ee:ff", age_seconds=120):
 
 class TestIdentityShift:
     def setup_method(self):
-        from leetha.rules.drift import _last_fired
-        _last_fired.clear()
+        import leetha.rules.drift
+        leetha.rules.drift._last_fired.clear()
 
     @pytest.mark.asyncio
     async def test_category_change_fires_critical(self, store):

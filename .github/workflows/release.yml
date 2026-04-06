@@ -11,6 +11,7 @@ permissions:
 jobs:
   build-frontend:
     runs-on: ubuntu-latest
+    name: Build Leetha Frontend
     steps:
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v2
@@ -23,6 +24,7 @@ jobs:
   build-wheel:
     needs: build-frontend
     runs-on: ubuntu-latest
+    name: Build Leetha Wheel
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -42,6 +44,7 @@ jobs:
   build-deb:
     needs: build-frontend
     runs-on: ubuntu-latest
+    name: Build Leetha Deb
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -71,6 +74,7 @@ jobs:
   build-rpm:
     needs: build-frontend
     runs-on: ubuntu-latest
+    name: Build Leetha RPM
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -100,6 +104,7 @@ jobs:
   build-macos:
     needs: build-frontend
     runs-on: macos-latest
+    name: Build Leetha macOS
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -120,6 +125,7 @@ jobs:
   build-windows:
     needs: build-frontend
     runs-on: windows-latest
+    name: Build Leetha Windows
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -140,6 +146,7 @@ jobs:
   release:
     needs: [build-frontend, build-wheel, build-deb, build-rpm, build-macos, build-windows]
     runs-on: ubuntu-latest
+    name: Create Leetha Release
     steps:
       - uses: actions/download-artifact@v4
         with:
