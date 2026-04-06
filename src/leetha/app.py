@@ -519,12 +519,11 @@ class LeethaApp:
         except Exception:
             logger.debug("Sighting prune failed", exc_info=True)
 
-    def _handle_dhcp_anomalies(self, future):
+    def _handle_dhcp_anomalies(self, future, loop):
         """Process DHCP anomaly results from background thread."""
         try:
             anomalies = future.result()
             if anomalies:
-                loop = asyncio.get_event_loop()
                 asyncio.run_coroutine_threadsafe(
                     self._write_dhcp_anomaly_findings(anomalies),
                     loop,
@@ -728,6 +727,7 @@ class LeethaApp:
         """Submit DHCP options for anomaly analysis."""
         raw_opts = packet.fields.get("raw_options")
         if raw_opts:
+            loop = asyncio.get_running_loop()
             future = self._analysis_executor.submit(
                 analyze_dhcp_options,
                 raw_opts,
@@ -735,7 +735,7 @@ class LeethaApp:
                 packet.ip_addr or "",
                 self.config.data_dir,
             )
-            future.add_done_callback(lambda f: self._handle_dhcp_anomalies(f))
+            future.add_done_callback(lambda f: self._handle_dhcp_anomalies(f, loop))
 
     async def _on_gateway_hint(self, mac, ip, source, interface):
         """Auto-learn gateway from DHCP/RA."""
