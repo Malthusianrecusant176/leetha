@@ -64,6 +64,118 @@ class VerdictRepository:
         rows = await cursor.fetchall()
         return [self._row_to_verdict(r) for r in rows]
 
+    async def list_devices(
+        self,
+        *,
+        page: int = 1,
+        per_page: int = 50,
+        sort: str = "last_seen",
+        order: str = "desc",
+        q: str | None = None,
+        manufacturer: str | None = None,
+        device_type: str | None = None,
+        os_family: str | None = None,
+        alert_status: str | None = None,
+        interface: str | None = None,
+        confidence_min: int | None = None,
+    ) -> tuple[list[dict], int]:
+        """Return paginated, filtered device list with total count.
+
+        Performs a single JOIN between verdicts and hosts instead of N+1 queries.
+        Returns (rows, total_count).
+        """
+        select = """
+            SELECT v.hw_addr, v.category, v.vendor, v.platform,
+                   v.platform_version, v.model, v.hostname, v.certainty,
+                   h.ip_addr, h.ip_v6, h.discovered_at, h.last_active,
+                   h.mac_randomized, h.real_hw_addr, h.disposition,
+                   h.identity_id
+            FROM verdicts v
+            LEFT JOIN hosts h ON v.hw_addr = h.hw_addr
+        """
+        count_select = """
+            SELECT COUNT(*)
+            FROM verdicts v
+            LEFT JOIN hosts h ON v.hw_addr = h.hw_addr
+        """
+
+        conditions: list[str] = []
+        params: list = []
+
+        if q:
+            conditions.append(
+                "(v.hw_addr LIKE ? OR v.hostname LIKE ? OR v.vendor LIKE ? OR h.ip_addr LIKE ?)"
+            )
+            like = f"%{q}%"
+            params.extend([like, like, like, like])
+        if manufacturer:
+            conditions.append("v.vendor = ?")
+            params.append(manufacturer)
+        if device_type:
+            conditions.append("v.category = ?")
+            params.append(device_type)
+        if os_family:
+            conditions.append("v.platform = ?")
+            params.append(os_family)
+        if alert_status:
+            conditions.append("h.disposition = ?")
+            params.append(alert_status)
+        if confidence_min is not None:
+            conditions.append("v.certainty >= ?")
+            params.append(confidence_min)
+        if interface:
+            conditions.append(
+                "v.hw_addr IN (SELECT DISTINCT hw_addr FROM sightings WHERE interface = ?)"
+            )
+            params.append(interface)
+
+        where = ""
+        if conditions:
+            where = " WHERE " + " AND ".join(conditions)
+
+        sort_col_map = {
+            "last_seen": "h.last_active",
+            "first_seen": "h.discovered_at",
+            "confidence": "v.certainty",
+            "mac": "v.hw_addr",
+            "manufacturer": "v.vendor",
+            "device_type": "v.category",
+            "hostname": "v.hostname",
+        }
+        sort_col = sort_col_map.get(sort, "h.last_active")
+        sort_dir = "DESC" if order == "desc" else "ASC"
+
+        cursor = await self._conn.execute(count_select + where, params)
+        total = (await cursor.fetchone())[0]
+
+        offset = (page - 1) * per_page
+        full_query = f"{select}{where} ORDER BY {sort_col} {sort_dir} NULLS LAST LIMIT ? OFFSET ?"
+        cursor = await self._conn.execute(full_query, params + [per_page, offset])
+        rows = await cursor.fetchall()
+
+        devices = []
+        for row in rows:
+            devices.append({
+                "mac": row["hw_addr"],
+                "manufacturer": row["vendor"],
+                "device_type": row["category"],
+                "os_family": row["platform"],
+                "os_version": row["platform_version"],
+                "hostname": row["hostname"],
+                "confidence": row["certainty"],
+                "model": row["model"],
+                "ip_v4": row["ip_addr"],
+                "ip_v6": row["ip_v6"],
+                "first_seen": row["discovered_at"],
+                "last_seen": row["last_active"],
+                "alert_status": row["disposition"] or "new",
+                "is_randomized_mac": bool(row["mac_randomized"]) if row["mac_randomized"] is not None else False,
+                "correlated_mac": row["real_hw_addr"],
+                "identity_id": row["identity_id"] if "identity_id" in row.keys() else None,
+            })
+
+        return devices, total
+
     def _row_to_verdict(self, row) -> Verdict:
         chain_data = json.loads(row["evidence_chain"]) if row["evidence_chain"] else []
         evidence_chain = []
