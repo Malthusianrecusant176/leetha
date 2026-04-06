@@ -40,13 +40,15 @@ class Pipeline:
     """
 
     def __init__(self, store, verdict_engine: VerdictEngine | None = None,
-                 on_verdict=None, on_arp=None, on_dhcp=None, on_gateway_hint=None):
+                 on_verdict=None, on_arp=None, on_dhcp=None, on_gateway_hint=None,
+                 is_local_mac=None):
         self.store = store
         self.verdict_engine = verdict_engine or VerdictEngine()
         self._on_verdict = on_verdict          # async(hw_addr, verdict, packet)
         self._on_arp = on_arp                  # async(packet)
         self._on_dhcp = on_dhcp                # callable(packet) -- sync fire-and-forget
         self._on_gateway_hint = on_gateway_hint  # async(mac, ip, source, interface)
+        self._is_local_mac = is_local_mac      # callable(mac) -> bool
         self._lookup = FingerprintLookup()
         self._evidence_buffer: dict[str, list[Evidence]] = defaultdict(list)
         self._oui_vendors: dict[str, str] = {}  # MAC -> OUI vendor name
@@ -216,11 +218,14 @@ class Pipeline:
                 real_mac = client_id
 
         # Preserve existing disposition so we don't reset "known" back to "new"
+        # Auto-tag local device MACs as "self"
         try:
             existing_host = await self.store.hosts.find_by_addr(hw_addr)
             disposition = existing_host.disposition if existing_host else "new"
         except Exception:
             disposition = "new"
+        if disposition != "self" and self._is_local_mac and self._is_local_mac(hw_addr):
+            disposition = "self"
 
         host = Host(
             hw_addr=hw_addr,

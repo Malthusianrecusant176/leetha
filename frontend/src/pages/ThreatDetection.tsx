@@ -544,7 +544,7 @@ function EvidenceSections({ detail }: { detail: IncidentDetail }) {
       )}
 
       {/* ARP History */}
-      {detail.arp_history.length > 0 && (
+      {(detail.arp_history?.length ?? 0) > 0 && (
         <DetailSection title={`ARP History (${detail.arp_history.length})`}>
           <div className="rounded-lg border border-border overflow-hidden">
             <table className="w-full">
@@ -579,7 +579,7 @@ function EvidenceSections({ detail }: { detail: IncidentDetail }) {
       )}
 
       {/* Fingerprint History */}
-      {detail.fingerprint_history.length > 0 && (
+      {(detail.fingerprint_history?.length ?? 0) > 0 && (
         <DetailSection title={`Fingerprint History (${detail.fingerprint_history.length})`}>
           <div className="space-y-1.5 max-h-[250px] overflow-y-auto">
             {detail.fingerprint_history.map((fh, i) => {
@@ -599,7 +599,7 @@ function EvidenceSections({ detail }: { detail: IncidentDetail }) {
       )}
 
       {/* Fingerprint Evidence */}
-      {detail.evidence.length > 0 && (
+      {(detail.evidence?.length ?? 0) > 0 && (
         <DetailSection title={`Fingerprint Evidence (${detail.evidence.length})`}>
           <div className="space-y-2 max-h-[300px] overflow-y-auto">
             {detail.evidence.map((ev, i) => {
@@ -635,7 +635,7 @@ function EvidenceSections({ detail }: { detail: IncidentDetail }) {
       )}
 
       {/* Recent Observations */}
-      {detail.recent_observations.length > 0 && (
+      {(detail.recent_observations?.length ?? 0) > 0 && (
         <DetailSection title={`Recent Observations (${Math.min(detail.recent_observations.length, 10)})`}>
           <div className="space-y-1 max-h-[250px] overflow-y-auto">
             {detail.recent_observations.slice(0, 10).map((obs, i) => {

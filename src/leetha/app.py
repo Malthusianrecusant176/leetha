@@ -150,6 +150,7 @@ class LeethaApp:
             on_arp=self._on_arp_packet,
             on_dhcp=self._on_dhcp_packet,
             on_gateway_hint=self._on_gateway_hint,
+            is_local_mac=self.is_local_device,
         )
 
         self._running = True
