@@ -19,6 +19,16 @@ from leetha.processors.registry import get_processor, get_all_processors
 from leetha.rules.registry import get_all_rules
 from leetha.store.models import Host, Sighting
 
+import ipaddress as _ipaddress
+
+
+def _is_private_ip(ip: str) -> bool:
+    """Check if an IPv4 address is RFC1918 private or link-local."""
+    try:
+        return _ipaddress.ip_address(ip).is_private
+    except (ValueError, TypeError):
+        return False
+
 logger = logging.getLogger(__name__)
 
 
@@ -182,6 +192,17 @@ class Pipeline:
                 ip_v6 = raw_ip
             else:
                 ip_v4 = raw_ip
+
+        # Don't overwrite a private IP with a public one — the public IP
+        # is likely from NAT'd traffic (e.g., router forwarding DNS responses
+        # from Cloudflare 162.x.x.x). Keep the device's real LAN address.
+        if ip_v4 and not _is_private_ip(ip_v4):
+            try:
+                existing = await self.store.hosts.find_by_addr(hw_addr)
+                if existing and existing.ip_addr and _is_private_ip(existing.ip_addr):
+                    ip_v4 = None  # keep existing private IP
+            except Exception:
+                pass
 
         # MAC randomization detection
         from leetha.fingerprint.mac_intel import is_randomized_mac
