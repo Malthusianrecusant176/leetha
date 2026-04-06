@@ -185,7 +185,7 @@ export default function Devices({ subscribe }: DevicesProps) {
     return subscribe((msg) => {
       if (msg.device) {
         const now = Date.now();
-        if (now - lastInvalidate.current > 5000) {
+        if (now - lastInvalidate.current > 2000) {
           lastInvalidate.current = now;
           queryClient.invalidateQueries({ queryKey: ["devices"] });
         } else if (!invalidateTimer.current) {
@@ -193,7 +193,7 @@ export default function Devices({ subscribe }: DevicesProps) {
             invalidateTimer.current = null;
             lastInvalidate.current = Date.now();
             queryClient.invalidateQueries({ queryKey: ["devices"] });
-          }, 5000);
+          }, 2000);
         }
       }
     });

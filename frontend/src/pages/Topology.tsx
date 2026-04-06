@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import type { WsMessage } from "@/hooks/use-websocket";
 import {
   ReactFlow,
   Controls,
@@ -98,11 +99,25 @@ async function computeElkLayout(
   }
 }
 
-function TopologyInner() {
+interface TopologyInnerProps {
+  subscribe: (handler: (msg: WsMessage) => void) => () => void;
+}
+
+function TopologyInner({ subscribe }: TopologyInnerProps) {
+  const queryClient = useQueryClient();
+
+  useEffect(() => {
+    return subscribe((msg) => {
+      if (msg.device) {
+        queryClient.invalidateQueries({ queryKey: ["topology"] });
+      }
+    });
+  }, [subscribe, queryClient]);
+
   const { data, isLoading } = useQuery({
     queryKey: ["topology"],
     queryFn: fetchTopology,
-    refetchInterval: 30000,
+    refetchInterval: 15000,
   });
 
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
@@ -392,10 +407,14 @@ function TopologyInner() {
   );
 }
 
-export default function Topology() {
+interface TopologyProps {
+  subscribe: (handler: (msg: WsMessage) => void) => () => void;
+}
+
+export default function Topology({ subscribe }: TopologyProps) {
   return (
     <ReactFlowProvider>
-      <TopologyInner />
+      <TopologyInner subscribe={subscribe} />
     </ReactFlowProvider>
   );
 }

@@ -87,13 +87,13 @@ export default function Dashboard({ wsStatus, subscribe }: DashboardProps) {
   const { data: statsData } = useQuery({ queryKey: ["stats"], queryFn: fetchStats, staleTime: 15000, refetchInterval: 30000 });
   const { data: recentDevices } = useQuery({ queryKey: ["dashboard-recent-devices"], queryFn: () => fetchDevices({ sort: "first_seen", order: "desc", per_page: 10, raw: true }), staleTime: 15000, refetchInterval: 30000 });
   const { data: alerts = [] } = useQuery({ queryKey: ["dashboard-alerts"], queryFn: () => fetchAlerts(), staleTime: 15000, refetchInterval: 30000 });
-  const { data: activityStats } = useQuery({ queryKey: ["stats-activity"], queryFn: fetchActivityStats, staleTime: 60000, refetchInterval: 60000 });
-  const { data: protoStats } = useQuery({ queryKey: ["stats-protocols"], queryFn: fetchProtocolStats, staleTime: 60000, refetchInterval: 60000 });
+  const { data: activityStats } = useQuery({ queryKey: ["stats-activity"], queryFn: fetchActivityStats, staleTime: 30000, refetchInterval: 30000 });
+  const { data: protoStats } = useQuery({ queryKey: ["stats-protocols"], queryFn: fetchProtocolStats, staleTime: 30000, refetchInterval: 30000 });
   const { data: alertTrend } = useQuery({ queryKey: ["stats-alert-trend"], queryFn: fetchAlertTrend, staleTime: 60000, refetchInterval: 60000 });
-  const { data: newDevices } = useQuery({ queryKey: ["stats-new-devices"], queryFn: fetchNewDevicesTimeline, staleTime: 60000, refetchInterval: 60000 });
+  const { data: newDevices } = useQuery({ queryKey: ["stats-new-devices"], queryFn: fetchNewDevicesTimeline, staleTime: 30000, refetchInterval: 30000 });
   const { data: topConns } = useQuery({ queryKey: ["stats-top-connections"], queryFn: fetchTopConnections, staleTime: 60000, refetchInterval: 60000 });
 
-  // --- WS: alert + finding toasts ---
+  // --- WS: alert + finding toasts + device updates ---
   useEffect(() => {
     return subscribe((msg) => {
       if (msg.alerts && msg.alerts.length > 0) {
@@ -114,8 +114,12 @@ export default function Dashboard({ wsStatus, subscribe }: DashboardProps) {
         queryClient.invalidateQueries({ queryKey: ["dashboard-alerts"] });
         queryClient.invalidateQueries({ queryKey: ["stats"] });
       }
+      if (msg.device) {
+        queryClient.invalidateQueries({ queryKey: ["stats"] });
+        queryClient.invalidateQueries({ queryKey: ["dashboard-recent-devices"] });
+      }
     });
-  }, [subscribe]);
+  }, [subscribe, queryClient]);
 
   // --- Derived ---
   const deviceCount = statsData?.device_count ?? 0;

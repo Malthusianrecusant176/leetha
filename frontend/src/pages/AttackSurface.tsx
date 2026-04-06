@@ -1,5 +1,6 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import type { WsMessage } from "@/hooks/use-websocket";
 import { toast } from "sonner";
 import {
   fetchAttackSurface,
@@ -146,13 +147,26 @@ function ChartTooltip({ active, payload, label }: { active?: boolean; payload?: 
 
 // --- Main ---
 
-export default function AttackSurface() {
+interface AttackSurfaceProps {
+  subscribe: (handler: (msg: WsMessage) => void) => () => void;
+}
+
+export default function AttackSurface({ subscribe }: AttackSurfaceProps) {
   const queryClient = useQueryClient();
+
+  useEffect(() => {
+    return subscribe((msg) => {
+      if (msg.device) {
+        queryClient.invalidateQueries({ queryKey: ["attack-surface"] });
+      }
+    });
+  }, [subscribe, queryClient]);
 
   const { data } = useQuery({
     queryKey: ["attack-surface"],
     queryFn: fetchAttackSurface,
     staleTime: 30000,
+    refetchInterval: 30000,
   });
 
   const { data: exclusionsData } = useQuery({

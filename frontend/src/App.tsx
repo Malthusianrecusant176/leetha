@@ -57,9 +57,9 @@ export default function App() {
           <Route path="/" element={<Shell title="Overview" wsStatus={wsStatus}><ErrorBoundary><Dashboard wsStatus={wsStatus} subscribe={subscribe} /></ErrorBoundary></Shell>} />
           <Route path="/inventory" element={<Shell title="Host Inventory" wsStatus={wsStatus}><ErrorBoundary><Devices wsStatus={wsStatus} subscribe={subscribe} /></ErrorBoundary></Shell>} />
           <Route path="/alerts" element={<Navigate to="/detections" replace />} />
-          <Route path="/detections" element={<Shell title="Detections" wsStatus={wsStatus}><ErrorBoundary><ThreatDetection /></ErrorBoundary></Shell>} />
-          <Route path="/exposure" element={<Shell title="Exposure Map" wsStatus={wsStatus}><ErrorBoundary><AttackSurface /></ErrorBoundary></Shell>} />
-          <Route path="/topology" element={<Shell title="Network Map" wsStatus={wsStatus}><ErrorBoundary><Topology /></ErrorBoundary></Shell>} />
+          <Route path="/detections" element={<Shell title="Detections" wsStatus={wsStatus}><ErrorBoundary><ThreatDetection subscribe={subscribe} /></ErrorBoundary></Shell>} />
+          <Route path="/exposure" element={<Shell title="Exposure Map" wsStatus={wsStatus}><ErrorBoundary><AttackSurface subscribe={subscribe} /></ErrorBoundary></Shell>} />
+          <Route path="/topology" element={<Shell title="Network Map" wsStatus={wsStatus}><ErrorBoundary><Topology subscribe={subscribe} /></ErrorBoundary></Shell>} />
           <Route path="/stream" element={<Shell title="Packet Stream" wsStatus={wsStatus}><ErrorBoundary><Console /></ErrorBoundary></Shell>} />
           <Route path="/feeds" element={<Shell title="Data Feeds" wsStatus={wsStatus}><ErrorBoundary><Sync /></ErrorBoundary></Shell>} />
           <Route path="/rules" element={<Shell title="Detection Rules" wsStatus={wsStatus}><ErrorBoundary><Patterns /></ErrorBoundary></Shell>} />

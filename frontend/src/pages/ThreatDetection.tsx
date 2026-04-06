@@ -1,5 +1,6 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import type { WsMessage } from "@/hooks/use-websocket";
 import { toast } from "sonner";
 import {
   fetchIncidents, fetchIncidentDetail,
@@ -82,17 +83,31 @@ function formatRelative(ts: string): string {
 //  Main page — split-pane triage view
 // ═══════════════════════════════════════════
 
-export default function ThreatDetection() {
+interface ThreatDetectionProps {
+  subscribe: (handler: (msg: WsMessage) => void) => () => void;
+}
+
+export default function ThreatDetection({ subscribe }: ThreatDetectionProps) {
+  const queryClient = useQueryClient();
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [configOpen, setConfigOpen] = useState(false);
   const [severityFilter, setSeverityFilter] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState<"severity" | "alerts" | "recent">("severity");
 
+  useEffect(() => {
+    return subscribe((msg) => {
+      if (msg.type === "finding_created" || msg.device) {
+        queryClient.invalidateQueries({ queryKey: ["incidents"] });
+      }
+    });
+  }, [subscribe, queryClient]);
+
   const { data: incidentData } = useQuery({
     queryKey: ["incidents"],
     queryFn: fetchIncidents,
     staleTime: 10000,
+    refetchInterval: 15000,
   });
 
   const counts = incidentData?.counts ?? { threat: 0, suspicious: 0, informational: 0, total: 0 };
