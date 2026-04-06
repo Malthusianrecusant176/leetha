@@ -159,10 +159,8 @@ class Pipeline:
                         and oui_vendor.lower() not in (ev.vendor or "").lower()):
                     ev.certainty = min(ev.certainty, 0.30)
 
-        if not evidence_list:
-            return
-
-        # 2. Record sighting (non-fatal if it fails)
+        # 2. Record sighting (non-fatal if it fails) — always record
+        # regardless of evidence so protocol coverage stats are accurate
         try:
             sighting = Sighting(
                 hw_addr=hw_addr,
@@ -176,6 +174,9 @@ class Pipeline:
             await self.store.sightings.record(sighting)
         except Exception:
             logger.debug("Sighting record failed", exc_info=True)
+
+        if not evidence_list:
+            return
 
         # 3. Accumulate evidence and compute verdict
         self._evidence_buffer[hw_addr].extend(evidence_list)
