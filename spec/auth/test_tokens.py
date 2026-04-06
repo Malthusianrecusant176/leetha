@@ -44,13 +44,15 @@ def test_save_and_load_admin_token(tmp_path):
     assert token_file.exists()
     assert token_file.read_text().strip() == token
 
-    # File permissions: owner read/write only (0600)
-    mode = oct(token_file.stat().st_mode & 0o777)
-    assert mode == "0o600"
+    # File permissions: owner read/write only (0600) — Unix only
+    import platform
+    if platform.system() != "Windows":
+        mode = oct(token_file.stat().st_mode & 0o777)
+        assert mode == "0o600"
 
-    # Directory permissions: owner only (0700)
-    dir_mode = oct(leetha_dir.stat().st_mode & 0o777)
-    assert dir_mode == "0o700"
+        # Directory permissions: owner only (0700)
+        dir_mode = oct(leetha_dir.stat().st_mode & 0o777)
+        assert dir_mode == "0o700"
 
 
 def test_load_admin_token(tmp_path):

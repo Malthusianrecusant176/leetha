@@ -1,4 +1,5 @@
 """Tests for identity shift detection rule."""
+import sys
 import pytest
 from unittest.mock import AsyncMock, MagicMock
 from datetime import datetime, timedelta
@@ -12,6 +13,14 @@ def store():
     s.verdicts = AsyncMock()
     s.hosts = AsyncMock()
     return s
+
+
+def _get_rule():
+    """Get IdentityShiftRule from the live module (survives importlib.reload)."""
+    import leetha.rules.drift  # ensure imported
+    mod = sys.modules["leetha.rules.drift"]
+    mod._last_fired.clear()
+    return mod.IdentityShiftRule()
 
 
 def _verdict(hw="aa:bb:cc:dd:ee:ff", category=None, vendor=None,
@@ -31,14 +40,10 @@ def _host(hw="aa:bb:cc:dd:ee:ff", age_seconds=120):
 
 
 class TestIdentityShift:
-    def setup_method(self):
-        import leetha.rules.drift
-        leetha.rules.drift._last_fired.clear()
 
     @pytest.mark.asyncio
     async def test_category_change_fires_critical(self, store):
-        from leetha.rules.drift import IdentityShiftRule
-        rule = IdentityShiftRule()
+        rule = _get_rule()
         old = _verdict(category="printer", vendor="HP", certainty=85)
         store.verdicts.find_by_addr = AsyncMock(return_value=old)
         result = await rule.evaluate(_host(), _verdict(category="laptop", vendor="Dell", certainty=80), store)
@@ -48,8 +53,7 @@ class TestIdentityShift:
 
     @pytest.mark.asyncio
     async def test_vendor_change_fires_critical(self, store):
-        from leetha.rules.drift import IdentityShiftRule
-        rule = IdentityShiftRule()
+        rule = _get_rule()
         store.verdicts.find_by_addr = AsyncMock(return_value=_verdict(category="laptop", vendor="Apple", certainty=85))
         result = await rule.evaluate(_host(), _verdict(category="laptop", vendor="Samsung", certainty=80), store)
         assert result is not None
@@ -57,8 +61,7 @@ class TestIdentityShift:
 
     @pytest.mark.asyncio
     async def test_platform_change_fires_high(self, store):
-        from leetha.rules.drift import IdentityShiftRule
-        rule = IdentityShiftRule()
+        rule = _get_rule()
         store.verdicts.find_by_addr = AsyncMock(return_value=_verdict(category="laptop", vendor="Dell", platform="Windows", certainty=80))
         result = await rule.evaluate(_host(), _verdict(category="laptop", vendor="Dell", platform="Linux", certainty=80), store)
         assert result is not None
@@ -66,8 +69,7 @@ class TestIdentityShift:
 
     @pytest.mark.asyncio
     async def test_version_change_fires_info(self, store):
-        from leetha.rules.drift import IdentityShiftRule
-        rule = IdentityShiftRule()
+        rule = _get_rule()
         store.verdicts.find_by_addr = AsyncMock(return_value=_verdict(category="laptop", vendor="Dell", platform="Windows", platform_version="10", certainty=80))
         result = await rule.evaluate(_host(), _verdict(category="laptop", vendor="Dell", platform="Windows", platform_version="11", certainty=80), store)
         assert result is not None
@@ -75,48 +77,42 @@ class TestIdentityShift:
 
     @pytest.mark.asyncio
     async def test_no_change_returns_none(self, store):
-        from leetha.rules.drift import IdentityShiftRule
-        rule = IdentityShiftRule()
+        rule = _get_rule()
         store.verdicts.find_by_addr = AsyncMock(return_value=_verdict(category="laptop", vendor="Dell", platform="Windows", certainty=80))
         result = await rule.evaluate(_host(), _verdict(category="laptop", vendor="Dell", platform="Windows", certainty=85), store)
         assert result is None
 
     @pytest.mark.asyncio
     async def test_low_certainty_old_skips(self, store):
-        from leetha.rules.drift import IdentityShiftRule
-        rule = IdentityShiftRule()
+        rule = _get_rule()
         store.verdicts.find_by_addr = AsyncMock(return_value=_verdict(category="printer", certainty=30))
         result = await rule.evaluate(_host(), _verdict(category="laptop", certainty=80), store)
         assert result is None
 
     @pytest.mark.asyncio
     async def test_low_certainty_new_skips(self, store):
-        from leetha.rules.drift import IdentityShiftRule
-        rule = IdentityShiftRule()
+        rule = _get_rule()
         store.verdicts.find_by_addr = AsyncMock(return_value=_verdict(category="printer", certainty=80))
         result = await rule.evaluate(_host(), _verdict(category="laptop", certainty=30), store)
         assert result is None
 
     @pytest.mark.asyncio
     async def test_few_evidence_skips(self, store):
-        from leetha.rules.drift import IdentityShiftRule
-        rule = IdentityShiftRule()
+        rule = _get_rule()
         store.verdicts.find_by_addr = AsyncMock(return_value=_verdict(category="printer", certainty=80, evidence_count=2))
         result = await rule.evaluate(_host(), _verdict(category="laptop", certainty=80), store)
         assert result is None
 
     @pytest.mark.asyncio
     async def test_grace_period_skips(self, store):
-        from leetha.rules.drift import IdentityShiftRule
-        rule = IdentityShiftRule()
+        rule = _get_rule()
         store.verdicts.find_by_addr = AsyncMock(return_value=_verdict(category="printer", certainty=80))
         result = await rule.evaluate(_host(age_seconds=30), _verdict(category="laptop", certainty=80), store)
         assert result is None
 
     @pytest.mark.asyncio
     async def test_no_existing_verdict_skips(self, store):
-        from leetha.rules.drift import IdentityShiftRule
-        rule = IdentityShiftRule()
+        rule = _get_rule()
         store.verdicts.find_by_addr = AsyncMock(return_value=None)
         result = await rule.evaluate(_host(), _verdict(category="laptop", certainty=80), store)
         assert result is None
