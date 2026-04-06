@@ -2350,12 +2350,11 @@ DELL_MAC_PREFIXES: Dict[str, Tuple[str, str, Optional[str]]] = {
     "F8:CA:B8": ("computer", "Computing", "Dell"),
     "F8:DB:88": ("computer", "Computing", "Dell"),
 
-    # Dell Networking (switches)
+    # Dell Networking (dedicated switch OUI)
     "00:01:E8": ("switch", "Network Equipment", "Dell Switch"),
-    "00:1E:C9": ("switch", "Network Equipment", "Dell Switch"),
-    "34:17:EB": ("switch", "Network Equipment", "Dell Switch"),
-    "4C:76:25": ("switch", "Network Equipment", "Dell Switch"),
-    "F4:8E:38": ("switch", "Network Equipment", "Dell Switch"),
+    # NOTE: 00:1E:C9, 34:17:EB, 4C:76:25, F4:8E:38 are shared across Dell
+    # servers, laptops, AND switches — classified as "computer" above.
+    # Real Dell switches will be identified via LLDP/CDP capabilities.
 }
 
 DELL_BANNER_PATTERNS: List[Tuple[str, str, str, Optional[str]]] = [
