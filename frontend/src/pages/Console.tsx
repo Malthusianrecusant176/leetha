@@ -514,7 +514,9 @@ export default function Console() {
           toast.success(`Import complete: ${data.filename} — ${data.processed} packets processed`);
           return;
         }
+        if (data.type === "finding_created") return;
         if (pausedRef.current) return;
+        if (!data.protocol) return;
         packetsRef.current.push(data);
         if (packetsRef.current.length > MAX_PACKETS) packetsRef.current = packetsRef.current.slice(-MAX_PACKETS);
         // Throttle: update state max 2x/sec
