@@ -490,10 +490,12 @@ class SignatureMatcher:
                     ))
                     break
 
-        # Huginn MAC vendor table
-        huginn_hit = self._resolve_huginn_mac(norm)
-        if huginn_hit:
-            hits.append(huginn_hit)
+        # Huginn MAC vendor table — only fall back to the massive
+        # huginn_mac_vendors (667 MB) if OUI lookup returned nothing
+        if not hits:
+            huginn_hit = self._resolve_huginn_mac(norm)
+            if huginn_hit:
+                hits.append(huginn_hit)
 
         return hits
 

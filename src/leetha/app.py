@@ -155,12 +155,12 @@ class LeethaApp:
 
         self._running = True
 
-        # Preload smaller Huginn caches in a background thread so the
-        # event loop stays responsive.  The massive huginn_mac_vendors
-        # file (667 MB) is NOT preloaded — it's accessed on-demand via
-        # the OUI index which is already built at import time.
+        # Fire-and-forget: preload smaller Huginn caches in a background
+        # thread.  Not awaited so the pipeline starts immediately.
+        # huginn_dhcp (138 MB) and huginn_mac_vendors (667 MB) are NOT
+        # preloaded — loaded on-demand only when needed.
         loop = asyncio.get_running_loop()
-        await loop.run_in_executor(None, self._preload_caches)
+        loop.run_in_executor(None, self._preload_caches)
 
         if self.config.probe_enabled:
             probe_engine = ProbeEngine()
@@ -250,10 +250,9 @@ class LeethaApp:
         for name in (
             "huginn_combinations", "huginn_dhcpv6",  # small files first
             "huginn_dhcp_vendor", "huginn_dhcpv6_enterprise",
-            "huginn_devices", "huginn_dhcp",
-            # NOTE: huginn_mac_vendors (667 MB) is NOT preloaded.
-            # The OUI index (75K prefixes) handles MAC lookups.
-            # The full file is loaded on-demand only when needed.
+            "huginn_devices",
+            # huginn_dhcp (138 MB) loaded on-demand only
+            # huginn_mac_vendors (667 MB) NOT preloaded — OUI index handles MAC lookups
         ):
             if name in lookup._json_cache:
                 continue
@@ -268,6 +267,7 @@ class LeethaApp:
                 lookup._json_cache[name] = data
                 elapsed = _time.monotonic() - t1
                 logger.debug("Preloaded %s (%.1fs)", name, elapsed)
+                _time.sleep(0.1)  # Yield GIL so event loop can make progress
             except Exception as exc:
                 logger.warning("Failed to preload %s: %s", name, exc)
                 lookup._json_cache[name] = None
