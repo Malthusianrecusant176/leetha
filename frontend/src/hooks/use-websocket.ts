@@ -9,6 +9,13 @@ export interface WsMessage {
   alerts?: Array<Record<string, unknown>>;
   packet?: Record<string, unknown>;
   matches?: Array<Record<string, unknown>>;
+  finding?: {
+    hw_addr: string;
+    rule: string;
+    severity: string;
+    message: string;
+    timestamp: string | null;
+  };
   // Import progress
   filename?: string;
   processed?: number;
@@ -89,6 +96,11 @@ export function useWebSocket(path = "/ws") {
       // Alerts — dispatch immediately
       if (data.alerts && data.alerts.length > 0) {
         dispatch({ alerts: data.alerts });
+      }
+
+      // Findings — dispatch immediately
+      if (data.type === "finding_created" && data.finding) {
+        dispatch(data);
       }
 
       // Device — batch, flush max 1/sec

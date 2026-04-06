@@ -93,7 +93,7 @@ export default function Dashboard({ wsStatus, subscribe }: DashboardProps) {
   const { data: newDevices } = useQuery({ queryKey: ["stats-new-devices"], queryFn: fetchNewDevicesTimeline, staleTime: 60000, refetchInterval: 60000 });
   const { data: topConns } = useQuery({ queryKey: ["stats-top-connections"], queryFn: fetchTopConnections, staleTime: 60000, refetchInterval: 60000 });
 
-  // --- WS: alert toasts only ---
+  // --- WS: alert + finding toasts ---
   useEffect(() => {
     return subscribe((msg) => {
       if (msg.alerts && msg.alerts.length > 0) {
@@ -104,6 +104,15 @@ export default function Dashboard({ wsStatus, subscribe }: DashboardProps) {
           else if (severity === "warning") toast.warning(message);
           else toast.info(message);
         }
+      }
+      if (msg.type === "finding_created" && msg.finding) {
+        const f = msg.finding;
+        const severity = f.severity ?? "info";
+        if (severity === "critical" || severity === "high") toast.error(f.message);
+        else if (severity === "warning") toast.warning(f.message);
+        else toast.info(f.message);
+        queryClient.invalidateQueries({ queryKey: ["dashboard-alerts"] });
+        queryClient.invalidateQueries({ queryKey: ["stats"] });
       }
     });
   }, [subscribe]);
