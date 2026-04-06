@@ -158,8 +158,8 @@ export default function Settings() {
       await clearDatabase();
       // Force refetch everything — device count, stats, db info
       await queryClient.refetchQueries({ queryKey: ["db-info"] });
-      queryClient.invalidateQueries({ queryKey: ["stats"] });
-      queryClient.invalidateQueries({ queryKey: ["devices"] });
+      await queryClient.invalidateQueries({ queryKey: ["stats"] });
+      await queryClient.invalidateQueries({ queryKey: ["devices"] });
       toast.success("Database cleared — all hosts removed");
     } catch (err) { toast.error(err instanceof Error ? err.message : "Failed to clear database"); }
   }, [queryClient]);

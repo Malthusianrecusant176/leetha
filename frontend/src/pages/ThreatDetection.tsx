@@ -110,7 +110,13 @@ export default function ThreatDetection({ subscribe }: ThreatDetectionProps) {
     refetchInterval: 15000,
   });
 
-  const counts = incidentData?.counts ?? { threat: 0, suspicious: 0, informational: 0, total: 0 };
+  const rawCounts = incidentData?.counts ?? {};
+  const counts = {
+    threat: rawCounts.threat ?? 0,
+    suspicious: rawCounts.suspicious ?? 0,
+    informational: rawCounts.informational ?? 0,
+    total: rawCounts.total ?? 0,
+  };
   const findings = incidentData?.incidents ?? [];
 
   const selectedFinding = findings.find((f) => f.id === selectedId) ?? null;

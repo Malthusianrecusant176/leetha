@@ -90,7 +90,7 @@ export default function Patterns() {
     }
   };
 
-  const totalPatterns = Object.values(patterns).reduce((sum, arr) => sum + arr.length, 0);
+  const totalPatterns = Object.values(patterns).reduce((sum, arr) => sum + (Array.isArray(arr) ? arr.length : 0), 0);
 
   return (
     <div className="space-y-6">

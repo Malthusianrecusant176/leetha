@@ -104,6 +104,7 @@ export function DeviceDrawer({ mac, open, onClose }: DeviceDrawerProps) {
       recommendations: Array<{ priority: string; message: string; action: string }>;
     }>(`/api/devices/${encodeURIComponent(mac!)}/coverage`),
     enabled: !!mac && open,
+    staleTime: 0,
   });
 
   const device = detailData?.device;
