@@ -91,29 +91,6 @@ class NameResolutionProcessor(Processor):
                     raw={"query": query_name, "type": "ntp_server"},
                 ))
 
-        # DNS domain -> platform/vendor inference
-        domain = query_name.lower() if query_name else ""
-        if domain:
-            dns_vendor = None
-            dns_platform = None
-            if any(d in domain for d in (".apple.com", ".icloud.com", "apple-dns.net", "mzstatic.com")):
-                dns_vendor = "Apple"
-                dns_platform = "iOS/macOS"
-            elif any(d in domain for d in (".microsoft.com", ".windows.com", "windowsupdate.com", ".msftconnecttest.com")):
-                dns_platform = "Windows"
-            elif any(d in domain for d in (".android.com", "play.googleapis.com", "connectivitycheck.gstatic.com")):
-                dns_platform = "Android"
-            elif "ubuntu.com" in domain:
-                dns_platform = "Linux"
-
-            if dns_vendor or dns_platform:
-                evidence.append(Evidence(
-                    source="dns", method="pattern", certainty=0.55,
-                    vendor=dns_vendor,
-                    platform=dns_platform,
-                    raw={"query_name": query_name, "inferred_platform": dns_platform},
-                ))
-
         # Feed into behavioral profiler
         try:
             from leetha.rules.behavioral import _shared_tracker

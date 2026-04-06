@@ -38,15 +38,15 @@ class ServiceFingerprintProcessor(Processor):
                 raw={"ttl": ttl, "os_hint": os_hint},
             ))
 
-        # TCP signature (window + MSS + options) for OS fingerprinting
+        # TCP signature (window + MSS + options) -- stored as raw evidence
+        # but NOT used for platform inference.  Embedded devices, routers,
+        # and smart speakers share identical TCP stacks with Linux/Windows.
         if window_size is not None:
             mss_str = str(mss) if mss else "*"
             sig = f"{ttl}:{window_size}:{mss_str}:{tcp_options}"
-            os_from_sig = self._match_tcp_signature(window_size, mss, tcp_options)
             evidence.append(Evidence(
                 source="tcp_syn_sig", method="pattern",
-                certainty=0.65 if os_from_sig else 0.40,
-                platform=os_from_sig,
+                certainty=0.40,
                 raw={"signature": sig, "window_size": window_size,
                      "mss": mss, "tcp_options": tcp_options},
             ))
@@ -76,22 +76,8 @@ class ServiceFingerprintProcessor(Processor):
             ))
 
         if sni:
-            # Use SNI for cloud/platform hints
-            sni_lower = sni.lower()
-            sni_vendor = None
-            sni_platform = None
-            if ".apple.com" in sni_lower or ".icloud.com" in sni_lower:
-                sni_vendor = "Apple"
-                sni_platform = "iOS/macOS"
-            elif ".microsoft.com" in sni_lower or ".windows.com" in sni_lower or ".windowsupdate.com" in sni_lower:
-                sni_platform = "Windows"
-            elif ".android.com" in sni_lower or "play.googleapis.com" in sni_lower:
-                sni_platform = "Android"
-
             evidence.append(Evidence(
                 source="tls_sni", method="exact", certainty=0.70,
-                vendor=sni_vendor,
-                platform=sni_platform,
                 raw={"sni": sni},
             ))
 
@@ -121,40 +107,15 @@ class ServiceFingerprintProcessor(Processor):
 
     @staticmethod
     def _ttl_os_hint(ttl: int) -> str | None:
-        """Map initial TTL to likely OS family.
+        """TTL is not reliable for OS identification in passive monitoring.
 
-        Not definitive but useful as weak evidence when combined with other signals.
+        Many device categories share TTL ranges:
+        - TTL 64: Linux, macOS, iOS, Android, FreeBSD, embedded, most IoT
+        - TTL 128: Windows, UniFi OS, many routers/switches
+        - TTL 255: Network infrastructure
+
+        Platform should come from DHCP options, mDNS, DNS patterns, user-agent.
         """
-        if ttl <= 32:
-            return None  # Too ambiguous
-        elif ttl <= 64:
-            return "Linux"  # Linux, macOS, iOS, Android, FreeBSD
-        elif ttl <= 128:
-            return "Windows"
-        elif ttl <= 255:
-            return None  # Network devices, too varied
-        return None
-
-    @staticmethod
-    def _match_tcp_signature(window_size: int, mss: int | None, tcp_options: str) -> str | None:
-        """Match TCP SYN parameters to known OS fingerprints."""
-        opts = tcp_options or ""
-
-        # Windows 10/11: window=65535, mss=1460, options include M,N,W,N,N,S
-        if window_size == 65535 and mss == 1460 and "M,N,W,N,N,S" in opts:
-            return "Windows"
-        # Windows 10/11 alternate: window=64240
-        if window_size == 64240 and mss == 1460:
-            return "Windows"
-        # Linux: window=29200 or 65535 with M,S,T,N,W
-        if mss == 1460 and ("S,T,N,W" in opts or "M,S,T,N,W" in opts):
-            return "Linux"
-        # macOS/iOS: window=65535, mss=1460, options include M,N,W,N,N,T,S
-        if window_size == 65535 and mss == 1460 and "T,S" in opts and "N,W" in opts:
-            return "macOS"
-        # Linux: window=5840 or 14600 or 29200
-        if window_size in (5840, 14600, 29200) and mss == 1460:
-            return "Linux"
         return None
 
     @staticmethod

@@ -41,18 +41,15 @@ class PassiveObserverProcessor(Processor):
 
     @staticmethod
     def _ttl_os_hint(ttl: int) -> str | None:
-        """Map initial TTL to likely OS family.
+        """TTL is not reliable for OS identification in passive monitoring.
 
-        Not definitive but useful as weak evidence when combined with other signals.
+        Many device categories share TTL ranges:
+        - TTL 64: Linux, macOS, iOS, Android, FreeBSD, embedded, most IoT
+        - TTL 128: Windows, UniFi OS, many routers/switches
+        - TTL 255: Network infrastructure
+
+        Platform should come from DHCP options, mDNS, DNS patterns, user-agent.
         """
-        if ttl <= 32:
-            return None  # Too ambiguous
-        elif ttl <= 64:
-            return "Linux"  # Linux, macOS, iOS, Android, FreeBSD
-        elif ttl <= 128:
-            return "Windows"
-        elif ttl <= 255:
-            return None  # Network devices, too varied
         return None
 
     @staticmethod

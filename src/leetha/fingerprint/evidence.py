@@ -46,18 +46,23 @@ _TRUST_TIER_2 = {
     "ws_discovery": 0.85,
     "huginn_dhcp_vendor": 0.78,
     "ja4": 0.78,
+    "tls_ja4": 0.78,
     "dns": 0.77,
     "dhcp_vendor": 0.75,
     "ja3": 0.75,
+    "tls_ja3": 0.75,
 }
 
 _TRUST_TIER_3 = {
     # Complementary / lower-fidelity signals
+    "mdns_txt": 0.75,
     "huginn_dhcpv6": 0.72,
     "huginn_dhcpv6_enterprise": 0.72,
+    "mdns_service": 0.72,
     "netbios": 0.72,
     "hostname": 0.72,
     "dhcp": 0.68,
+    "mdns_name": 0.65,
 }
 
 _TRUST_AI = {
@@ -71,6 +76,10 @@ _TRUST_TIER_4 = {
     "ttl": 0.55,
     "ntp": 0.55,
     "dns_ntp_hint": 0.55,
+    "tcp_syn_sig": 0.40,
+    "ip_observed_port": 0.35,
+    "tcp_syn_ttl": 0.30,
+    "ip_observed_ttl": 0.25,
 }
 
 # Merged lookup -- public so other modules can inspect source weights
@@ -351,6 +360,7 @@ _VENDOR_TO_DEFAULT_OS: dict[str, str | dict[str, str]] = {
     "sony": {"game_console": "PlayStation", "_default": None},
     "nintendo": "Nintendo",
     "microsoft": {"game_console": "Xbox", "_default": None},
+    "sonos": "Sonos S2",
     "roku": "RokuOS",
     "proxmox": {"hypervisor": "Proxmox VE", "_default": "Linux"},
     "citrix": {"hypervisor": "XenServer", "load_balancer": "NetScaler", "_default": None},
