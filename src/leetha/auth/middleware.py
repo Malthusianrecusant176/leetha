@@ -56,10 +56,12 @@ async def auth_middleware(request: Request, call_next, *, db, auth_enabled: bool
         request.scope["auth_role"] = "anonymous"
         return await call_next(request)
 
-    # Database not ready yet (app still initializing) — let request through
+    # Database not ready yet — fail closed
     if db is None:
-        request.scope["auth_role"] = "admin"
-        return await call_next(request)
+        return JSONResponse(
+            status_code=503,
+            content={"error": "Service initializing", "status": "starting"},
+        )
 
     raw_token = None
     auth_header = request.headers.get("authorization", "")
@@ -80,9 +82,10 @@ async def auth_middleware(request: Request, call_next, *, db, auth_enabled: bool
     try:
         token_info = await db.validate_token(hash_token(raw_token))
     except Exception:
-        # DB not fully initialized — allow through temporarily
-        request.scope["auth_role"] = "admin"
-        return await call_next(request)
+        return JSONResponse(
+            status_code=503,
+            content={"error": "Service initializing", "status": "starting"},
+        )
 
     if token_info is None:
         return JSONResponse(
