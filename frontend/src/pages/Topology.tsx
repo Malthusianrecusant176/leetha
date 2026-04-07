@@ -296,9 +296,20 @@ function TopologyInner({ subscribe }: TopologyInnerProps) {
       >
         <Controls position="bottom-left" />
         <MiniMap
+          position="top-right"
           nodeColor={(n) => DEVICE_TYPE_COLORS[(n.data as any)?.type] ?? "#64748b"}
-          maskColor="rgba(0,0,0,0.7)"
-          style={{ background: "#1a1a2e" }}
+          maskColor="rgba(0,0,0,0.55)"
+          nodeBorderRadius={3}
+          nodeStrokeWidth={0}
+          style={{
+            background: "rgba(15, 15, 30, 0.85)",
+            backdropFilter: "blur(8px)",
+            borderRadius: "10px",
+            border: "1px solid rgba(255,255,255,0.08)",
+            boxShadow: "0 4px 20px rgba(0,0,0,0.4)",
+            width: 180,
+            height: 120,
+          }}
         />
         <Background variant={BackgroundVariant.Dots} gap={20} size={1} color="#ffffff08" />
       </ReactFlow>

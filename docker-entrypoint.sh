@@ -1,6 +1,8 @@
 #!/bin/sh
-# Ensure the data directory is writable by appuser.
-# Docker named volumes mount as root — fix ownership on every start.
-chown -R appuser:appuser /home/appuser/.leetha 2>/dev/null || true
+# Fix volume ownership if running as root (e.g., docker run --user root).
+# When running as appuser (default), skip — capabilities are preserved.
+if [ "$(id -u)" = "0" ]; then
+    chown -R appuser:appuser /home/appuser/.leetha 2>/dev/null || true
+fi
 
-exec su -s /bin/sh appuser -c "leetha $*"
+exec leetha "$@"

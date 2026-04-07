@@ -1111,15 +1111,30 @@ async def enable_interface(name: str):
         bindings=list(match.bindings),
     )
 
-    # Hot-add to capture engine
-    app_instance.capture_engine.add_interface(config)
-
     # Persist to saved config
     current = app_instance.config.interfaces or []
     if not any(c.name == name for c in current):
         current.append(config)
         app_instance.config.interfaces = current
     save_interface_config(app_instance.config.data_dir, current)
+
+    # If capture engine is already active, hot-add the interface.
+    # Otherwise do a full start_capture() to activate the engine,
+    # processing pipeline, and packet queue consumer.
+    if app_instance.capture_engine.is_running:
+        app_instance.capture_engine.add_interface(config)
+    else:
+        # start_capture() creates async tasks (_process_loop, etc.) that
+        # must run on the app's event loop, not uvicorn's.  When
+        # run_web() uses a background thread, schedule there.
+        import asyncio
+        app_loop = getattr(app_instance, "_app_loop", None)
+        if app_loop is not None and app_loop is not asyncio.get_running_loop():
+            future = asyncio.run_coroutine_threadsafe(
+                app_instance.start_capture(), app_loop)
+            future.result(timeout=10)
+        else:
+            await app_instance.start_capture()
 
     return {"status": "ok", "interface": name}
 
@@ -1585,13 +1600,15 @@ async def api_incident_detail(incident_id: str):
 
 @fastapi_app.get("/api/stats")
 async def api_stats():
+    if not app_instance or not getattr(app_instance, "_running", False):
+        return {"device_count": 0, "alert_count": 0, "capturing_count": 0}
     try:
         device_count = await app_instance.store.hosts.count()
         alert_count = await app_instance.store.findings.count_active()
     except Exception:
         device_count = 0
         alert_count = 0
-    capturing_count = len(app_instance.capture_engine.interfaces) if app_instance else 0
+    capturing_count = len(app_instance.capture_engine.interfaces)
     return {
         "device_count": device_count,
         "alert_count": alert_count,

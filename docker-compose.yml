@@ -4,6 +4,9 @@
 #   docker compose up -d          Start in background
 #   docker compose logs -f        Follow logs
 #   docker compose exec leetha leetha sync   Update fingerprint databases
+#
+# If you get "readonly database" errors after upgrading, remove the old volume:
+#   docker compose down && docker volume rm leetha_app-storage && docker compose up -d
 
 services:
   leetha:
@@ -21,7 +24,7 @@ services:
       - LEETHA_DATA_DIR=/home/appuser/.leetha
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-sf", "http://localhost:8080/api/stats"]
+      test: ["CMD", "curl", "-sf", "http://localhost:8080/health"]
       interval: 30s
       timeout: 5s
       retries: 3

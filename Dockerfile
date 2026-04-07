@@ -29,16 +29,18 @@ LABEL maintainer="leetha" \
 
 # libpcap required for scapy packet capture
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends libpcap0.8 iproute2 \
+    && apt-get install -y --no-install-recommends libpcap0.8 iproute2 curl \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 COPY --from=compile /src/wheels/*.whl /tmp/
 RUN pip install --no-cache-dir /tmp/*.whl && rm -f /tmp/*.whl
 
-# Non-root user for runtime (entrypoint drops privileges after fixing volume perms)
+# Non-root user — Docker grants NET_RAW/NET_ADMIN caps directly to PID 1
 RUN useradd --system --create-home --shell /usr/sbin/nologin appuser \
     && mkdir -p /home/appuser/.leetha/cache \
     && chown -R appuser:appuser /home/appuser/.leetha
+USER appuser
+ENV HOME=/home/appuser
 
 # Persistent storage — DB, tokens, cache, settings all under ~/.leetha
 VOLUME /home/appuser/.leetha
@@ -46,6 +48,6 @@ ENV LEETHA_DATA_DIR=/home/appuser/.leetha
 
 EXPOSE 8080
 
-COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+COPY --chown=appuser:appuser docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 ENTRYPOINT ["docker-entrypoint.sh"]
 CMD ["--web"]

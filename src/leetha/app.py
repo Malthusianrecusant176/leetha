@@ -154,6 +154,7 @@ class LeethaApp:
         )
 
         self._running = True
+        self._app_loop = asyncio.get_running_loop()
 
         # Fire-and-forget: preload smaller Huginn caches in a background
         # thread.  Not awaited so the pipeline starts immediately.
@@ -210,7 +211,7 @@ class LeethaApp:
             logger.warning("No interfaces configured — cannot start capture")
             return False
 
-        loop = asyncio.get_running_loop()
+        loop = getattr(self, "_app_loop", None) or asyncio.get_running_loop()
         self.capture_engine.start(self.packet_queue, loop)
 
         # Detect local MACs from capture interfaces for self-identification

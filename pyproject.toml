@@ -31,6 +31,7 @@ packages = ["src/leetha"]
 
 [tool.hatch.build.targets.wheel.force-include]
 "src/leetha/ui/web/dist" = "leetha/ui/web/dist"
+"docs/wiki" = "leetha/docs/wiki"
 
 [tool.pytest.ini_options]
 testpaths = ["spec"]

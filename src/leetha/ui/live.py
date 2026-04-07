@@ -11,6 +11,7 @@ import asyncio
 import collections
 import sys
 import time
+from datetime import datetime
 
 try:
     import select
@@ -22,7 +23,6 @@ except ImportError:
 
 from rich.console import Console
 from leetha.app import LeethaApp
-from leetha.capture.protocols import ParsedPacket
 
 
 class _RateLimiter:
@@ -136,6 +136,14 @@ class _KeyReader:
         return None
 
 
+def _get_mac(event: dict) -> str:
+    """Extract source MAC from event."""
+    pkt = event.get("packet")
+    if pkt and isinstance(pkt, dict):
+        return pkt.get("src_mac", event.get("mac", "??:??:??:??:??:??"))
+    return event.get("mac", "??:??:??:??:??:??")
+
+
 async def run_live(
     interfaces: list | None = None,
     decode: bool = False,
@@ -149,7 +157,6 @@ async def run_live(
     If *app* is None, create and manage a new LeethaApp.
     """
     if not _HAS_TERMINAL:
-        from rich.console import Console
         Console().print(
             "[bold red]Live packet viewer requires a Unix terminal "
             "(not available on Windows).[/bold red]\n"
@@ -193,8 +200,7 @@ async def run_live(
                     for buffered_event in buffer:
                         if limiter.allow():
                             status.record_event()
-                            status.seen_macs.add(buffered_event["packet"].src_mac)
-                            status.alert_count += len(buffered_event.get("alerts", []))
+                            status.seen_macs.add(_get_mac(buffered_event))
                             _render_event(console, buffered_event, decode=decode, repeat_tracker=repeat_tracker)
                         else:
                             status.skipped = limiter.skipped
@@ -220,8 +226,7 @@ async def run_live(
                 status.buffered = len(buffer)
             elif limiter.allow():
                 status.record_event()
-                status.seen_macs.add(event["packet"].src_mac)
-                status.alert_count += len(event.get("alerts", []))
+                status.seen_macs.add(_get_mac(event))
                 _render_event(console, event, decode=decode, repeat_tracker=repeat_tracker)
             else:
                 status.skipped = limiter.skipped
@@ -316,85 +321,83 @@ def _proto_tag(protocol: str) -> str:
 
 def _render_event(console: Console, event: dict, decode: bool = False,
                   repeat_tracker: _RepeatTracker | None = None):
-    """Render a single packet event with fingerprint reasoning."""
-    packet: ParsedPacket = event["packet"]
-    device = event.get("device")
-    alerts = event.get("alerts", [])
-    matches = event.get("matches", [])
-    data = packet.data
+    """Render a single packet event with fingerprint reasoning.
 
-    # ── Header: timestamp + protocol + src MAC/IP + dst MAC/IP + verdict ──
-    timestamp = packet.timestamp.strftime("%H:%M:%S")
-    tag = _proto_tag(packet.protocol)
+    Events are dicts emitted by LeethaApp with keys:
+        type, mac, verdict (dict), packet (dict with protocol/src_mac/src_ip/dst_ip/fields/timestamp)
+    """
+    pkt = event.get("packet") or {}
+    verdict = event.get("verdict") or {}
 
-    src_mac = f"[bright_blue]{packet.src_mac}[/bright_blue]"
-    src_ip = f"[white]{packet.src_ip}[/white]" if packet.src_ip else ""
+    protocol = pkt.get("protocol", "?")
+    src_mac = pkt.get("src_mac", event.get("mac", "?"))
+    src_ip = pkt.get("src_ip") or ""
+    dst_ip = pkt.get("dst_ip") or ""
+    fields = pkt.get("fields") or {}
 
-    dst_mac = f"[bright_blue]{packet.dst_mac}[/bright_blue]" if packet.dst_mac else ""
-    dst_ip = f"[white]{packet.dst_ip}[/white]" if packet.dst_ip else ""
-    if not dst_mac and not dst_ip:
-        dst_mac = "[dim]—[/dim]"
+    # Parse timestamp
+    ts_raw = pkt.get("timestamp")
+    if ts_raw:
+        try:
+            ts = datetime.fromisoformat(ts_raw).strftime("%H:%M:%S")
+        except (ValueError, TypeError):
+            ts = "??:??:??"
+    else:
+        ts = datetime.now().strftime("%H:%M:%S")
 
-    # Build verdict from device identity
-    verdict = ""
-    if device:
-        dtype = device.device_type or "—"
-        mfr = device.hostname or device.manufacturer or "Unknown"
-        os_str = device.os_family or "—"
-        if device.os_version:
-            os_str = f"{os_str} {device.os_version}"
-        conf = device.confidence
+    # ── Header: timestamp + protocol + src MAC/IP + dst + verdict ──
+    tag = _proto_tag(protocol)
+    mac_str = f"[bright_blue]{src_mac}[/bright_blue]"
+    ip_str = f"  [white]{src_ip}[/white]" if src_ip else ""
+    dst_str = f"  [dim]→[/dim] [white]{dst_ip}[/white]" if dst_ip else ""
+
+    # Build verdict line from verdict dict
+    verdict_str = ""
+    if verdict and verdict.get("category"):
+        dtype = verdict.get("category", "—")
+        mfr = verdict.get("hostname") or verdict.get("vendor") or "Unknown"
+        os_str = verdict.get("platform") or "—"
+        if verdict.get("platform_version"):
+            os_str = f"{os_str} {verdict['platform_version']}"
+        conf = verdict.get("certainty", 0)
         style = _conf_style(conf)
-        verdict = (
+        verdict_str = (
             f"  [bold bright_white]{dtype}[/bold bright_white]"
             f" [dim]|[/dim] [white]{mfr}[/white]"
             f" [dim]|[/dim] [white]{os_str}[/white]"
             f" [dim]|[/dim] [{style}]{conf}%[/{style}]"
         )
 
-    console.print(
-        f"[dim white]{timestamp}[/dim white]  {tag}"
-        f"{src_mac}  {src_ip}  {dst_mac}  {dst_ip}"
-        f"{verdict}"
-    )
-
-    # MAC randomization indicator
-    if device and device.is_randomized_mac:
-        corr = f" -> [bright_blue]{device.correlated_mac}[/bright_blue]" if device.correlated_mac else ""
-        console.print(
-            f"{_INDENT}[bright_magenta][R] Randomized MAC{corr}[/bright_magenta]"
-        )
+    console.print(f"[dim white]{ts}[/dim white]  {tag}{mac_str}{ip_str}{dst_str}{verdict_str}")
 
     # Build evidence key for repeat detection
-    evidence_keys = [f"{m.source}:{int(m.confidence * 100)}" for m in matches]
-    device_conf = device.confidence if device else 0
-    alert_count = len(alerts)
+    evidence_chain = verdict.get("evidence_chain") or []
+    evidence_keys = [f"{e.get('source', '?')}:{e.get('certainty', 0)}" for e in evidence_chain]
+    device_conf = verdict.get("certainty", 0)
 
-    if repeat_tracker and repeat_tracker.check(
-        packet.src_mac, evidence_keys, device_conf, alert_count
-    ):
+    if repeat_tracker and repeat_tracker.check(src_mac, evidence_keys, device_conf, 0):
         console.print(
-            f"{_INDENT}[dim]↻ same evidence (×{repeat_tracker.repeat_count})[/dim]"
+            f"{_INDENT}[dim]\u21bb same evidence (\u00d7{repeat_tracker.repeat_count})[/dim]"
         )
         console.print()
         return
 
     # ── Protocol-specific details ──
-    if packet.protocol == "arp":
-        op = data.get("op", "")
+    if protocol == "arp":
+        op = fields.get("op", "")
         op_label = "Request" if op == 1 else "Reply" if op == 2 else str(op)
         console.print(
             f"{_INDENT}[yellow]Op:[/yellow] {op_label}"
-            f"  [yellow]Target:[/yellow] {packet.dst_ip or '?'}"
+            f"  [yellow]Target:[/yellow] {dst_ip or '?'}"
         )
 
-    elif packet.protocol == "tcp_syn":
-        ttl = data.get("ttl", "?")
-        win = data.get("window_size", "?")
-        mss = data.get("mss", "?")
-        wscale = data.get("window_scale", "")
-        opts = data.get("tcp_options", "")
-        dst_port = data.get("dst_port", "")
+    elif protocol == "tcp_syn":
+        ttl = fields.get("ttl", "?")
+        win = fields.get("window_size", "?")
+        mss = fields.get("mss", "?")
+        wscale = fields.get("window_scale", "")
+        opts = fields.get("tcp_options", "")
+        dst_port = fields.get("dst_port", "")
         parts = [f"TTL: {ttl}", f"Win: {win}", f"MSS: {mss}"]
         if wscale:
             parts.append(f"WScale: {wscale}")
@@ -404,97 +407,91 @@ def _render_event(console: Console, event: dict, decode: bool = False,
             parts.append(f"Port: {dst_port}")
         console.print(f"{_INDENT}[yellow]{'  '.join(parts)}[/yellow]")
 
-    elif packet.protocol == "dhcpv4":
+    elif protocol == "dhcpv4":
         parts = []
-        msg_type = data.get("message_type", "")
+        msg_type = fields.get("message_type", "")
         if msg_type:
             parts.append(f"Type: {msg_type}")
-        if data.get("hostname"):
-            parts.append(f"Hostname: {data['hostname']}")
-        if data.get("opt55"):
-            parts.append(f"Opt55: {data['opt55']}")
-        if data.get("opt60"):
-            parts.append(f"Vendor: {data['opt60']}")
+        if fields.get("hostname"):
+            parts.append(f"Hostname: {fields['hostname']}")
+        if fields.get("opt55"):
+            parts.append(f"Opt55: {fields['opt55']}")
+        if fields.get("opt60"):
+            parts.append(f"Vendor: {fields['opt60']}")
         if parts:
             console.print(f"{_INDENT}[yellow]{'  '.join(parts)}[/yellow]")
-        client_id = data.get("client_id")
-        if client_id and client_id != packet.src_mac:
-            console.print(
-                f"{_INDENT}[yellow]Client-ID:[/yellow] "
-                f"[bright_magenta]{client_id}[/bright_magenta] [dim](real MAC)[/dim]"
-            )
 
-    elif packet.protocol == "dhcpv6":
+    elif protocol == "dhcpv6":
         parts = []
-        if data.get("message_type"):
-            parts.append(f"Type: {data['message_type']}")
-        if data.get("oro"):
-            parts.append(f"ORO: {data['oro']}")
-        if data.get("duid"):
-            parts.append(f"DUID: {data['duid']}")
-        if data.get("fqdn"):
-            parts.append(f"FQDN: {data['fqdn']}")
-        if data.get("vendor_class"):
-            parts.append(f"Vendor: {data['vendor_class']}")
-        if data.get("enterprise_id"):
-            parts.append(f"Enterprise: {data['enterprise_id']}")
+        if fields.get("message_type"):
+            parts.append(f"Type: {fields['message_type']}")
+        if fields.get("oro"):
+            parts.append(f"ORO: {fields['oro']}")
+        if fields.get("duid"):
+            parts.append(f"DUID: {fields['duid']}")
+        if fields.get("fqdn"):
+            parts.append(f"FQDN: {fields['fqdn']}")
+        if fields.get("vendor_class"):
+            parts.append(f"Vendor: {fields['vendor_class']}")
+        if fields.get("enterprise_id"):
+            parts.append(f"Enterprise: {fields['enterprise_id']}")
         if parts:
             console.print(f"{_INDENT}[yellow]{'  '.join(parts)}[/yellow]")
 
-    elif packet.protocol == "dns":
-        qname = data.get("query_name", "")
-        qtype_name = data.get("query_type_name", str(data.get("query_type", "")))
+    elif protocol == "dns":
+        qname = fields.get("query_name", "")
+        qtype_name = fields.get("query_type_name", str(fields.get("query_type", "")))
         console.print(
             f"{_INDENT}[yellow]Query:[/yellow] {qname}  "
             f"[yellow]Type:[/yellow] {qtype_name}"
         )
 
-    elif packet.protocol == "mdns":
+    elif protocol == "mdns":
         parts = []
-        if data.get("service_type"):
-            parts.append(f"Service: {data['service_type']}")
-        if data.get("name"):
-            parts.append(f'Name: "{data["name"]}"')
+        if fields.get("service_type"):
+            parts.append(f"Service: {fields['service_type']}")
+        if fields.get("name"):
+            parts.append(f'Name: "{fields["name"]}"')
         if parts:
             console.print(f"{_INDENT}[yellow]{'  '.join(parts)}[/yellow]")
         txt_parts = []
-        if data.get("model"):
-            txt_parts.append(f"Model: {data['model']}")
-        if data.get("apple_model"):
-            txt_parts.append(f"Apple: {data['apple_model']}")
-        if data.get("friendly_name"):
-            txt_parts.append(f'Friendly: "{data["friendly_name"]}"')
-        if data.get("txt_manufacturer"):
-            txt_parts.append(f"Mfr: {data['txt_manufacturer']}")
+        if fields.get("model"):
+            txt_parts.append(f"Model: {fields['model']}")
+        if fields.get("apple_model"):
+            txt_parts.append(f"Apple: {fields['apple_model']}")
+        if fields.get("friendly_name"):
+            txt_parts.append(f'Friendly: "{fields["friendly_name"]}"')
+        if fields.get("txt_manufacturer"):
+            txt_parts.append(f"Mfr: {fields['txt_manufacturer']}")
         if txt_parts:
             console.print(f"{_INDENT}[yellow]{'  '.join(txt_parts)}[/yellow]")
 
-    elif packet.protocol == "ssdp":
+    elif protocol == "ssdp":
         parts = []
-        if data.get("server"):
-            parts.append(f"Server: {data['server']}")
-        if data.get("st"):
-            parts.append(f"ST: {data['st']}")
-        if data.get("ssdp_type"):
-            parts.append(f"Type: {data['ssdp_type']}")
+        if fields.get("server"):
+            parts.append(f"Server: {fields['server']}")
+        if fields.get("st"):
+            parts.append(f"ST: {fields['st']}")
+        if fields.get("ssdp_type"):
+            parts.append(f"Type: {fields['ssdp_type']}")
         if parts:
             console.print(f"{_INDENT}[yellow]{'  '.join(parts)}[/yellow]")
-        if data.get("usn"):
-            console.print(f"{_INDENT}[yellow]USN: {data['usn']}[/yellow]")
-        if data.get("location"):
-            console.print(f"{_INDENT}[yellow]Location: {data['location']}[/yellow]")
+        if fields.get("usn"):
+            console.print(f"{_INDENT}[yellow]USN: {fields['usn']}[/yellow]")
+        if fields.get("location"):
+            console.print(f"{_INDENT}[yellow]Location: {fields['location']}[/yellow]")
 
-    elif packet.protocol == "netbios":
-        qtype = data.get("query_type", "").upper()
-        console.print(f"{_INDENT}[yellow]{qtype}:[/yellow] {data.get('query_name')}")
-        if data.get("netbios_suffix") is not None:
-            console.print(f"{_INDENT}[yellow]Suffix:[/yellow] 0x{data['netbios_suffix']:02X}")
+    elif protocol == "netbios":
+        qtype = fields.get("query_type", "").upper()
+        console.print(f"{_INDENT}[yellow]{qtype}:[/yellow] {fields.get('query_name')}")
+        if fields.get("netbios_suffix") is not None:
+            console.print(f"{_INDENT}[yellow]Suffix:[/yellow] 0x{fields['netbios_suffix']:02X}")
 
-    elif packet.protocol == "tls":
-        ja3 = data.get("ja3_hash", "")
-        ja4 = data.get("ja4", "")
-        tls_ver = data.get("tls_version", "")
-        sni = data.get("sni", "")
+    elif protocol == "tls":
+        ja3 = fields.get("ja3_hash", "")
+        ja4 = fields.get("ja4", "")
+        tls_ver = fields.get("tls_version", "")
+        sni = fields.get("sni", "")
         console.print(
             f"{_INDENT}[yellow]JA3:[/yellow] {ja3}  "
             f"[yellow]JA4:[/yellow] {ja4}"
@@ -507,54 +504,53 @@ def _render_event(console: Console, event: dict, decode: bool = False,
         if line_parts:
             console.print(f"{_INDENT}{'  '.join(line_parts)}")
 
-    elif packet.protocol == "icmpv6":
-        icmp_type = data.get("icmpv6_type", "")
-        type_display = icmp_type.replace("_", " ").title()
+    elif protocol == "icmpv6":
+        icmp_type = fields.get("icmpv6_type", "")
+        type_display = icmp_type.replace("_", " ").title() if icmp_type else "?"
         line = f"{_INDENT}[yellow]Type:[/yellow] {type_display}"
-        if data.get("hop_limit"):
-            line += f"  [yellow]Hop Limit:[/yellow] {data['hop_limit']}"
-        if data.get("target"):
-            line += f"  [yellow]Target:[/yellow] {data['target']}"
+        if fields.get("hop_limit"):
+            line += f"  [yellow]Hop Limit:[/yellow] {fields['hop_limit']}"
+        if fields.get("target"):
+            line += f"  [yellow]Target:[/yellow] {fields['target']}"
         console.print(line)
         # Show flags for RA and NA
         flag_parts = []
-        if data.get("managed"):
+        if fields.get("managed"):
             flag_parts.append("Managed")
-        if data.get("other"):
+        if fields.get("other"):
             flag_parts.append("Other")
-        if data.get("router"):
+        if fields.get("router"):
             flag_parts.append("Router")
-        if data.get("solicited"):
+        if fields.get("solicited"):
             flag_parts.append("Solicited")
-        if data.get("override"):
+        if fields.get("override"):
             flag_parts.append("Override")
         if flag_parts:
             console.print(f"{_INDENT}[yellow]Flags:[/yellow] {', '.join(flag_parts)}")
 
-    elif packet.protocol == "banner":
-        banner_text = data.get("banner", "")
+    elif protocol == "banner":
+        banner_text = fields.get("banner", "")
         if banner_text:
-            # Truncate long banners
             display = banner_text[:120] + ("..." if len(banner_text) > 120 else "")
             console.print(f"{_INDENT}[yellow]Banner:[/yellow] {display}")
 
-    elif packet.protocol == "ip_observed":
-        ttl = data.get("ttl", "?")
-        os_hint = data.get("ttl_os_hint", "")
-        hops = data.get("ttl_hops", "")
-        src_port = data.get("src_port")
-        dst_port = data.get("dst_port")
+    elif protocol == "ip_observed":
+        ttl = fields.get("ttl", "?")
+        os_hint = fields.get("ttl_os_hint", "")
+        hops = fields.get("ttl_hops", "")
+        src_port = fields.get("src_port")
+        dst_port = fields.get("dst_port")
         hint_str = f" ({os_hint}, {hops} hops)" if os_hint else ""
         port_str = ""
         if src_port and dst_port:
             port_str = f"  Port: {src_port} -> {dst_port}"
         console.print(f"{_INDENT}[yellow]TTL: {ttl}{hint_str}{port_str}[/yellow]")
 
-    elif packet.protocol == "http_useragent":
-        method = data.get("method", "")
-        path = data.get("path", "")
-        host = data.get("host", "")
-        ua = data.get("user_agent", "")
+    elif protocol == "http_useragent":
+        method = fields.get("method", "")
+        path = fields.get("path", "")
+        host = fields.get("host", "")
+        ua = fields.get("user_agent", "")
         parts = []
         if method:
             parts.append(method)
@@ -568,69 +564,49 @@ def _render_event(console: Console, event: dict, decode: bool = False,
             display_ua = ua[:120] + ("..." if len(ua) > 120 else "")
             console.print(f"{_INDENT}[yellow]UA: {display_ua}[/yellow]")
 
-    elif packet.protocol == "dns_answer":
-        qname = data.get("query_name", "?")
-        rtype = data.get("record_type", "?")
-        answer_ip = data.get("answer_ip", "")
-        hostname = data.get("hostname", "")
-        ttl = data.get("ttl", "")
+    elif protocol == "dns_answer":
+        qname = fields.get("query_name", "?")
+        rtype = fields.get("record_type", "?")
+        answer_ip = fields.get("answer_ip", "")
+        hostname = fields.get("hostname", "")
+        ttl = fields.get("ttl", "")
         target = answer_ip or hostname or "?"
         ttl_str = f"  TTL: {ttl}" if ttl else ""
         console.print(
             f"{_INDENT}[yellow]{qname}  {rtype} -> {target}{ttl_str}[/yellow]"
         )
 
-    # ── Evidence from fingerprint matches ──
-    for i, match in enumerate(matches):
-        is_last = i == len(matches) - 1
-        prefix = "└─" if is_last else "├─"
-        conf_pct = int(match.confidence * 100)
+    # ── Evidence from verdict's evidence chain ──
+    for i, ev in enumerate(evidence_chain):
+        is_last = i == len(evidence_chain) - 1
+        prefix = "\u2514\u2500" if is_last else "\u251c\u2500"
+        conf_pct = ev.get("certainty", 0)
         style = _conf_style(conf_pct)
+        source = ev.get("source", "?")
 
         parts = []
-        if match.manufacturer:
-            parts.append(f"[white]manufacturer=[/white]{match.manufacturer}")
-        if match.os_family:
-            parts.append(f"[white]os=[/white]{match.os_family}")
-        if match.device_type:
-            parts.append(f"[white]type=[/white]{match.device_type}")
-        if match.model:
-            parts.append(f"[white]model=[/white]{match.model}")
-        detail = ", ".join(parts) if parts else match.match_type
+        if ev.get("vendor"):
+            parts.append(f"[white]vendor=[/white]{ev['vendor']}")
+        if ev.get("platform"):
+            parts.append(f"[white]os=[/white]{ev['platform']}")
+        if ev.get("category"):
+            parts.append(f"[white]type=[/white]{ev['category']}")
+        if ev.get("model"):
+            parts.append(f"[white]model=[/white]{ev['model']}")
+        detail = ", ".join(parts) if parts else ev.get("match_type", source)
         console.print(
-            f"{_INDENT}  {prefix} [cyan]{match.source}[/cyan]: "
+            f"{_INDENT}  {prefix} [cyan]{source}[/cyan]: "
             f"{detail} [{style}]({conf_pct}%)[/{style}]"
         )
-
-    # Alerts
-    for alert in alerts:
-        severity_colors = {
-            "info": "blue",
-            "low": "bright_yellow",
-            "warning": "yellow",
-            "medium": "yellow",
-            "high": "bright_red",
-            "critical": "bold bright_red",
-        }
-        color = severity_colors.get(alert.severity, "white")
-        sev_label = str(alert.severity).upper()
-        console.print(
-            f"{_INDENT}[{color}]▲ {sev_label} {alert.alert_type}: "
-            f"{alert.message}[/{color}]"
-        )
-
-    # Full protocol decode
-    if decode and packet.raw_bytes:
-        hex_str = packet.raw_bytes[:64].hex()
-        suffix = "..." if len(packet.raw_bytes) > 64 else ""
-        console.print(f"{_INDENT}[dim white]RAW: {hex_str}{suffix}[/dim white]")
 
     console.print()  # blank line
 
 
 def _matches_filter(event: dict, packet_filter: str) -> bool:
     """Check if event matches the user's --filter."""
-    packet = event["packet"]
+    pkt = event.get("packet") or {}
+    src_mac = pkt.get("src_mac", event.get("mac", ""))
+    protocol = pkt.get("protocol", "")
     if packet_filter.startswith("mac="):
-        return packet.src_mac.upper().startswith(packet_filter[4:].upper())
-    return packet.protocol == packet_filter
+        return src_mac.upper().startswith(packet_filter[4:].upper())
+    return protocol == packet_filter
