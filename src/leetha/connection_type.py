@@ -87,6 +87,23 @@ _WIRELESS_OUI_PREFIXES = frozenset({
     "ec:fa:bc", "f0:08:d1",
 })
 
+# Manufacturers whose devices are virtually always wireless
+_WIRELESS_MANUFACTURERS = frozenset({
+    "apple", "samsung", "google", "xiaomi", "huawei", "oppo", "vivo",
+    "oneplus", "realme", "nothing", "motorola", "nokia",
+    "roborock", "ecovacs", "irobot", "dreame",  # robot vacuums
+    "withings", "fitbit",  # health/wearables
+    "ring", "arlo", "wyze", "blink",  # wireless cameras/doorbells
+    "sonos", "jbl", "bose",  # wireless speakers
+    "ecobee", "nest",  # smart home
+    "lutron", "philips hue", "lifx", "hue",  # smart lighting
+    "shelly", "meross", "kasa", "tp-link kasa",  # smart plugs
+    "august", "yale",  # smart locks
+    "roku",  # streaming
+    "espressif",  # ESP32/ESP8266 always WiFi
+    "tuya", "smartlife",  # IoT platform devices
+})
+
 # mDNS services that indicate wireless-only devices
 _WIRELESS_MDNS_SERVICES = frozenset({
     "_apple-mobdev2._tcp",
@@ -137,6 +154,11 @@ def infer_connection_type(
 
     # Likely-wireless device types
     if dt in _LIKELY_WIRELESS:
+        return "wireless"
+
+    # Check manufacturer — some only make wireless devices
+    mfr = (manufacturer or "").lower()
+    if any(w in mfr for w in _WIRELESS_MANUFACTURERS):
         return "wireless"
 
     # Check OUI prefix for wireless-only chipsets
