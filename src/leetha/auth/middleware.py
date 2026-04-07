@@ -70,7 +70,10 @@ async def auth_middleware(request: Request, call_next, *, db, auth_enabled: bool
     elif request.headers.get("x-api-key", "").startswith(TOKEN_PREFIX):
         raw_token = request.headers["x-api-key"].strip()
     else:
-        # Fallback: token in query param (for EventSource/SSE which can't set headers)
+        # Fallback 1: cookie (survives reverse proxies that strip Authorization)
+        raw_token = request.cookies.get("leetha_token")
+    if not raw_token:
+        # Fallback 2: query param (for EventSource/SSE which can't set headers)
         raw_token = request.query_params.get("token")
 
     if not raw_token:

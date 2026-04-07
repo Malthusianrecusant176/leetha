@@ -36,7 +36,16 @@ async def api_auth_login(request: Request):
     token_info = await db.validate_token(hash_token(raw_token))
     if token_info is None:
         return JSONResponse(status_code=401, content={"error": "Invalid or revoked token."})
-    return {"valid": True, "role": token_info["role"]}
+    # Set cookie so auth survives reverse proxies that strip Authorization
+    response = JSONResponse(content={"valid": True, "role": token_info["role"]})
+    response.set_cookie(
+        key="leetha_token",
+        value=raw_token,
+        httponly=True,
+        samesite="lax",
+        path="/",
+    )
+    return response
 
 
 @router.get("/api/auth/status")
