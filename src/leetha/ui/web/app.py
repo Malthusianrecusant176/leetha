@@ -2536,7 +2536,7 @@ async def run_web_async(interfaces: list | None = None, host: str = "0.0.0.0", p
         raw = load_admin_token()
         if raw:
             rc = RichConsole()
-            rc.print(f"\n[bold green]Admin token:[/bold green]")
+            rc.print("\n[bold green]Admin token:[/bold green]")
             rc.print(f"[bold yellow]{raw}[/bold yellow]")
             rc.print("[dim]Saved at ~/.leetha/admin-token[/dim]\n")
 
