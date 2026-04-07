@@ -1108,5 +1108,117 @@
     "device_type": "smart_home",
     "manufacturer": null,
     "confidence": 60
+  },
+  {
+    "pattern": "^Emerson",
+    "manufacturer": "Emerson",
+    "device_type": "ics_device",
+    "os_family": null,
+    "confidence": 80
+  },
+  {
+    "pattern": "^DeltaV",
+    "manufacturer": "Emerson",
+    "device_type": "scada_server",
+    "os_family": null,
+    "confidence": 85
+  },
+  {
+    "pattern": "^ROC",
+    "manufacturer": "Emerson",
+    "device_type": "rtu",
+    "os_family": null,
+    "confidence": 80
+  },
+  {
+    "pattern": "^Yokogawa",
+    "manufacturer": "Yokogawa",
+    "device_type": "scada_server",
+    "os_family": null,
+    "confidence": 80
+  },
+  {
+    "pattern": "^CENTUM",
+    "manufacturer": "Yokogawa",
+    "device_type": "scada_server",
+    "os_family": null,
+    "confidence": 85
+  },
+  {
+    "pattern": "^Moxa",
+    "manufacturer": "Moxa",
+    "device_type": "ics_device",
+    "os_family": "Linux",
+    "confidence": 80
+  },
+  {
+    "pattern": "^ioLogik",
+    "manufacturer": "Moxa",
+    "device_type": "ics_device",
+    "os_family": null,
+    "confidence": 80
+  },
+  {
+    "pattern": "^NPort",
+    "manufacturer": "Moxa",
+    "device_type": "ics_device",
+    "os_family": null,
+    "confidence": 80
+  },
+  {
+    "pattern": "^Hirschmann",
+    "manufacturer": "Hirschmann",
+    "device_type": "industrial_switch",
+    "os_family": null,
+    "confidence": 80
+  },
+  {
+    "pattern": "^Red Lion",
+    "manufacturer": "Red Lion",
+    "device_type": "ics_device",
+    "os_family": null,
+    "confidence": 80
+  },
+  {
+    "pattern": "^Sixnet",
+    "manufacturer": "Red Lion",
+    "device_type": "rtu",
+    "os_family": null,
+    "confidence": 80
+  },
+  {
+    "pattern": "^Danfoss",
+    "manufacturer": "Danfoss",
+    "device_type": "ics_device",
+    "os_family": null,
+    "confidence": 75
+  },
+  {
+    "pattern": "^Yaskawa",
+    "manufacturer": "Yaskawa",
+    "device_type": "ics_device",
+    "os_family": null,
+    "confidence": 75
+  },
+  {
+    "pattern": "^Belden",
+    "manufacturer": "Belden",
+    "device_type": "industrial_switch",
+    "os_family": null,
+    "confidence": 75
+  },
+  {
+    "pattern": "^Tofino",
+    "manufacturer": "Belden",
+    "device_type": "firewall",
+    "os_family": null,
+    "confidence": 80
+  },
+  {
+    "pattern": "^CODESYS",
+    "manufacturer": null,
+    "device_type": "plc",
+    "os_family": "CODESYS",
+    "confidence": 75
   }
 ]

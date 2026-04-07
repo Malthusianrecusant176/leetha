@@ -125,6 +125,190 @@
       "os_version_group": 1,
       "device_type": "network_device",
       "confidence": 40
+    },
+    {
+      "pattern": "Samsung.*UPnP",
+      "device_type": "smart_tv",
+      "manufacturer": "Samsung",
+      "confidence": 85
+    },
+    {
+      "pattern": "LGE.*WebOS",
+      "device_type": "smart_tv",
+      "manufacturer": "LG",
+      "os_family": "webOS",
+      "confidence": 88
+    },
+    {
+      "pattern": "LG.*UPnP",
+      "device_type": "smart_tv",
+      "manufacturer": "LG",
+      "confidence": 80
+    },
+    {
+      "pattern": "Vizio",
+      "device_type": "smart_tv",
+      "manufacturer": "Vizio",
+      "confidence": 85
+    },
+    {
+      "pattern": "Hisense",
+      "device_type": "smart_tv",
+      "manufacturer": "Hisense",
+      "confidence": 80
+    },
+    {
+      "pattern": "TCL",
+      "device_type": "smart_tv",
+      "manufacturer": "TCL",
+      "confidence": 75
+    },
+    {
+      "pattern": "Philips.*UPnP",
+      "device_type": "smart_tv",
+      "manufacturer": "Philips",
+      "confidence": 80
+    },
+    {
+      "pattern": "Xbox",
+      "device_type": "game_console",
+      "manufacturer": "Microsoft",
+      "os_family": "Xbox",
+      "confidence": 88
+    },
+    {
+      "pattern": "PlayStation",
+      "device_type": "game_console",
+      "manufacturer": "Sony",
+      "os_family": "PlayStation",
+      "confidence": 88
+    },
+    {
+      "pattern": "Nintendo",
+      "device_type": "game_console",
+      "manufacturer": "Nintendo",
+      "confidence": 85
+    },
+    {
+      "pattern": "Plex",
+      "device_type": "media_server",
+      "manufacturer": "Plex",
+      "confidence": 85
+    },
+    {
+      "pattern": "Emby",
+      "device_type": "media_server",
+      "manufacturer": "Emby",
+      "confidence": 85
+    },
+    {
+      "pattern": "Jellyfin",
+      "device_type": "media_server",
+      "manufacturer": "Jellyfin",
+      "confidence": 85
+    },
+    {
+      "pattern": "MiniDLNA",
+      "device_type": "media_server",
+      "confidence": 75
+    },
+    {
+      "pattern": "Belkin.*WeMo",
+      "device_type": "smart_plug",
+      "manufacturer": "Belkin",
+      "confidence": 88
+    },
+    {
+      "pattern": "NETGEAR",
+      "device_type": "router",
+      "manufacturer": "Netgear",
+      "confidence": 80
+    },
+    {
+      "pattern": "TP-Link",
+      "device_type": "router",
+      "manufacturer": "TP-Link",
+      "confidence": 80
+    },
+    {
+      "pattern": "ASUS.*RT-",
+      "device_type": "router",
+      "manufacturer": "ASUS",
+      "confidence": 85
+    },
+    {
+      "pattern": "Synology",
+      "device_type": "nas",
+      "manufacturer": "Synology",
+      "os_family": "DSM",
+      "confidence": 90
+    },
+    {
+      "pattern": "QNAP",
+      "device_type": "nas",
+      "manufacturer": "QNAP",
+      "os_family": "QTS",
+      "confidence": 90
+    },
+    {
+      "pattern": "Denon",
+      "device_type": "smart_speaker",
+      "manufacturer": "Denon",
+      "confidence": 80
+    },
+    {
+      "pattern": "Yamaha",
+      "device_type": "smart_speaker",
+      "manufacturer": "Yamaha",
+      "confidence": 75
+    },
+    {
+      "pattern": "Bose",
+      "device_type": "smart_speaker",
+      "manufacturer": "Bose",
+      "confidence": 80
+    },
+    {
+      "pattern": "Epson",
+      "device_type": "printer",
+      "manufacturer": "Epson",
+      "confidence": 85
+    },
+    {
+      "pattern": "Canon",
+      "device_type": "printer",
+      "manufacturer": "Canon",
+      "confidence": 85
+    },
+    {
+      "pattern": "Brother",
+      "device_type": "printer",
+      "manufacturer": "Brother",
+      "confidence": 85
+    },
+    {
+      "pattern": "HP.*LaserJet",
+      "device_type": "printer",
+      "manufacturer": "HP",
+      "confidence": 88
+    },
+    {
+      "pattern": "HP.*OfficeJet",
+      "device_type": "printer",
+      "manufacturer": "HP",
+      "confidence": 88
+    },
+    {
+      "pattern": "Siemens",
+      "device_type": "plc",
+      "manufacturer": "Siemens",
+      "confidence": 75
+    },
+    {
+      "pattern": "Schneider",
+      "device_type": "plc",
+      "manufacturer": "Schneider Electric",
+      "confidence": 75
     }
   ],
   "upnp_device_types": {
@@ -175,6 +359,30 @@
     },
     "urn:schemas-upnp-org:device:RemoteUIServerDevice": {
       "category": "server"
+    },
+    "urn:schemas-upnp-org:device:ZonePlayer": {
+      "category": "smart_speaker"
+    },
+    "urn:schemas-upnp-org:device:WFADevice": {
+      "category": "network_device"
+    },
+    "urn:schemas-upnp-org:device:WLANAccessPoint": {
+      "category": "access_point"
+    },
+    "urn:schemas-upnp-org:device:televisioncontrol": {
+      "category": "smart_tv"
+    },
+    "urn:dial-multiscreen-org:device:dial": {
+      "category": "streaming_device"
+    },
+    "urn:schemas-sony-com:service:ScalarWebAPI": {
+      "category": "smart_tv"
+    },
+    "urn:lge-com:service:webos-second-screen": {
+      "category": "smart_tv"
+    },
+    "urn:samsung-com:device:RemoteControlReceiver": {
+      "category": "smart_tv"
     }
   }
 }

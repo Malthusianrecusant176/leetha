@@ -1886,5 +1886,383 @@
     "platform": null,
     "model": null,
     "certainty": 85
+  },
+  {
+    "match": "^PLC[_-]?\\d+",
+    "category": "plc",
+    "vendor": null,
+    "platform": null,
+    "certainty": 75
+  },
+  {
+    "match": "^HMI[_-]?\\d+",
+    "category": "hmi",
+    "vendor": null,
+    "platform": null,
+    "certainty": 75
+  },
+  {
+    "match": "^RTU[_-]?\\d+",
+    "category": "rtu",
+    "vendor": null,
+    "platform": null,
+    "certainty": 75
+  },
+  {
+    "match": "^DCS[_-]?\\d+",
+    "category": "scada_server",
+    "vendor": null,
+    "platform": null,
+    "certainty": 70
+  },
+  {
+    "match": "^SCADA[_-]?\\d+",
+    "category": "scada_server",
+    "vendor": null,
+    "platform": null,
+    "certainty": 75
+  },
+  {
+    "match": "^IED[_-]?\\d+",
+    "category": "ics_device",
+    "vendor": null,
+    "platform": null,
+    "certainty": 70
+  },
+  {
+    "match": "^MCC[_-]?\\d+",
+    "category": "ics_device",
+    "vendor": null,
+    "platform": null,
+    "certainty": 65
+  },
+  {
+    "match": "^VFD[_-]?\\d+",
+    "category": "ics_device",
+    "vendor": null,
+    "platform": null,
+    "certainty": 65
+  },
+  {
+    "match": "^RELAY[_-]?\\d+",
+    "category": "ics_device",
+    "vendor": null,
+    "platform": null,
+    "certainty": 65
+  },
+  {
+    "match": "^SEL[_-]\\d{3}",
+    "category": "ics_device",
+    "vendor": "SEL",
+    "platform": null,
+    "certainty": 85
+  },
+  {
+    "match": "^S7[_-]?\\d{3,4}",
+    "category": "plc",
+    "vendor": "Siemens",
+    "platform": null,
+    "certainty": 80
+  },
+  {
+    "match": "^SIMATIC",
+    "category": "plc",
+    "vendor": "Siemens",
+    "platform": null,
+    "certainty": 80
+  },
+  {
+    "match": "^SCALANCE",
+    "category": "industrial_switch",
+    "vendor": "Siemens",
+    "platform": null,
+    "certainty": 85
+  },
+  {
+    "match": "^CP[_-]?1[56]\\d{2}",
+    "category": "plc",
+    "vendor": "Siemens",
+    "platform": null,
+    "certainty": 75
+  },
+  {
+    "match": "^ET[_-]?200",
+    "category": "ics_device",
+    "vendor": "Siemens",
+    "platform": null,
+    "certainty": 80
+  },
+  {
+    "match": "^LOGO[_!-]",
+    "category": "plc",
+    "vendor": "Siemens",
+    "platform": null,
+    "certainty": 80
+  },
+  {
+    "match": "^Modicon",
+    "category": "plc",
+    "vendor": "Schneider Electric",
+    "platform": null,
+    "certainty": 80
+  },
+  {
+    "match": "^TM2\\d{2}",
+    "category": "plc",
+    "vendor": "Schneider Electric",
+    "platform": null,
+    "certainty": 80
+  },
+  {
+    "match": "^BMX[A-Z]\\d{2}",
+    "category": "plc",
+    "vendor": "Schneider Electric",
+    "platform": null,
+    "certainty": 80
+  },
+  {
+    "match": "^SCADAPack",
+    "category": "rtu",
+    "vendor": "Schneider Electric",
+    "platform": null,
+    "certainty": 85
+  },
+  {
+    "match": "^AC500",
+    "category": "plc",
+    "vendor": "ABB",
+    "platform": null,
+    "certainty": 80
+  },
+  {
+    "match": "^REF\\d{3}",
+    "category": "ics_device",
+    "vendor": "ABB",
+    "platform": null,
+    "certainty": 80
+  },
+  {
+    "match": "^RET\\d{3}",
+    "category": "ics_device",
+    "vendor": "ABB",
+    "platform": null,
+    "certainty": 80
+  },
+  {
+    "match": "^CompactLogix",
+    "category": "plc",
+    "vendor": "Rockwell",
+    "platform": null,
+    "certainty": 85
+  },
+  {
+    "match": "^ControlLogix",
+    "category": "plc",
+    "vendor": "Rockwell",
+    "platform": null,
+    "certainty": 85
+  },
+  {
+    "match": "^MicroLogix",
+    "category": "plc",
+    "vendor": "Rockwell",
+    "platform": null,
+    "certainty": 85
+  },
+  {
+    "match": "^PanelView",
+    "category": "hmi",
+    "vendor": "Rockwell",
+    "platform": null,
+    "certainty": 85
+  },
+  {
+    "match": "^PowerFlex",
+    "category": "ics_device",
+    "vendor": "Rockwell",
+    "platform": null,
+    "certainty": 80
+  },
+  {
+    "match": "^MELSEC",
+    "category": "plc",
+    "vendor": "Mitsubishi",
+    "platform": null,
+    "certainty": 80
+  },
+  {
+    "match": "^GOT\\d{4}",
+    "category": "hmi",
+    "vendor": "Mitsubishi",
+    "platform": null,
+    "certainty": 80
+  },
+  {
+    "match": "^FX[35][A-Z]",
+    "category": "plc",
+    "vendor": "Mitsubishi",
+    "platform": null,
+    "certainty": 80
+  },
+  {
+    "match": "^NPort",
+    "category": "ics_device",
+    "vendor": "Moxa",
+    "platform": null,
+    "certainty": 80
+  },
+  {
+    "match": "^ioLogik",
+    "category": "ics_device",
+    "vendor": "Moxa",
+    "platform": null,
+    "certainty": 80
+  },
+  {
+    "match": "^EDS[_-]\\d{3}",
+    "category": "industrial_switch",
+    "vendor": "Moxa",
+    "platform": null,
+    "certainty": 80
+  },
+  {
+    "match": "^Multilin",
+    "category": "ics_device",
+    "vendor": "GE",
+    "platform": null,
+    "certainty": 80
+  },
+  {
+    "match": "^ROC\\d{3}",
+    "category": "rtu",
+    "vendor": "Emerson",
+    "platform": null,
+    "certainty": 80
+  },
+  {
+    "match": "^DeltaV",
+    "category": "scada_server",
+    "vendor": "Emerson",
+    "platform": null,
+    "certainty": 80
+  },
+  {
+    "match": "^CENTUM",
+    "category": "scada_server",
+    "vendor": "Yokogawa",
+    "platform": null,
+    "certainty": 80
+  },
+  {
+    "match": "^ProSafe",
+    "category": "plc",
+    "vendor": "Yokogawa",
+    "platform": null,
+    "certainty": 80
+  },
+  {
+    "match": "^STARDOM",
+    "category": "rtu",
+    "vendor": "Yokogawa",
+    "platform": null,
+    "certainty": 80
+  },
+  {
+    "match": "^PLCnext",
+    "category": "plc",
+    "vendor": "Phoenix Contact",
+    "platform": null,
+    "certainty": 80
+  },
+  {
+    "match": "^CX\\d{4}",
+    "category": "plc",
+    "vendor": "Beckhoff",
+    "platform": null,
+    "certainty": 75
+  },
+  {
+    "match": "^PFC[12]00",
+    "category": "plc",
+    "vendor": "WAGO",
+    "platform": null,
+    "certainty": 80
+  },
+  {
+    "match": "^HIKVISION",
+    "category": "ip_camera",
+    "vendor": "Hikvision",
+    "platform": null,
+    "certainty": 85
+  },
+  {
+    "match": "^DS-\\d{4}",
+    "category": "ip_camera",
+    "vendor": "Hikvision",
+    "platform": null,
+    "certainty": 80
+  },
+  {
+    "match": "^DH[_-]?[A-Z]{2,3}",
+    "category": "ip_camera",
+    "vendor": "Dahua",
+    "platform": null,
+    "certainty": 75
+  },
+  {
+    "match": "^IPC[_-]?[A-Z]",
+    "category": "ip_camera",
+    "vendor": "Dahua",
+    "platform": null,
+    "certainty": 70
+  },
+  {
+    "match": "^NVR",
+    "category": "ip_camera",
+    "vendor": null,
+    "platform": null,
+    "certainty": 65
+  },
+  {
+    "match": "^DVR",
+    "category": "ip_camera",
+    "vendor": null,
+    "platform": null,
+    "certainty": 65
+  },
+  {
+    "match": "^DiskStation",
+    "category": "nas",
+    "vendor": "Synology",
+    "platform": "DSM",
+    "certainty": 90
+  },
+  {
+    "match": "^DS\\d{3,4}[a-z]?\\+?$",
+    "category": "nas",
+    "vendor": "Synology",
+    "platform": "DSM",
+    "certainty": 85
+  },
+  {
+    "match": "^RS\\d{4}",
+    "category": "nas",
+    "vendor": "Synology",
+    "platform": "DSM",
+    "certainty": 80
+  },
+  {
+    "match": "^TS-\\d{3,4}",
+    "category": "nas",
+    "vendor": "QNAP",
+    "platform": "QTS",
+    "certainty": 85
+  },
+  {
+    "match": "^TVS-\\d{3}",
+    "category": "nas",
+    "vendor": "QNAP",
+    "platform": "QTS",
+    "certainty": 85
   }
 ]

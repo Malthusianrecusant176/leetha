@@ -484,5 +484,134 @@
     "category": "smart_speaker",
     "note": "Amazon Echo/Alexa device",
     "certainty": 75
+  },
+  {
+    "domains": [
+      "siemens.com",
+      "siemens-cloud.com"
+    ],
+    "vendor": "Siemens",
+    "category": "plc",
+    "note": "Siemens device telemetry",
+    "certainty": 55
+  },
+  {
+    "domains": [
+      "schneider-electric.com",
+      "se.com"
+    ],
+    "vendor": "Schneider Electric",
+    "category": "plc",
+    "note": "Schneider device telemetry",
+    "certainty": 55
+  },
+  {
+    "domains": [
+      "abb.com",
+      "abb-cloud.com"
+    ],
+    "vendor": "ABB",
+    "category": "plc",
+    "note": "ABB device telemetry",
+    "certainty": 55
+  },
+  {
+    "domains": [
+      "rockwellautomation.com",
+      "ab.com"
+    ],
+    "vendor": "Rockwell",
+    "category": "plc",
+    "note": "Rockwell device telemetry",
+    "certainty": 55
+  },
+  {
+    "domains": [
+      "honeywell.com",
+      "myconnecthome.com"
+    ],
+    "vendor": "Honeywell",
+    "category": "ics_device",
+    "note": "Honeywell device telemetry",
+    "certainty": 50
+  },
+  {
+    "domains": [
+      "emerson.com",
+      "emersonprocess.com"
+    ],
+    "vendor": "Emerson",
+    "category": "ics_device",
+    "note": "Emerson device telemetry",
+    "certainty": 50
+  },
+  {
+    "domains": [
+      "yokogawa.com"
+    ],
+    "vendor": "Yokogawa",
+    "category": "scada_server",
+    "note": "Yokogawa device telemetry",
+    "certainty": 50
+  },
+  {
+    "domains": [
+      "moxa.com"
+    ],
+    "vendor": "Moxa",
+    "category": "ics_device",
+    "note": "Moxa device telemetry",
+    "certainty": 55
+  },
+  {
+    "domains": [
+      "hikvision.com",
+      "hik-connect.com"
+    ],
+    "vendor": "Hikvision",
+    "category": "ip_camera",
+    "note": "Hikvision cloud",
+    "certainty": 60
+  },
+  {
+    "domains": [
+      "dahuatech.com",
+      "dahua.com"
+    ],
+    "vendor": "Dahua",
+    "category": "ip_camera",
+    "note": "Dahua cloud",
+    "certainty": 60
+  },
+  {
+    "domains": [
+      "axis.com"
+    ],
+    "vendor": "Axis",
+    "category": "ip_camera",
+    "note": "Axis camera cloud",
+    "certainty": 55
+  },
+  {
+    "domains": [
+      "synology.com",
+      "quickconnect.to"
+    ],
+    "vendor": "Synology",
+    "category": "nas",
+    "platform": "DSM",
+    "note": "Synology QuickConnect",
+    "certainty": 65
+  },
+  {
+    "domains": [
+      "myqnapcloud.com",
+      "qnap.com"
+    ],
+    "vendor": "QNAP",
+    "category": "nas",
+    "platform": "QTS",
+    "note": "QNAP cloud",
+    "certainty": 65
   }
 ]

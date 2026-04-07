@@ -521,6 +521,114 @@
       "vendor": "Sony",
       "platform": "Android TV",
       "certainty": 90
+    },
+    "_modbus._tcp": {
+      "category": "plc",
+      "vendor": null,
+      "platform": null,
+      "certainty": 80
+    },
+    "_bacnet._tcp": {
+      "category": "building_automation",
+      "vendor": null,
+      "platform": null,
+      "certainty": 80
+    },
+    "_opcua-tcp._tcp": {
+      "category": "plc",
+      "vendor": null,
+      "platform": null,
+      "certainty": 80
+    },
+    "_opcua-udp._udp": {
+      "category": "plc",
+      "vendor": null,
+      "platform": null,
+      "certainty": 75
+    },
+    "_codesys._tcp": {
+      "category": "plc",
+      "vendor": null,
+      "platform": "CODESYS",
+      "certainty": 80
+    },
+    "_profinet._tcp": {
+      "category": "plc",
+      "vendor": "Siemens",
+      "platform": null,
+      "certainty": 80
+    },
+    "_s7comm._tcp": {
+      "category": "plc",
+      "vendor": "Siemens",
+      "platform": null,
+      "certainty": 85
+    },
+    "_ethernetip._tcp": {
+      "category": "plc",
+      "vendor": null,
+      "platform": null,
+      "certainty": 75
+    },
+    "_knx._tcp": {
+      "category": "building_automation",
+      "vendor": null,
+      "platform": null,
+      "certainty": 80
+    },
+    "_enip._tcp": {
+      "category": "plc",
+      "vendor": null,
+      "platform": null,
+      "certainty": 75
+    },
+    "_dnp3._tcp": {
+      "category": "rtu",
+      "vendor": null,
+      "platform": null,
+      "certainty": 75
+    },
+    "_iec61850._tcp": {
+      "category": "ics_device",
+      "vendor": null,
+      "platform": null,
+      "certainty": 80
+    },
+    "_cip._tcp": {
+      "category": "plc",
+      "vendor": null,
+      "platform": null,
+      "certainty": 75
+    },
+    "_amqp._tcp": {
+      "category": "server",
+      "vendor": null,
+      "platform": null,
+      "certainty": 65
+    },
+    "_nvr._tcp": {
+      "category": "ip_camera",
+      "vendor": null,
+      "platform": null,
+      "certainty": 75
+    },
+    "_axis-video._tcp": {
+      "category": "ip_camera",
+      "vendor": "Axis",
+      "platform": null,
+      "certainty": 85
+    },
+    "_hikvision._tcp": {
+      "category": "ip_camera",
+      "vendor": "Hikvision",
+      "platform": null,
+      "certainty": 85
+    },
+    "_dahua._tcp": {
+      "category": "ip_camera",
+      "vendor": "Dahua",
+      "platform": null,
+      "certainty": 85
     }
   },
   "names": [
