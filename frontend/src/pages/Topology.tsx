@@ -271,14 +271,14 @@ function TopologyInner({ subscribe }: TopologyInnerProps) {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-full -m-6">
+      <div className="flex items-center justify-center flex-1 min-h-0 -m-6">
         <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
       </div>
     );
   }
 
   return (
-    <div ref={containerRef} className="relative h-full -m-6">
+    <div ref={containerRef} className="relative flex-1 min-h-0 -m-6">
       {/* Full-width topology canvas */}
       <ReactFlow
         nodes={nodes}

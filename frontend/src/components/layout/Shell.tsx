@@ -12,7 +12,7 @@ export function Shell({ wsStatus, children }: ShellProps) {
   return (
     <div className="flex h-screen overflow-hidden">
       <Sidebar wsStatus={wsStatus} />
-      <main className="flex-1 overflow-y-auto p-6">{children}</main>
+      <main className="flex-1 flex flex-col overflow-y-auto p-6">{children}</main>
     </div>
   );
 }

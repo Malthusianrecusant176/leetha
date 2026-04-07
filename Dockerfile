@@ -35,11 +35,10 @@ RUN apt-get update \
 COPY --from=compile /src/wheels/*.whl /tmp/
 RUN pip install --no-cache-dir /tmp/*.whl && rm -f /tmp/*.whl
 
-# Non-root user for safety
+# Non-root user for runtime (entrypoint drops privileges after fixing volume perms)
 RUN useradd --system --create-home --shell /usr/sbin/nologin appuser \
     && mkdir -p /home/appuser/.leetha/cache \
     && chown -R appuser:appuser /home/appuser/.leetha
-USER appuser
 
 # Persistent storage — DB, tokens, cache, settings all under ~/.leetha
 VOLUME /home/appuser/.leetha
@@ -47,5 +46,6 @@ ENV LEETHA_DATA_DIR=/home/appuser/.leetha
 
 EXPOSE 8080
 
-ENTRYPOINT ["leetha"]
+COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+ENTRYPOINT ["docker-entrypoint.sh"]
 CMD ["--web"]
