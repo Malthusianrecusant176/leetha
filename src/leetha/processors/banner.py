@@ -85,7 +85,7 @@ class BannerProcessor(Processor):
                     platform = os_name
                     break
 
-        return [Evidence(
+        evidence = [Evidence(
             source="passive_banner",
             method="pattern",
             certainty=0.85,
@@ -100,6 +100,78 @@ class BannerProcessor(Processor):
                 "server_port": server_port,
             },
         )]
+
+        # OT device identity extraction from banner content
+        banner_text = packet.get("banner", "") or ""
+        if banner_text:
+            ot_evidence = self._extract_ot_identity(banner_text)
+            if ot_evidence:
+                evidence.extend(ot_evidence)
+
+        return evidence
+
+    def _extract_ot_identity(self, banner: str) -> list[Evidence]:
+        """Extract OT device identity from service banner content."""
+        import re
+        results = []
+
+        # SEL relay banners (Telnet/SSH): "SEL-351-7 FID=SEL-351-7-R107-V0-Z002002-D20130514"
+        sel_match = re.search(r'(SEL-\d{3,4}[A-Z]?)', banner, re.IGNORECASE)
+        if sel_match:
+            model = sel_match.group(1).upper()
+            fid_match = re.search(r'FID=([\w-]+)', banner)
+            results.append(Evidence(
+                source="passive_banner", method="pattern", certainty=0.90,
+                vendor="SEL", model=model, category="ics_device",
+                raw={"banner": banner[:200], "fid": fid_match.group(1) if fid_match else None},
+            ))
+
+        # GE Multilin banners: "GE Multilin T60" or "UR-series"
+        ge_match = re.search(r'(?:GE\s+)?Multilin\s+([A-Z]\d{2,3})', banner, re.IGNORECASE)
+        if ge_match:
+            model = f"GE Multilin {ge_match.group(1).upper()}"
+            results.append(Evidence(
+                source="passive_banner", method="pattern", certainty=0.90,
+                vendor="GE", model=model, category="ics_device",
+                raw={"banner": banner[:200]},
+            ))
+
+        # Schneider Modicon: "BMX P34 2020" or "Modicon M340"
+        schneider_match = re.search(r'(?:BMX\s*[A-Z]\d{2}\s*\d{4}|Modicon\s+[A-Z]\d{3,4})', banner, re.IGNORECASE)
+        if schneider_match:
+            model = schneider_match.group(0)
+            results.append(Evidence(
+                source="passive_banner", method="pattern", certainty=0.85,
+                vendor="Schneider Electric", model=model, category="plc",
+                raw={"banner": banner[:200]},
+            ))
+
+        # Siemens PLC: "S7-300" or "SIMATIC S7-1200" or "6ES7"
+        siemens_match = re.search(r'(?:SIMATIC\s+)?S7-(\d{3,4})', banner, re.IGNORECASE)
+        if not siemens_match:
+            siemens_match = re.search(r'6ES7\s*\d{3}', banner)
+        if siemens_match:
+            results.append(Evidence(
+                source="passive_banner", method="pattern", certainty=0.85,
+                vendor="Siemens", model=siemens_match.group(0), category="plc",
+                raw={"banner": banner[:200]},
+            ))
+
+        # Woodward controller: "easYgen" or "2301" or "MicroNet"
+        woodward_match = re.search(r'(?:easYgen|MicroNet|Woodward.*(?:2301|DECS|ProTech))', banner, re.IGNORECASE)
+        if woodward_match:
+            results.append(Evidence(
+                source="passive_banner", method="pattern", certainty=0.85,
+                vendor="Woodward", model=woodward_match.group(0), category="ics_device",
+                raw={"banner": banner[:200]},
+            ))
+
+        # Firmware version extraction: "FW:" or "Firmware:" or "Version:" followed by digits
+        fw_match = re.search(r'(?:FW|Firmware|Version|Rev)[:\s]+([0-9]+(?:\.[0-9]+)+)', banner, re.IGNORECASE)
+        if fw_match and results:
+            results[0].platform_version = fw_match.group(1)
+
+        return results
 
     @staticmethod
     def _resolve_vendor(software: str | None) -> str | None:

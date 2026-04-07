@@ -28,6 +28,7 @@ from leetha.capture.protocols.fallback import parse_ip_observed as _new_parse_ip
 from leetha.capture.protocols.icmpv6 import parse_icmpv6 as _new_parse_icmpv6
 from leetha.capture.protocols.ws_discovery import parse_ws_discovery as _new_parse_ws_discovery
 from leetha.capture.protocols.ntp import parse_ntp as _new_parse_ntp
+from leetha.capture.protocols.iot_scada import parse_umas as _new_parse_umas
 from leetha.capture.protocols.iot_scada import parse_modbus as _new_parse_modbus
 from leetha.capture.protocols.iot_scada import parse_bacnet as _new_parse_bacnet
 from leetha.capture.protocols.iot_scada import parse_coap as _new_parse_coap
@@ -63,7 +64,8 @@ PARSER_CHAIN = [
     _new_parse_icmpv6,
     _new_parse_igmp,
     _new_parse_ntp,
-    _new_parse_modbus, _new_parse_bacnet, _new_parse_coap,
+    _new_parse_umas, _new_parse_modbus,  # UMAS before Modbus (same port, UMAS is more specific)
+    _new_parse_bacnet, _new_parse_coap,
     _new_parse_mqtt, _new_parse_enip,
     _new_parse_dnp3, _new_parse_s7comm, _new_parse_opcua,  # TCP OT protocols
     _new_parse_stun, _new_parse_radius, _new_parse_upnp,

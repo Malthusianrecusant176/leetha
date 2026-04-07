@@ -8701,6 +8701,391 @@
       "version_match": null,
       "certainty": 90,
       "category": "ied"
+    },
+    {
+      "match": "SEL-311C",
+      "product": "SEL-311C Relay",
+      "vendor": "SEL",
+      "category": "ics_device",
+      "certainty": 90
+    },
+    {
+      "match": "SEL-311L",
+      "product": "SEL-311L Relay",
+      "vendor": "SEL",
+      "category": "ics_device",
+      "certainty": 90
+    },
+    {
+      "match": "SEL-351",
+      "product": "SEL-351 Relay",
+      "vendor": "SEL",
+      "category": "ics_device",
+      "certainty": 90
+    },
+    {
+      "match": "SEL-351S",
+      "product": "SEL-351S Relay",
+      "vendor": "SEL",
+      "category": "ics_device",
+      "certainty": 90
+    },
+    {
+      "match": "SEL-411L",
+      "product": "SEL-411L Relay",
+      "vendor": "SEL",
+      "category": "ics_device",
+      "certainty": 90
+    },
+    {
+      "match": "SEL-451",
+      "product": "SEL-451 Relay",
+      "vendor": "SEL",
+      "category": "ics_device",
+      "certainty": 90
+    },
+    {
+      "match": "SEL-487E",
+      "product": "SEL-487E Relay",
+      "vendor": "SEL",
+      "category": "ics_device",
+      "certainty": 90
+    },
+    {
+      "match": "SEL-700G",
+      "product": "SEL-700G Relay",
+      "vendor": "SEL",
+      "category": "ics_device",
+      "certainty": 90
+    },
+    {
+      "match": "SEL-710",
+      "product": "SEL-710 Relay",
+      "vendor": "SEL",
+      "category": "ics_device",
+      "certainty": 90
+    },
+    {
+      "match": "SEL-751",
+      "product": "SEL-751 Relay",
+      "vendor": "SEL",
+      "category": "ics_device",
+      "certainty": 90
+    },
+    {
+      "match": "SEL-\\d{3,4}",
+      "product": "SEL Relay",
+      "vendor": "SEL",
+      "category": "ics_device",
+      "certainty": 85
+    },
+    {
+      "match": "SEL-3530",
+      "product": "SEL-3530 RTAC",
+      "vendor": "SEL",
+      "category": "rtu",
+      "certainty": 90
+    },
+    {
+      "match": "SEL-3350",
+      "product": "SEL-3350 RTAC",
+      "vendor": "SEL",
+      "category": "rtu",
+      "certainty": 90
+    },
+    {
+      "match": "SEL-3620",
+      "product": "SEL-3620 Security Gateway",
+      "vendor": "SEL",
+      "category": "firewall",
+      "certainty": 90
+    },
+    {
+      "match": "SEL-2032",
+      "product": "SEL-2032 Communications Processor",
+      "vendor": "SEL",
+      "category": "ics_device",
+      "certainty": 90
+    },
+    {
+      "match": "Schweitzer",
+      "product": "SEL Device",
+      "vendor": "SEL",
+      "category": "ics_device",
+      "certainty": 75
+    },
+    {
+      "match": "RTAC",
+      "product": "SEL RTAC",
+      "vendor": "SEL",
+      "category": "rtu",
+      "certainty": 80
+    },
+    {
+      "match": "AcSELerator",
+      "product": "AcSELerator Software",
+      "vendor": "SEL",
+      "category": "scada_server",
+      "certainty": 80
+    },
+    {
+      "match": "Multilin.*D25",
+      "product": "GE Multilin D25",
+      "vendor": "GE",
+      "category": "ics_device",
+      "certainty": 90
+    },
+    {
+      "match": "Multilin.*T60",
+      "product": "GE Multilin T60",
+      "vendor": "GE",
+      "category": "ics_device",
+      "certainty": 90
+    },
+    {
+      "match": "Multilin.*L90",
+      "product": "GE Multilin L90",
+      "vendor": "GE",
+      "category": "ics_device",
+      "certainty": 90
+    },
+    {
+      "match": "Multilin.*F35",
+      "product": "GE Multilin F35",
+      "vendor": "GE",
+      "category": "ics_device",
+      "certainty": 90
+    },
+    {
+      "match": "Multilin.*N60",
+      "product": "GE Multilin N60",
+      "vendor": "GE",
+      "category": "ics_device",
+      "certainty": 90
+    },
+    {
+      "match": "Multilin.*C60",
+      "product": "GE Multilin C60",
+      "vendor": "GE",
+      "category": "ics_device",
+      "certainty": 90
+    },
+    {
+      "match": "Multilin.*B30",
+      "product": "GE Multilin B30",
+      "vendor": "GE",
+      "category": "ics_device",
+      "certainty": 90
+    },
+    {
+      "match": "Multilin.*B90",
+      "product": "GE Multilin B90",
+      "vendor": "GE",
+      "category": "ics_device",
+      "certainty": 90
+    },
+    {
+      "match": "Multilin.*G60",
+      "product": "GE Multilin G60",
+      "vendor": "GE",
+      "category": "ics_device",
+      "certainty": 90
+    },
+    {
+      "match": "GE.*Multilin",
+      "product": "GE Multilin Relay",
+      "vendor": "GE",
+      "category": "ics_device",
+      "certainty": 80
+    },
+    {
+      "match": "GE.*UR.*series",
+      "product": "GE UR Platform",
+      "vendor": "GE",
+      "category": "ics_device",
+      "certainty": 85
+    },
+    {
+      "match": "EnerVista",
+      "product": "GE EnerVista Software",
+      "vendor": "GE",
+      "category": "scada_server",
+      "certainty": 80
+    },
+    {
+      "match": "Modicon.*M340",
+      "product": "Schneider Modicon M340",
+      "vendor": "Schneider Electric",
+      "category": "plc",
+      "certainty": 90
+    },
+    {
+      "match": "Modicon.*M580",
+      "product": "Schneider Modicon M580",
+      "vendor": "Schneider Electric",
+      "category": "plc",
+      "certainty": 90
+    },
+    {
+      "match": "Modicon.*M251",
+      "product": "Schneider Modicon M251",
+      "vendor": "Schneider Electric",
+      "category": "plc",
+      "certainty": 90
+    },
+    {
+      "match": "Modicon.*M241",
+      "product": "Schneider Modicon M241",
+      "vendor": "Schneider Electric",
+      "category": "plc",
+      "certainty": 90
+    },
+    {
+      "match": "Modicon.*Premium",
+      "product": "Schneider Modicon Premium",
+      "vendor": "Schneider Electric",
+      "category": "plc",
+      "certainty": 85
+    },
+    {
+      "match": "Modicon.*Quantum",
+      "product": "Schneider Modicon Quantum",
+      "vendor": "Schneider Electric",
+      "category": "plc",
+      "certainty": 85
+    },
+    {
+      "match": "ION.*7\\d{3}",
+      "product": "Schneider ION Power Meter",
+      "vendor": "Schneider Electric",
+      "category": "power_meter",
+      "certainty": 85
+    },
+    {
+      "match": "ION.*8\\d{3}",
+      "product": "Schneider ION Power Meter",
+      "vendor": "Schneider Electric",
+      "category": "power_meter",
+      "certainty": 85
+    },
+    {
+      "match": "PowerLogic",
+      "product": "Schneider PowerLogic",
+      "vendor": "Schneider Electric",
+      "category": "power_meter",
+      "certainty": 80
+    },
+    {
+      "match": "Sage.*RTU",
+      "product": "Schneider Sage RTU",
+      "vendor": "Schneider Electric",
+      "category": "rtu",
+      "certainty": 85
+    },
+    {
+      "match": "Sage.*\\d{4}",
+      "product": "Schneider Sage RTU",
+      "vendor": "Schneider Electric",
+      "category": "rtu",
+      "certainty": 80
+    },
+    {
+      "match": "UMAS",
+      "product": "Schneider UMAS Protocol",
+      "vendor": "Schneider Electric",
+      "category": "plc",
+      "certainty": 85
+    },
+    {
+      "match": "Unity.*Pro",
+      "product": "Schneider Unity Pro",
+      "vendor": "Schneider Electric",
+      "category": "scada_server",
+      "certainty": 80
+    },
+    {
+      "match": "EcoStruxure",
+      "product": "Schneider EcoStruxure",
+      "vendor": "Schneider Electric",
+      "category": "scada_server",
+      "certainty": 80
+    },
+    {
+      "match": "Telvent",
+      "product": "Schneider Telvent",
+      "vendor": "Schneider Electric",
+      "category": "scada_server",
+      "certainty": 75
+    },
+    {
+      "match": "Woodward.*2301",
+      "product": "Woodward 2301E",
+      "vendor": "Woodward",
+      "category": "ics_device",
+      "certainty": 90
+    },
+    {
+      "match": "Woodward.*easYgen",
+      "product": "Woodward easYgen",
+      "vendor": "Woodward",
+      "category": "ics_device",
+      "certainty": 90
+    },
+    {
+      "match": "easYgen.*3500",
+      "product": "Woodward easYgen 3500XT",
+      "vendor": "Woodward",
+      "category": "ics_device",
+      "certainty": 90
+    },
+    {
+      "match": "MicroNet.*Plus",
+      "product": "Woodward MicroNet Plus",
+      "vendor": "Woodward",
+      "category": "ics_device",
+      "certainty": 90
+    },
+    {
+      "match": "Woodward",
+      "product": "Woodward Controller",
+      "vendor": "Woodward",
+      "category": "ics_device",
+      "certainty": 75
+    },
+    {
+      "match": "DECS",
+      "product": "Woodward DECS",
+      "vendor": "Woodward",
+      "category": "ics_device",
+      "certainty": 80
+    },
+    {
+      "match": "MasterFlo",
+      "product": "Woodward MasterFlo",
+      "vendor": "Woodward",
+      "category": "ics_device",
+      "certainty": 85
+    },
+    {
+      "match": "iDirect.*[Xx]\\d",
+      "product": "iDirect X-Series Modem",
+      "vendor": "iDirect",
+      "category": "satellite_terminal",
+      "certainty": 85
+    },
+    {
+      "match": "SCEPTRE",
+      "product": "Sandia SCEPTRE",
+      "vendor": "Sandia",
+      "category": "scada_server",
+      "certainty": 80
+    },
+    {
+      "match": "Camlin",
+      "product": "Camlin Device",
+      "vendor": "Camlin",
+      "category": "ics_device",
+      "certainty": 75
     }
   ],
   "security": [

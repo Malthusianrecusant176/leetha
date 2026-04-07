@@ -20,7 +20,7 @@ _MQTT_CLIENT_PATTERNS: list[tuple[str, str | None, str]] = [
 ]
 
 
-@register_processor("modbus", "bacnet", "coap", "mqtt", "enip", "dnp3", "s7comm", "opcua", "goose", "profinet")
+@register_processor("modbus", "bacnet", "coap", "mqtt", "enip", "dnp3", "s7comm", "opcua", "goose", "profinet", "umas")
 class IotScadaProcessor(Processor):
     """Handles ICS/SCADA and IoT protocols.
 
@@ -50,6 +50,8 @@ class IotScadaProcessor(Processor):
             return self._analyze_goose(packet)
         elif protocol == "profinet":
             return self._analyze_profinet(packet)
+        elif protocol == "umas":
+            return self._analyze_umas(packet)
         return []
 
     def _analyze_modbus(self, packet: CapturedPacket) -> list[Evidence]:
@@ -201,4 +203,20 @@ class IotScadaProcessor(Processor):
         )]
         if station_name:
             evidence[0].hostname = station_name
+        return evidence
+
+    def _analyze_umas(self, packet: CapturedPacket) -> list[Evidence]:
+        """UMAS — Schneider Electric PLC identification."""
+        umas_function = packet.get("umas_function", "")
+        project_name = packet.get("project_name")
+        is_server = packet.get("is_server", False)
+        evidence = [Evidence(
+            source="umas", method="exact", certainty=0.85,
+            vendor="Schneider Electric",
+            category="plc" if is_server else "scada_server",
+            platform="Unity",
+            raw={"function": umas_function, "project_name": project_name},
+        )]
+        if project_name:
+            evidence[0].hostname = project_name
         return evidence

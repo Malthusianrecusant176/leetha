@@ -71,6 +71,7 @@ _SOURCE_WEIGHTS: dict[str, float] = {
     "opcua": 0.75,
     "goose": 0.85,
     "profinet": 0.80,
+    "umas": 0.85,
     # Other
     "ip_observed_ttl": 0.35,
     "ip_observed_port": 0.30,
