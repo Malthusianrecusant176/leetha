@@ -4,10 +4,12 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "@/components/ui/collapsible";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { getDeviceTypeColor } from "@/lib/constants";
 import { toast } from "sonner";
-import { X } from "lucide-react";
+import { X, ChevronDown } from "lucide-react";
 import { authHeaders, fetchDeviceTimeline, type TimelineEvent } from "@/lib/api";
 
 // --- API ---
@@ -21,7 +23,7 @@ async function apiFetch<T>(url: string, opts?: RequestInit): Promise<T> {
 interface DeviceInfo {
   mac: string; primary_mac?: string; ip_v4: string | null; ip_v6: string | null;
   manufacturer: string | null; device_type: string | null; os_family: string | null;
-  os_version: string | null; hostname: string | null; confidence: number;
+  os_version: string | null; hostname: string | null; model: string | null; confidence: number;
   is_randomized_mac: boolean; correlated_mac: string | null;
   first_seen: string | null; last_seen: string | null;
   alert_status: string | null; manual_override: Record<string, string> | null;
@@ -116,26 +118,41 @@ export function DeviceDrawer({ mac, open, onClose }: DeviceDrawerProps) {
 
   // Override form
   const [showOvrForm, setShowOvrForm] = useState(false);
-  const [ovrType, setOvrType] = useState("");
-  const [ovrMfr, setOvrMfr] = useState("");
-  const [ovrOs, setOvrOs] = useState("");
+  const [ovrFields, setOvrFields] = useState<Record<string, string>>({});
 
   const openOvrForm = () => {
     const o = device?.manual_override;
-    setOvrType(o?.device_type ?? device?.device_type ?? "");
-    setOvrMfr(o?.manufacturer ?? device?.manufacturer ?? "");
-    setOvrOs(o?.os_family ?? device?.os_family ?? "");
+    setOvrFields({
+      hostname: o?.hostname ?? device?.hostname ?? "",
+      manufacturer: o?.manufacturer ?? device?.manufacturer ?? "",
+      model: o?.model ?? device?.model ?? "",
+      device_type: o?.device_type ?? device?.device_type ?? "",
+      os_family: o?.os_family ?? device?.os_family ?? "",
+      os_version: o?.os_version ?? device?.os_version ?? "",
+      connection_type: o?.connection_type ?? "",
+      disposition: o?.disposition ?? device?.alert_status ?? "new",
+      notes: o?.notes ?? "",
+    });
     setShowOvrForm(true);
   };
+
+  const updateField = (key: string, value: string) =>
+    setOvrFields((prev) => ({ ...prev, [key]: value }));
+
   const saveOverride = async () => {
     if (!mac) return;
     try {
-      await apiFetch(`/api/devices/${encodeURIComponent(mac)}/override`, { method: "PUT", body: JSON.stringify({ device_type: ovrType, manufacturer: ovrMfr, os_family: ovrOs }) });
+      await apiFetch(`/api/devices/${encodeURIComponent(mac)}/override`, {
+        method: "PUT",
+        body: JSON.stringify(ovrFields),
+      });
       queryClient.invalidateQueries({ queryKey: ["device-detail", mac] });
       queryClient.invalidateQueries({ queryKey: ["devices"] });
       setShowOvrForm(false);
       toast.success("Override saved");
-    } catch (err) { toast.error(`Failed: ${err instanceof Error ? err.message : "unknown"}`); }
+    } catch (err) {
+      toast.error(`Failed: ${err instanceof Error ? err.message : "unknown"}`);
+    }
   };
   const clearOverride = async () => {
     if (!mac) return;
@@ -233,19 +250,120 @@ export function DeviceDrawer({ mac, open, onClose }: DeviceDrawerProps) {
                 {device.manual_override && !showOvrForm && (
                   <div className="mb-4">
                     <div className="grid grid-cols-3 gap-x-10 gap-y-4">
+                      {device.manual_override.hostname && <LabelValue label="Hostname">{device.manual_override.hostname}</LabelValue>}
                       {device.manual_override.device_type && <LabelValue label="Host Category">{device.manual_override.device_type}</LabelValue>}
                       {device.manual_override.manufacturer && <LabelValue label="Vendor">{device.manual_override.manufacturer}</LabelValue>}
+                      {device.manual_override.model && <LabelValue label="Model">{device.manual_override.model}</LabelValue>}
                       {device.manual_override.os_family && <LabelValue label="Platform">{device.manual_override.os_family}</LabelValue>}
+                      {device.manual_override.os_version && <LabelValue label="Platform Version">{device.manual_override.os_version}</LabelValue>}
+                      {device.manual_override.connection_type && <LabelValue label="Connection">{device.manual_override.connection_type}</LabelValue>}
+                      {device.manual_override.disposition && <LabelValue label="Disposition">{device.manual_override.disposition}</LabelValue>}
+                      {device.manual_override.notes && <LabelValue label="Notes">{device.manual_override.notes}</LabelValue>}
                     </div>
                     <Button variant="ghost" size="sm" className="mt-4 text-xs text-destructive" onClick={clearOverride}>Clear Override</Button>
                   </div>
                 )}
                 {showOvrForm ? (
-                  <div className="grid grid-cols-3 gap-4 bg-card rounded-lg border border-border p-5">
-                    <div><label className="text-xs text-muted-foreground block mb-1.5">Host Category</label><Input value={ovrType} onChange={(e) => setOvrType(e.target.value)} className="bg-secondary" /></div>
-                    <div><label className="text-xs text-muted-foreground block mb-1.5">Vendor</label><Input value={ovrMfr} onChange={(e) => setOvrMfr(e.target.value)} className="bg-secondary" /></div>
-                    <div><label className="text-xs text-muted-foreground block mb-1.5">Platform</label><Input value={ovrOs} onChange={(e) => setOvrOs(e.target.value)} className="bg-secondary" /></div>
-                    <div className="col-span-3 flex gap-3 pt-2">
+                  <div className="space-y-4 bg-card rounded-lg border border-border p-5">
+                    {/* Identity */}
+                    <Collapsible defaultOpen>
+                      <CollapsibleTrigger className="flex items-center gap-2 text-xs font-semibold uppercase text-muted-foreground w-full">
+                        <ChevronDown size={14} /> Identity
+                      </CollapsibleTrigger>
+                      <CollapsibleContent className="pt-3">
+                        <div className="grid grid-cols-3 gap-4">
+                          <div>
+                            <label className="text-xs text-muted-foreground block mb-1.5">Hostname</label>
+                            <Input value={ovrFields.hostname} onChange={(e) => updateField("hostname", e.target.value)} className="bg-secondary" />
+                          </div>
+                          <div>
+                            <label className="text-xs text-muted-foreground block mb-1.5">Vendor</label>
+                            <Input value={ovrFields.manufacturer} onChange={(e) => updateField("manufacturer", e.target.value)} className="bg-secondary" />
+                          </div>
+                          <div>
+                            <label className="text-xs text-muted-foreground block mb-1.5">Model</label>
+                            <Input value={ovrFields.model} onChange={(e) => updateField("model", e.target.value)} className="bg-secondary" />
+                          </div>
+                        </div>
+                      </CollapsibleContent>
+                    </Collapsible>
+
+                    {/* Classification */}
+                    <Collapsible defaultOpen>
+                      <CollapsibleTrigger className="flex items-center gap-2 text-xs font-semibold uppercase text-muted-foreground w-full">
+                        <ChevronDown size={14} /> Classification
+                      </CollapsibleTrigger>
+                      <CollapsibleContent className="pt-3">
+                        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                          <div>
+                            <label className="text-xs text-muted-foreground block mb-1.5">Host Category</label>
+                            <Select value={ovrFields.device_type} onValueChange={(v) => updateField("device_type", v)}>
+                              <SelectTrigger className="bg-secondary"><SelectValue placeholder="Select..." /></SelectTrigger>
+                              <SelectContent>
+                                {["laptop", "desktop", "phone", "tablet", "printer", "server",
+                                  "switch", "router", "access_point", "camera", "nas", "iot",
+                                  "workstation", "media_player", "game_console", "smart_home",
+                                  "voip_phone", "other"].map((t) => (
+                                  <SelectItem key={t} value={t}>{t.replace(/_/g, " ")}</SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div>
+                            <label className="text-xs text-muted-foreground block mb-1.5">Platform</label>
+                            <Input value={ovrFields.os_family} onChange={(e) => updateField("os_family", e.target.value)} className="bg-secondary" />
+                          </div>
+                          <div>
+                            <label className="text-xs text-muted-foreground block mb-1.5">Platform Version</label>
+                            <Input value={ovrFields.os_version} onChange={(e) => updateField("os_version", e.target.value)} className="bg-secondary" />
+                          </div>
+                          <div>
+                            <label className="text-xs text-muted-foreground block mb-1.5">Connection Type</label>
+                            <Select value={ovrFields.connection_type} onValueChange={(v) => updateField("connection_type", v)}>
+                              <SelectTrigger className="bg-secondary"><SelectValue placeholder="Select..." /></SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="wired">Wired</SelectItem>
+                                <SelectItem value="wireless">Wireless</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        </div>
+                      </CollapsibleContent>
+                    </Collapsible>
+
+                    {/* Analyst */}
+                    <Collapsible defaultOpen>
+                      <CollapsibleTrigger className="flex items-center gap-2 text-xs font-semibold uppercase text-muted-foreground w-full">
+                        <ChevronDown size={14} /> Analyst
+                      </CollapsibleTrigger>
+                      <CollapsibleContent className="pt-3">
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <label className="text-xs text-muted-foreground block mb-1.5">Disposition</label>
+                            <Select value={ovrFields.disposition} onValueChange={(v) => updateField("disposition", v)}>
+                              <SelectTrigger className="bg-secondary"><SelectValue placeholder="Select..." /></SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="new">New</SelectItem>
+                                <SelectItem value="known">Known</SelectItem>
+                                <SelectItem value="suspicious">Suspicious</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div className="col-span-2">
+                            <label className="text-xs text-muted-foreground block mb-1.5">Notes</label>
+                            <textarea
+                              value={ovrFields.notes}
+                              onChange={(e) => updateField("notes", e.target.value)}
+                              rows={3}
+                              className="flex w-full rounded-md border border-input bg-secondary px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                              placeholder="Analyst notes..."
+                            />
+                          </div>
+                        </div>
+                      </CollapsibleContent>
+                    </Collapsible>
+
+                    <div className="flex gap-3 pt-2">
                       <Button size="sm" onClick={saveOverride}>Save Override</Button>
                       <Button variant="ghost" size="sm" onClick={() => setShowOvrForm(false)}>Cancel</Button>
                     </div>
