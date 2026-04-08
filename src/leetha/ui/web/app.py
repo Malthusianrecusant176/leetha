@@ -236,12 +236,24 @@ fastapi_app.include_router(_settings_router)
 from leetha.ui.web.routers.auth import router as _auth_router
 fastapi_app.include_router(_auth_router)
 
+# --- Notification Endpoints ---
+from leetha.ui.web.routers.notifications import router as _notifications_router
+fastapi_app.include_router(_notifications_router)
+
 
 @fastapi_app.get("/health")
 async def health():
     """Readiness probe — always accessible, reports initialization state."""
     ready = app_instance is not None and getattr(app_instance, "_running", False)
     return {"status": "ok", "ready": ready}
+
+
+@fastapi_app.get("/metrics")
+async def prometheus_metrics():
+    """Prometheus metrics endpoint — exempt from auth."""
+    from leetha.metrics import render_metrics
+    from starlette.responses import Response
+    return Response(content=render_metrics(), media_type="text/plain; charset=utf-8")
 
 
 

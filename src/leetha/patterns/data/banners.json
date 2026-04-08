@@ -7411,6 +7411,134 @@
       "platform": null,
       "version_match": null,
       "certainty": 95
+    },
+    {
+      "match": "Cisco IOS.*Catalyst",
+      "product": "Cisco Catalyst",
+      "vendor": "Cisco",
+      "platform": "IOS",
+      "version_match": "Version ([\\d.]+)",
+      "certainty": 95
+    },
+    {
+      "match": "Cisco.*IOS.*XE",
+      "product": "Cisco IOS-XE",
+      "vendor": "Cisco",
+      "platform": "IOS-XE",
+      "version_match": "Version ([\\d.]+)",
+      "certainty": 95
+    },
+    {
+      "match": "Juniper.*EX\\d{4}",
+      "product": "Juniper EX",
+      "vendor": "Juniper",
+      "platform": "JunOS",
+      "version_match": null,
+      "certainty": 95
+    },
+    {
+      "match": "JUNOS.*\\d+\\.\\d+",
+      "product": "JunOS",
+      "vendor": "Juniper",
+      "platform": "JunOS",
+      "version_match": "(\\d+\\.\\d+[A-Z]?\\d*)",
+      "certainty": 90
+    },
+    {
+      "match": "ArubaOS.*Switch",
+      "product": "Aruba Switch",
+      "vendor": "HPE",
+      "platform": "ArubaOS-CX",
+      "version_match": null,
+      "certainty": 90
+    },
+    {
+      "match": "ArubaOS-CX",
+      "product": "ArubaOS-CX Switch",
+      "vendor": "HPE",
+      "platform": "ArubaOS-CX",
+      "version_match": null,
+      "certainty": 92
+    },
+    {
+      "match": "Cambium.*cnPilot",
+      "product": "Cambium cnPilot",
+      "vendor": "Cambium Networks",
+      "platform": null,
+      "version_match": null,
+      "certainty": 90
+    },
+    {
+      "match": "Cambium.*ePMP",
+      "product": "Cambium ePMP",
+      "vendor": "Cambium Networks",
+      "platform": null,
+      "version_match": null,
+      "certainty": 90
+    },
+    {
+      "match": "BIG-IP",
+      "product": "F5 BIG-IP",
+      "vendor": "F5",
+      "platform": "TMOS",
+      "version_match": null,
+      "certainty": 92
+    },
+    {
+      "match": "BigIP",
+      "product": "F5 BIG-IP",
+      "vendor": "F5",
+      "platform": "TMOS",
+      "version_match": null,
+      "certainty": 90
+    },
+    {
+      "match": "F5.*TMOS",
+      "product": "F5 TMOS",
+      "vendor": "F5",
+      "platform": "TMOS",
+      "version_match": null,
+      "certainty": 90
+    },
+    {
+      "match": "NetScaler.*NS",
+      "product": "Citrix ADC",
+      "vendor": "Citrix",
+      "platform": "NetScaler",
+      "version_match": "NS([\\d.]+)",
+      "certainty": 92
+    },
+    {
+      "match": "Citrix.*ADC",
+      "product": "Citrix ADC",
+      "vendor": "Citrix",
+      "platform": "NetScaler",
+      "version_match": null,
+      "certainty": 90
+    },
+    {
+      "match": "HAProxy",
+      "product": "HAProxy",
+      "vendor": null,
+      "platform": null,
+      "version_match": "HAProxy[/ ]([\\d.]+)",
+      "certainty": 85
+    },
+    {
+      "match": "Cisco.*SD-WAN|Viptela",
+      "product": "Cisco SD-WAN",
+      "vendor": "Cisco",
+      "platform": "Viptela OS",
+      "version_match": null,
+      "certainty": 90
+    },
+    {
+      "match": "VeloCloud",
+      "product": "VMware VeloCloud",
+      "vendor": "VMware",
+      "platform": null,
+      "version_match": null,
+      "certainty": 88
     }
   ],
   "ntp": [
@@ -7453,6 +7581,46 @@
       "platform": "IOS",
       "version_match": null,
       "certainty": 90
+    },
+    {
+      "match": "Meinberg.*LANTIME",
+      "product": "Meinberg LANTIME",
+      "vendor": "Meinberg",
+      "platform": null,
+      "version_match": null,
+      "certainty": 95
+    },
+    {
+      "match": "Meinberg",
+      "product": "Meinberg NTP",
+      "vendor": "Meinberg",
+      "platform": null,
+      "version_match": null,
+      "certainty": 88
+    },
+    {
+      "match": "Spectracom.*SecureSync",
+      "product": "Spectracom SecureSync",
+      "vendor": "Spectracom",
+      "platform": null,
+      "version_match": null,
+      "certainty": 92
+    },
+    {
+      "match": "Spectracom",
+      "product": "Spectracom NTP",
+      "vendor": "Spectracom",
+      "platform": null,
+      "version_match": null,
+      "certainty": 85
+    },
+    {
+      "match": "Symmetricom",
+      "product": "Symmetricom NTP",
+      "vendor": "Symmetricom",
+      "platform": null,
+      "version_match": null,
+      "certainty": 88
     }
   ],
   "printer": [
@@ -9625,6 +9793,38 @@
       "platform": null,
       "version_match": null,
       "certainty": 85
+    },
+    {
+      "match": "Snom",
+      "product": "Snom",
+      "vendor": "Snom",
+      "platform": null,
+      "version_match": null,
+      "certainty": 85
+    },
+    {
+      "match": "Fanvil",
+      "product": "Fanvil",
+      "vendor": "Fanvil",
+      "platform": null,
+      "version_match": null,
+      "certainty": 85
+    },
+    {
+      "match": "Grandstream GXP\\d{4}",
+      "product": "Grandstream GXP",
+      "vendor": "Grandstream",
+      "platform": null,
+      "version_match": null,
+      "certainty": 90
+    },
+    {
+      "match": "Grandstream GRP\\d{4}",
+      "product": "Grandstream GRP",
+      "vendor": "Grandstream",
+      "platform": null,
+      "version_match": null,
+      "certainty": 90
     }
   ],
   "smb": [
@@ -10535,6 +10735,190 @@
       "platform": null,
       "version_match": null,
       "certainty": 85
+    },
+    {
+      "match": "Integrated Lights-Out",
+      "product": "HPE iLO",
+      "vendor": "HPE",
+      "platform": null,
+      "version_match": "Integrated Lights-Out (\\d+)",
+      "certainty": 95
+    },
+    {
+      "match": "Lenovo.*XClarity",
+      "product": "Lenovo XClarity Controller",
+      "vendor": "Lenovo",
+      "platform": null,
+      "version_match": null,
+      "certainty": 90
+    },
+    {
+      "match": "Lenovo.*IMM",
+      "product": "Lenovo IMM",
+      "vendor": "Lenovo",
+      "platform": null,
+      "version_match": null,
+      "certainty": 90
+    },
+    {
+      "match": "Raritan.*PX",
+      "product": "Raritan PDU",
+      "vendor": "Raritan",
+      "platform": null,
+      "version_match": null,
+      "certainty": 92
+    },
+    {
+      "match": "Raritan.*Dominion",
+      "product": "Raritan KVM",
+      "vendor": "Raritan",
+      "platform": null,
+      "version_match": null,
+      "certainty": 90
+    },
+    {
+      "match": "Raritan",
+      "product": "Raritan",
+      "vendor": "Raritan",
+      "platform": null,
+      "version_match": null,
+      "certainty": 85
+    },
+    {
+      "match": "Server Technology.*Sentry",
+      "product": "ServerTech Sentry PDU",
+      "vendor": "Server Technology",
+      "platform": null,
+      "version_match": null,
+      "certainty": 92
+    },
+    {
+      "match": "Server Technology",
+      "product": "ServerTech PDU",
+      "vendor": "Server Technology",
+      "platform": null,
+      "version_match": null,
+      "certainty": 88
+    },
+    {
+      "match": "APC Web/SNMP",
+      "product": "APC Network Management Card",
+      "vendor": "APC",
+      "platform": null,
+      "version_match": null,
+      "certainty": 95
+    },
+    {
+      "match": "APC.*Back-UPS",
+      "product": "APC Back-UPS",
+      "vendor": "APC",
+      "platform": null,
+      "version_match": null,
+      "certainty": 92
+    },
+    {
+      "match": "APC.*Rack PDU",
+      "product": "APC Rack PDU",
+      "vendor": "APC",
+      "platform": null,
+      "version_match": null,
+      "certainty": 92
+    },
+    {
+      "match": "Eaton.*5P",
+      "product": "Eaton 5P UPS",
+      "vendor": "Eaton",
+      "platform": null,
+      "version_match": null,
+      "certainty": 92
+    },
+    {
+      "match": "Eaton.*9PX",
+      "product": "Eaton 9PX UPS",
+      "vendor": "Eaton",
+      "platform": null,
+      "version_match": null,
+      "certainty": 92
+    },
+    {
+      "match": "Eaton.*Network-M",
+      "product": "Eaton Network Card",
+      "vendor": "Eaton",
+      "platform": null,
+      "version_match": null,
+      "certainty": 90
+    },
+    {
+      "match": "CyberPower.*OR",
+      "product": "CyberPower OR UPS",
+      "vendor": "CyberPower",
+      "platform": null,
+      "version_match": null,
+      "certainty": 90
+    },
+    {
+      "match": "CyberPower.*PR",
+      "product": "CyberPower PR UPS",
+      "vendor": "CyberPower",
+      "platform": null,
+      "version_match": null,
+      "certainty": 90
+    },
+    {
+      "match": "Tripp Lite.*SMART",
+      "product": "Tripp Lite SmartPro",
+      "vendor": "Tripp Lite",
+      "platform": null,
+      "version_match": null,
+      "certainty": 90
+    },
+    {
+      "match": "Dell EMC.*PowerStore",
+      "product": "Dell EMC PowerStore",
+      "vendor": "Dell EMC",
+      "platform": null,
+      "version_match": null,
+      "certainty": 92
+    },
+    {
+      "match": "Dell EMC.*Unity",
+      "product": "Dell EMC Unity",
+      "vendor": "Dell EMC",
+      "platform": null,
+      "version_match": null,
+      "certainty": 92
+    },
+    {
+      "match": "Pure Storage.*FlashArray",
+      "product": "Pure Storage FlashArray",
+      "vendor": "Pure Storage",
+      "platform": "Purity",
+      "version_match": null,
+      "certainty": 92
+    },
+    {
+      "match": "Pure Storage.*FlashBlade",
+      "product": "Pure Storage FlashBlade",
+      "vendor": "Pure Storage",
+      "platform": "Purity",
+      "version_match": null,
+      "certainty": 92
+    },
+    {
+      "match": "NetApp.*FAS",
+      "product": "NetApp FAS",
+      "vendor": "NetApp",
+      "platform": "ONTAP",
+      "version_match": null,
+      "certainty": 92
+    },
+    {
+      "match": "NetApp.*AFF",
+      "product": "NetApp AFF",
+      "vendor": "NetApp",
+      "platform": "ONTAP",
+      "version_match": null,
+      "certainty": 92
     },
     {"match": "Siemens.*SIMATIC.*S7", "product": "Siemens SIMATIC S7 PLC", "vendor": "Siemens", "category": "plc", "certainty": 90},
     {"match": "Siemens.*SCALANCE", "product": "Siemens SCALANCE Switch", "vendor": "Siemens", "category": "industrial_switch", "certainty": 90},
@@ -11677,6 +12061,198 @@
       "platform": null,
       "version_match": null,
       "certainty": 85
+    },
+    {
+      "match": "X-Jenkins",
+      "product": "Jenkins",
+      "vendor": null,
+      "platform": null,
+      "version_match": "X-Jenkins: ([\\d.]+)",
+      "certainty": 95
+    },
+    {
+      "match": "Jenkins",
+      "product": "Jenkins",
+      "vendor": null,
+      "platform": null,
+      "version_match": null,
+      "certainty": 85
+    },
+    {
+      "match": "GitLab.*Runner",
+      "product": "GitLab Runner",
+      "vendor": "GitLab",
+      "platform": null,
+      "version_match": null,
+      "certainty": 90
+    },
+    {
+      "match": "Buildkite",
+      "product": "Buildkite Agent",
+      "vendor": "Buildkite",
+      "platform": null,
+      "version_match": null,
+      "certainty": 85
+    },
+    {
+      "match": "Zabbix",
+      "product": "Zabbix",
+      "vendor": null,
+      "platform": null,
+      "version_match": null,
+      "certainty": 85
+    },
+    {
+      "match": "ZBXD",
+      "product": "Zabbix Agent",
+      "vendor": null,
+      "platform": null,
+      "version_match": null,
+      "certainty": 92
+    },
+    {
+      "match": "Nagios",
+      "product": "Nagios",
+      "vendor": null,
+      "platform": null,
+      "version_match": null,
+      "certainty": 85
+    },
+    {
+      "match": "NRPE",
+      "product": "Nagios NRPE",
+      "vendor": null,
+      "platform": null,
+      "version_match": "NRPE v([\\d.]+)",
+      "certainty": 90
+    },
+    {
+      "match": "Prometheus",
+      "product": "Prometheus",
+      "vendor": null,
+      "platform": null,
+      "version_match": null,
+      "certainty": 85
+    },
+    {
+      "match": "node_exporter",
+      "product": "Prometheus Node Exporter",
+      "vendor": null,
+      "platform": "Linux",
+      "version_match": null,
+      "certainty": 88
+    },
+    {
+      "match": "PRTG",
+      "product": "PRTG Network Monitor",
+      "vendor": "Paessler",
+      "platform": null,
+      "version_match": null,
+      "certainty": 88
+    },
+    {
+      "match": "Datadog.*Agent",
+      "product": "Datadog Agent",
+      "vendor": "Datadog",
+      "platform": null,
+      "version_match": null,
+      "certainty": 88
+    },
+    {
+      "match": "Niagara.*Web.*Server",
+      "product": "Tridium Niagara",
+      "vendor": "Tridium",
+      "platform": "Niagara",
+      "version_match": null,
+      "certainty": 95
+    },
+    {
+      "match": "Niagara AX",
+      "product": "Tridium Niagara AX",
+      "vendor": "Tridium",
+      "platform": "Niagara",
+      "version_match": null,
+      "certainty": 95
+    },
+    {
+      "match": "Niagara 4",
+      "product": "Tridium Niagara 4",
+      "vendor": "Tridium",
+      "platform": "Niagara",
+      "version_match": null,
+      "certainty": 95
+    },
+    {
+      "match": "Metasys",
+      "product": "Johnson Controls Metasys",
+      "vendor": "Johnson Controls",
+      "platform": "Metasys",
+      "version_match": null,
+      "certainty": 90
+    },
+    {
+      "match": "Honeywell.*WEBs",
+      "product": "Honeywell WEBs",
+      "vendor": "Honeywell",
+      "platform": null,
+      "version_match": null,
+      "certainty": 90
+    },
+    {
+      "match": "Dell.*Wyse",
+      "product": "Dell Wyse Thin Client",
+      "vendor": "Dell",
+      "platform": "ThinOS",
+      "version_match": null,
+      "certainty": 90
+    },
+    {
+      "match": "IGEL.*OS",
+      "product": "IGEL Thin Client",
+      "vendor": "IGEL",
+      "platform": "IGEL OS",
+      "version_match": null,
+      "certainty": 90
+    },
+    {
+      "match": "kube-apiserver",
+      "product": "Kubernetes API Server",
+      "vendor": null,
+      "platform": "Kubernetes",
+      "version_match": null,
+      "certainty": 92
+    },
+    {
+      "match": "Docker.*Swarm",
+      "product": "Docker Swarm",
+      "vendor": "Docker",
+      "platform": null,
+      "version_match": null,
+      "certainty": 88
+    },
+    {
+      "match": "Nomad",
+      "product": "HashiCorp Nomad",
+      "vendor": "HashiCorp",
+      "platform": null,
+      "version_match": null,
+      "certainty": 85
+    },
+    {
+      "match": "Rancher",
+      "product": "Rancher",
+      "vendor": "SUSE",
+      "platform": null,
+      "version_match": null,
+      "certainty": 85
+    },
+    {
+      "match": "OpenShift",
+      "product": "OpenShift",
+      "vendor": "Red Hat",
+      "platform": null,
+      "version_match": null,
+      "certainty": 88
     }
   ],
   "virtualization": [
@@ -11940,6 +12516,33 @@
       "version_match": null,
       "certainty": 80,
       "category": "kvm_host"
+    },
+    {
+      "match": "XCP-ng",
+      "product": "XCP-ng",
+      "vendor": null,
+      "platform": "XCP-ng",
+      "version_match": null,
+      "certainty": 90,
+      "category": "hypervisor"
+    },
+    {
+      "match": "Xen Orchestra",
+      "product": "Xen Orchestra",
+      "vendor": null,
+      "platform": "XCP-ng",
+      "version_match": null,
+      "certainty": 85,
+      "category": "hypervisor"
+    },
+    {
+      "match": "Harvester",
+      "product": "Harvester HCI",
+      "vendor": "SUSE",
+      "platform": "Harvester",
+      "version_match": null,
+      "certainty": 85,
+      "category": "hypervisor"
     }
   ],
   "webapp": [

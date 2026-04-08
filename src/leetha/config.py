@@ -50,6 +50,10 @@ class LeethaConfig:
     probe_max_concurrent: int = 10
     probe_cooldown_seconds: int = 3600
 
+    # Notifications
+    notification_urls: list[str] = field(default_factory=list)
+    notification_min_severity: str = "warning"
+
     @property
     def interface(self) -> str | None:
         """Deprecated: returns first interface name for backward compat."""
@@ -119,6 +123,7 @@ _PERSISTABLE_FIELDS = [
     "db_batch_size", "db_flush_interval", "sync_interval_days",
     "bpf_filter", "probe_enabled", "probe_max_concurrent",
     "probe_cooldown_seconds",
+    "notification_urls", "notification_min_severity",
 ]
 
 

@@ -52,7 +52,23 @@ import {
   HardDrive,
   Terminal,
   Palette,
+  Bell,
+  Plus,
+  X,
+  Send,
 } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  fetchNotificationSettings,
+  updateNotificationSettings,
+  testNotification,
+} from "@/lib/api";
 
 function formatBytes(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
@@ -63,6 +79,7 @@ function formatBytes(bytes: number): string {
 const TABS = [
   { id: "general", label: "General", icon: Settings2 },
   { id: "capture", label: "Capture & Probing", icon: Crosshair },
+  { id: "notifications", label: "Notifications", icon: Bell },
   { id: "appearance", label: "Appearance", icon: Palette },
   { id: "database", label: "Database", icon: Database },
   { id: "console", label: "SQL Console", icon: Terminal },
@@ -272,6 +289,8 @@ export default function Settings() {
           </div>
         )}
 
+        {activeTab === "notifications" && <NotificationsTab />}
+
         {activeTab === "appearance" && <AppearanceTab />}
 
         {activeTab === "database" && (
@@ -410,6 +429,167 @@ export default function Settings() {
             </div>
           </div>
         )}
+      </div>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════
+//  Notifications Tab
+// ═══════════════════════════════════════════
+
+const SEVERITY_OPTIONS = [
+  { value: "info", label: "Info & above (all)" },
+  { value: "low", label: "Low & above" },
+  { value: "warning", label: "Warning & above (default)" },
+  { value: "high", label: "High & above" },
+  { value: "critical", label: "Critical only" },
+];
+
+function NotificationsTab() {
+  const { data, refetch } = useQuery({
+    queryKey: ["notification-settings"],
+    queryFn: fetchNotificationSettings,
+  });
+
+  const [urls, setUrls] = useState<string[]>([]);
+  const [minSeverity, setMinSeverity] = useState("warning");
+  const [newUrl, setNewUrl] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [testing, setTesting] = useState(false);
+  const [loaded, setLoaded] = useState(false);
+
+  // Sync state from server on first load
+  if (data && !loaded) {
+    setUrls(data.urls);
+    setMinSeverity(data.min_severity);
+    setLoaded(true);
+  }
+
+  const addUrl = () => {
+    const trimmed = newUrl.trim();
+    if (trimmed && !urls.includes(trimmed)) {
+      setUrls([...urls, trimmed]);
+      setNewUrl("");
+    }
+  };
+
+  const removeUrl = (index: number) => {
+    setUrls(urls.filter((_, i) => i !== index));
+  };
+
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      await updateNotificationSettings({ urls, min_severity: minSeverity });
+      refetch();
+      toast.success("Notification settings saved");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to save");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleTest = async () => {
+    setTesting(true);
+    try {
+      await testNotification();
+      toast.success("Test notification sent");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Test failed");
+    } finally {
+      setTesting(false);
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h3 className="text-base font-semibold mb-1">Notifications</h3>
+        <p className="text-sm text-muted-foreground">
+          Send alerts to Telegram, Discord, Slack, email, webhooks, and 90+ other services via{" "}
+          <span className="font-medium text-foreground">Apprise</span> URLs.
+        </p>
+      </div>
+      <Separator />
+
+      {/* Minimum severity */}
+      <div className="space-y-2">
+        <h4 className="text-sm font-semibold">Minimum Severity</h4>
+        <p className="text-xs text-muted-foreground">Only findings at or above this level will trigger a notification.</p>
+        <Select value={minSeverity} onValueChange={setMinSeverity}>
+          <SelectTrigger className="w-64">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {SEVERITY_OPTIONS.map((opt) => (
+              <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      <Separator />
+
+      {/* URL list */}
+      <div className="space-y-3">
+        <h4 className="text-sm font-semibold">Notification URLs</h4>
+        <p className="text-xs text-muted-foreground">
+          Add Apprise-compatible URLs. Examples: <code className="text-[11px] bg-secondary px-1 py-0.5 rounded">tgram://bottoken/ChatID</code>{" "}
+          <code className="text-[11px] bg-secondary px-1 py-0.5 rounded">discord://WebhookID/WebhookToken</code>{" "}
+          <code className="text-[11px] bg-secondary px-1 py-0.5 rounded">slack://TokenA/TokenB/TokenC</code>
+        </p>
+
+        {urls.length > 0 && (
+          <div className="space-y-2">
+            {urls.map((url, i) => (
+              <div key={i} className="flex items-center gap-2 rounded-lg bg-secondary/50 border border-border px-3 py-2">
+                <span className="flex-1 text-sm font-mono break-all">{url}</span>
+                <button
+                  onClick={() => removeUrl(i)}
+                  className="shrink-0 p-1 rounded hover:bg-destructive/20 text-muted-foreground hover:text-destructive transition-colors"
+                  title="Remove"
+                >
+                  <X size={14} />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+
+        <div className="flex gap-2">
+          <Input
+            value={newUrl}
+            onChange={(e) => setNewUrl(e.target.value)}
+            placeholder="e.g. tgram://bottoken/ChatID"
+            className="font-mono text-sm bg-secondary border-border"
+            onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addUrl(); } }}
+          />
+          <Button variant="outline" size="sm" onClick={addUrl} disabled={!newUrl.trim()}>
+            <Plus size={14} className="mr-1" /> Add
+          </Button>
+        </div>
+
+        {urls.length === 0 && (
+          <div className="rounded-lg border border-dashed border-border py-8 text-center text-sm text-muted-foreground">
+            No notification URLs configured. Add one above to start receiving alerts.
+          </div>
+        )}
+      </div>
+
+      <Separator />
+
+      {/* Actions */}
+      <div className="flex gap-3">
+        <Button onClick={handleSave} disabled={saving}>
+          <Save size={14} className="mr-1.5" />
+          {saving ? "Saving..." : "Save Notifications"}
+        </Button>
+        <Button variant="outline" onClick={handleTest} disabled={testing || urls.length === 0}>
+          <Send size={14} className="mr-1.5" />
+          {testing ? "Sending..." : "Send Test"}
+        </Button>
       </div>
     </div>
   );

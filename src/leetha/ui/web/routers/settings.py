@@ -28,7 +28,11 @@ async def put_settings(request: Request):
     config = app_instance.config
     for key, value in body.items():
         if key in _PERSISTABLE_FIELDS and hasattr(config, key):
-            setattr(config, key, type(getattr(config, key))(value))
+            current = getattr(config, key)
+            if isinstance(current, list):
+                setattr(config, key, value if isinstance(value, list) else [value])
+            else:
+                setattr(config, key, type(current)(value))
     save_config(config)
     return {k: getattr(config, k) for k in _PERSISTABLE_FIELDS}
 
@@ -74,7 +78,11 @@ async def import_settings(request: Request):
     config = app_instance.config
     for key, value in body.items():
         if key in _PERSISTABLE_FIELDS and hasattr(config, key):
-            setattr(config, key, type(getattr(config, key))(value))
+            current = getattr(config, key)
+            if isinstance(current, list):
+                setattr(config, key, value if isinstance(value, list) else [value])
+            else:
+                setattr(config, key, type(current)(value))
     save_config(config)
     return {k: getattr(config, k) for k in _PERSISTABLE_FIELDS}
 

@@ -291,6 +291,12 @@ class Pipeline:
                 opt55=data.get("opt55"),
                 opt60=data.get("opt60"),
             ))
+            # Satori annotated DHCP fingerprints (device attribution)
+            opt55 = data.get("opt55")
+            if opt55:
+                m = self._lookup.match_satori_dhcp(opt55)
+                if m:
+                    hits.append(m)
             hostname = data.get("hostname")
             if hostname:
                 m = self._lookup.match_hostname(hostname)
@@ -323,6 +329,9 @@ class Pipeline:
             ua = data.get("user_agent", "")
             if ua:
                 m = self._lookup.match_user_agent(ua)
+                if m:
+                    hits.append(m)
+                m = self._lookup.match_satori_useragent(ua)
                 if m:
                     hits.append(m)
 
@@ -360,11 +369,26 @@ class Pipeline:
                 m = self._lookup.match_banner(protocol=service, banner_text=banner)
                 if m:
                     hits.append(m)
+                # Satori protocol-specific banner matching
+                if service == "ssh":
+                    m = self._lookup.match_satori_ssh(banner)
+                    if m:
+                        hits.append(m)
+                elif service in ("http", "https"):
+                    server = data.get("server", banner)
+                    m = self._lookup.match_satori_web(server)
+                    if m:
+                        hits.append(m)
 
         elif protocol == "tls":
             ja3 = data.get("ja3_hash")
             if ja3:
                 m = self._lookup.match_ja3(ja3)
+                if m:
+                    hits.append(m)
+            ja4 = data.get("ja4")
+            if ja4:
+                m = self._lookup.match_ja4(ja4)
                 if m:
                     hits.append(m)
             sni = data.get("sni")

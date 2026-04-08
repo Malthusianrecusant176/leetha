@@ -21,6 +21,8 @@ dependencies = [
     "python-multipart>=0.0.6",
     "psutil>=5.9",
     "markdown>=3.4",
+    "apprise>=1.7",
+    "prometheus-client>=0.20",
 ]
 
 [project.scripts]

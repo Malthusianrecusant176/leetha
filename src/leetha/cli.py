@@ -103,6 +103,12 @@ console commands:
         metavar="PATH",
         help="Listen on a Unix domain socket for event streaming (e.g. /tmp/leetha.sock)",
     )
+    parser.add_argument(
+        "--service",
+        action="store_true",
+        default=False,
+        help="Service mode: web UI + auto-capture on saved interfaces, no prompts",
+    )
 
     sub = parser.add_subparsers(dest="command")
 
@@ -348,6 +354,42 @@ def main():
     for spec in args.interface:
         name, itype, label = parse_interface_arg(spec)
         iface_configs.append(InterfaceConfig(name=name, type=itype, label=label))
+
+    if args.service:
+        import signal
+
+        def _fast_exit(signum, frame):
+            print("\n\033[33m[*] Shutting down Leetha...\033[0m")
+            sys.stdout.flush()
+            import threading
+            def _force():
+                import time
+                time.sleep(3)
+                os._exit(1)
+            threading.Thread(target=_force, daemon=True).start()
+
+        signal.signal(signal.SIGINT, _fast_exit)
+        signal.signal(signal.SIGTERM, _fast_exit)
+
+        # Load saved interfaces for auto-capture
+        from leetha.capture.interfaces import load_interface_config
+        from leetha.config import get_config
+        config = get_config()
+        saved = load_interface_config(config.data_dir)
+        if saved:
+            iface_configs = saved
+
+        from leetha.ui.web.app import run_web
+        try:
+            run_web(
+                interfaces=iface_configs or None,
+                host=args.host,
+                port=args.port,
+                force_auth=args.force_auth,
+            )
+        except (KeyboardInterrupt, SystemExit):
+            print("\033[32m[+] Leetha stopped\033[0m")
+        return
 
     if args.live:
         from leetha.ui.live import run_live

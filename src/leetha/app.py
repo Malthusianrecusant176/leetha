@@ -109,6 +109,11 @@ class LeethaApp:
         self.capture_engine = CaptureEngine(interfaces=iface_configs)
         self.packet_queue: asyncio.Queue[ParsedPacket] = asyncio.Queue()
         self.event_subscribers: list[asyncio.Queue] = []
+        from leetha.notifications import NotificationDispatcher
+        self._notifier = NotificationDispatcher(
+            urls=self.config.notification_urls,
+            min_severity=self.config.notification_min_severity,
+        )
         self._running = False
         # Local device MACs — populated at start() for self-identification
         self._local_macs: set[str] = set()
@@ -250,7 +255,11 @@ class LeethaApp:
         t0 = _time.monotonic()
 
         for name in (
-            "huginn_combinations", "huginn_dhcpv6",  # small files first
+            "p0f", "ja3", "ja4", "iana_enterprise",  # tiny files first
+            "satori_dhcp", "satori_useragent", "satori_tcp",  # Satori (all <1MB)
+            "satori_smb", "satori_ssh", "satori_web",
+            "satori_sip", "satori_ntp",
+            "huginn_combinations", "huginn_dhcpv6",
             "huginn_dhcp_vendor", "huginn_dhcpv6_enterprise",
             "huginn_devices",
             # huginn_dhcp (138 MB) loaded on-demand only
@@ -473,6 +482,20 @@ class LeethaApp:
                 except Exception:
                     logger.debug("Infra offline check failed", exc_info=True)
 
+                # Update Prometheus metrics
+                try:
+                    from leetha.metrics import update_metrics
+                    from datetime import datetime, timedelta
+                    device_count = await self.store.hosts.count()
+                    alert_count = await self.store.findings.count_active()
+                    threshold = datetime.now() - timedelta(minutes=5)
+                    all_hosts = await self.store.hosts.find_all()
+                    online = sum(1 for h in all_hosts if h.last_active and h.last_active >= threshold)
+                    capture_count = len(self.capture_engine.interfaces)
+                    await update_metrics(device_count, online, alert_count, capture_count, 0)
+                except Exception:
+                    logger.debug("Metrics update failed", exc_info=True)
+
                 # Prune old sightings every 10 minutes (cycle 20 × 30s)
                 if cycle % 20 == 0:
                     try:
@@ -655,6 +678,20 @@ class LeethaApp:
                     stale.append(sub)
         for sub in stale:
             self.event_subscribers.remove(sub)
+
+        # Fire-and-forget notification to external services
+        notifier = getattr(self, "_notifier", None)
+        if notifier:
+            asyncio.ensure_future(notifier.send(finding))
+
+        # Increment Prometheus finding counter
+        try:
+            from leetha.metrics import record_finding
+            rule = finding.rule.value if hasattr(finding.rule, "value") else str(finding.rule)
+            sev = finding.severity.value if hasattr(finding.severity, "value") else str(finding.severity)
+            record_finding(rule, sev)
+        except Exception:
+            pass
 
     # Sharded pipeline (worker_count > 1)
 

@@ -629,6 +629,328 @@
       "vendor": "Dahua",
       "platform": null,
       "certainty": 85
+    },
+    "_nanit._tcp": {
+      "category": "baby_monitor",
+      "vendor": "Nanit",
+      "platform": null,
+      "certainty": 88
+    },
+    "_owlet._tcp": {
+      "category": "baby_monitor",
+      "vendor": "Owlet",
+      "platform": null,
+      "certainty": 88
+    },
+    "_arlo._tcp": {
+      "category": "ip_camera",
+      "vendor": "Arlo",
+      "platform": null,
+      "certainty": 88
+    },
+    "_wyze._tcp": {
+      "category": "smart_home",
+      "vendor": "Wyze",
+      "platform": null,
+      "certainty": 85
+    },
+    "_ring._tcp": {
+      "category": "doorbell",
+      "vendor": "Ring",
+      "platform": null,
+      "certainty": 88
+    },
+    "_ecobee._tcp": {
+      "category": "thermostat",
+      "vendor": "ecobee",
+      "platform": null,
+      "certainty": 88
+    },
+    "_shelly._tcp": {
+      "category": "smart_home",
+      "vendor": "Shelly",
+      "platform": null,
+      "certainty": 88
+    },
+    "_esphome._tcp": {
+      "category": "smart_home",
+      "vendor": null,
+      "platform": "ESPHome",
+      "certainty": 85
+    },
+    "_tasmota._tcp": {
+      "category": "smart_home",
+      "vendor": null,
+      "platform": "Tasmota",
+      "certainty": 85
+    },
+    "_meross._tcp": {
+      "category": "smart_plug",
+      "vendor": "Meross",
+      "platform": null,
+      "certainty": 85
+    },
+    "_kasa._tcp": {
+      "category": "smart_plug",
+      "vendor": "TP-Link",
+      "platform": "Kasa",
+      "certainty": 85
+    },
+    "_nanoleaf._tcp": {
+      "category": "smart_lighting",
+      "vendor": "Nanoleaf",
+      "platform": null,
+      "certainty": 88
+    },
+    "_govee._tcp": {
+      "category": "smart_lighting",
+      "vendor": "Govee",
+      "platform": null,
+      "certainty": 85
+    },
+    "_roomba._tcp": {
+      "category": "robot_vacuum",
+      "vendor": "iRobot",
+      "platform": null,
+      "certainty": 88
+    },
+    "_roborock._tcp": {
+      "category": "robot_vacuum",
+      "vendor": "Roborock",
+      "platform": null,
+      "certainty": 88
+    },
+    "_pihole._tcp": {
+      "category": "dns_server",
+      "vendor": null,
+      "platform": "Pi-hole",
+      "certainty": 85
+    },
+    "_adguard._tcp": {
+      "category": "dns_server",
+      "vendor": null,
+      "platform": "AdGuard Home",
+      "certainty": 85
+    },
+    "_proxmox._tcp": {
+      "category": "hypervisor",
+      "vendor": "Proxmox",
+      "platform": "PVE",
+      "certainty": 90
+    },
+    "_unraid._tcp": {
+      "category": "nas",
+      "vendor": "Lime Technology",
+      "platform": "Unraid",
+      "certainty": 88
+    },
+
+    "_sip._udp": {
+      "category": "voip_phone",
+      "vendor": null,
+      "platform": null,
+      "certainty": 75
+    },
+    "_sip._tcp": {
+      "category": "voip_phone",
+      "vendor": null,
+      "platform": null,
+      "certainty": 75
+    },
+    "_sips._tcp": {
+      "category": "voip_phone",
+      "vendor": null,
+      "platform": null,
+      "certainty": 75
+    },
+    "_h323._tcp": {
+      "category": "voip_phone",
+      "vendor": null,
+      "platform": null,
+      "certainty": 70
+    },
+
+    "_niagara._tcp": {
+      "category": "building_automation",
+      "vendor": "Tridium",
+      "platform": "Niagara",
+      "certainty": 90
+    },
+    "_bacnet._udp": {
+      "category": "building_automation",
+      "vendor": null,
+      "platform": null,
+      "certainty": 80
+    },
+
+    "_nfs._tcp": {
+      "category": "storage_array",
+      "vendor": null,
+      "platform": null,
+      "certainty": 70
+    },
+    "_iscsi._tcp": {
+      "category": "storage_array",
+      "vendor": null,
+      "platform": null,
+      "certainty": 80
+    },
+
+    "_vmware._tcp": {
+      "category": "hypervisor",
+      "vendor": "VMware",
+      "platform": "ESXi",
+      "certainty": 85
+    },
+    "_nutanix._tcp": {
+      "category": "hypervisor",
+      "vendor": "Nutanix",
+      "platform": "AHV",
+      "certainty": 90
+    },
+    "_ovirt._tcp": {
+      "category": "hypervisor",
+      "vendor": "Red Hat",
+      "platform": "oVirt",
+      "certainty": 85
+    },
+    "_xcpng._tcp": {
+      "category": "hypervisor",
+      "vendor": null,
+      "platform": "XCP-ng",
+      "certainty": 85
+    },
+
+    "_kubernetes._tcp": {
+      "category": "k8s_node",
+      "vendor": null,
+      "platform": "Kubernetes",
+      "certainty": 80
+    },
+    "_nomad._tcp": {
+      "category": "container_host",
+      "vendor": "HashiCorp",
+      "platform": "Nomad",
+      "certainty": 85
+    },
+    "_consul._tcp": {
+      "category": "service_mesh",
+      "vendor": "HashiCorp",
+      "platform": "Consul",
+      "certainty": 85
+    },
+
+    "_jenkins._tcp": {
+      "category": "ci_server",
+      "vendor": null,
+      "platform": "Jenkins",
+      "certainty": 85
+    },
+    "_gitlab._tcp": {
+      "category": "ci_server",
+      "vendor": "GitLab",
+      "platform": null,
+      "certainty": 85
+    },
+
+    "_zabbix-agent._tcp": {
+      "category": "monitoring",
+      "vendor": null,
+      "platform": "Zabbix",
+      "certainty": 85
+    },
+    "_prometheus._tcp": {
+      "category": "monitoring",
+      "vendor": null,
+      "platform": "Prometheus",
+      "certainty": 85
+    },
+    "_prtg._tcp": {
+      "category": "monitoring",
+      "vendor": "Paessler",
+      "platform": "PRTG",
+      "certainty": 85
+    },
+
+    "_apc._tcp": {
+      "category": "ups",
+      "vendor": "APC",
+      "platform": null,
+      "certainty": 85
+    },
+
+    "_ipmi._tcp": {
+      "category": "bmc",
+      "vendor": null,
+      "platform": "IPMI",
+      "certainty": 80
+    },
+    "_idrac._tcp": {
+      "category": "bmc",
+      "vendor": "Dell",
+      "platform": "iDRAC",
+      "certainty": 90
+    },
+    "_ilo._tcp": {
+      "category": "bmc",
+      "vendor": "HPE",
+      "platform": "iLO",
+      "certainty": 90
+    },
+
+    "_ntp._udp": {
+      "category": "ntp_server",
+      "vendor": null,
+      "platform": null,
+      "certainty": 60
+    },
+    "_lxi._tcp": {
+      "category": "lab_equipment",
+      "vendor": null,
+      "platform": "LXI",
+      "certainty": 85
+    },
+    "_scpi-raw._tcp": {
+      "category": "lab_equipment",
+      "vendor": null,
+      "platform": "SCPI",
+      "certainty": 80
+    },
+    "_vxi-11._tcp": {
+      "category": "lab_equipment",
+      "vendor": null,
+      "platform": "VXI-11",
+      "certainty": 80
+    },
+    "_home-assistant._tcp": {
+      "category": "smart_home_hub",
+      "vendor": null,
+      "platform": "Home Assistant",
+      "certainty": 90
+    },
+    "_hubitat._tcp": {
+      "category": "smart_home_hub",
+      "vendor": "Hubitat",
+      "platform": null,
+      "certainty": 90
+    },
+    "_heos._tcp": {
+      "category": "audio",
+      "vendor": "Denon",
+      "platform": "HEOS",
+      "certainty": 88
+    },
+    "_bose._tcp": {
+      "category": "audio",
+      "vendor": "Bose",
+      "platform": "SoundTouch",
+      "certainty": 88
+    },
+    "_yamaha._tcp": {
+      "category": "audio",
+      "vendor": "Yamaha",
+      "platform": "MusicCast",
+      "certainty": 85
     }
   },
   "names": [

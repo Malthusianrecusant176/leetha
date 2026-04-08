@@ -596,6 +596,28 @@ parse_iana_enterprise = ingest_iana_enterprise
 parse_ja3_database = ingest_ja3
 parse_ja4_database = ingest_ja4
 
+
+# ===================================================================
+# Satori fingerprint parser (generic for all 13 Satori JSON files)
+# ===================================================================
+
+def ingest_satori(content: str) -> list[dict]:
+    """Parse a Satori fingerprint JSON file.
+
+    All Satori files share the same schema: a list of entries, each with
+    device metadata (name, os_name, os_class, os_vendor, device_type,
+    device_vendor) and a ``tests`` array of protocol-specific match rules.
+
+    Returns the list as-is — indexing happens at load time in the matcher.
+    """
+    raw = json.loads(content)
+    if not isinstance(raw, list):
+        return []
+    return raw
+
+
+parse_satori = ingest_satori
+
 # Also expose old private helper names in case anything references them
 _abbreviate_vendor = _shorten_vendor
 _hash_dhcp_options = _fingerprint_dhcp_opts

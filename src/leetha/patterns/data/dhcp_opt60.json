@@ -1220,5 +1220,624 @@
     "device_type": "plc",
     "os_family": "CODESYS",
     "confidence": 75
-  }
+  },
+  {
+    "pattern": "^Owlet",
+    "device_type": "baby_monitor",
+    "manufacturer": "Owlet",
+    "os_family": null,
+    "confidence": 90
+  },
+  {
+    "pattern": "^Nanit",
+    "device_type": "baby_monitor",
+    "manufacturer": "Nanit",
+    "os_family": null,
+    "confidence": 90
+  },
+  {
+    "pattern": "^VTech",
+    "device_type": "baby_monitor",
+    "manufacturer": "VTech",
+    "os_family": null,
+    "confidence": 85
+  },
+  {
+    "pattern": "(?i)infant.?optics",
+    "device_type": "baby_monitor",
+    "manufacturer": "Infant Optics",
+    "os_family": null,
+    "confidence": 90
+  },
+  {
+    "pattern": "(?i)motorola.?baby",
+    "device_type": "baby_monitor",
+    "manufacturer": "Motorola",
+    "os_family": null,
+    "confidence": 85
+  },
+  {
+    "pattern": "(?i)hubble.?connect",
+    "device_type": "baby_monitor",
+    "manufacturer": "Motorola",
+    "os_family": null,
+    "confidence": 85
+  },
+  {
+    "pattern": "(?i)eufy.?(baby|spaceview)",
+    "device_type": "baby_monitor",
+    "manufacturer": "eufy",
+    "os_family": null,
+    "confidence": 85
+  },
+  {
+    "pattern": "(?i)tesla.?(wall.?connector|charger|twc)",
+    "device_type": "ev_charger",
+    "manufacturer": "Tesla",
+    "os_family": null,
+    "confidence": 90
+  },
+  {
+    "pattern": "(?i)chargepoint",
+    "device_type": "ev_charger",
+    "manufacturer": "ChargePoint",
+    "os_family": null,
+    "confidence": 90
+  },
+  {
+    "pattern": "(?i)juicebox",
+    "device_type": "ev_charger",
+    "manufacturer": "Enel X",
+    "os_family": null,
+    "confidence": 85
+  },
+  {
+    "pattern": "(?i)wallbox",
+    "device_type": "ev_charger",
+    "manufacturer": "Wallbox",
+    "os_family": null,
+    "confidence": 85
+  },
+  {
+    "pattern": "(?i)grizzl-e",
+    "device_type": "ev_charger",
+    "manufacturer": "United Chargers",
+    "os_family": null,
+    "confidence": 85
+  },
+  {
+    "pattern": "(?i)emporia.?(energy|vue|charger)",
+    "device_type": "ev_charger",
+    "manufacturer": "Emporia Energy",
+    "os_family": null,
+    "confidence": 85
+  },
+  {
+    "pattern": "(?i)fitbit",
+    "device_type": "wearable",
+    "manufacturer": "Fitbit",
+    "os_family": "Fitbit OS",
+    "confidence": 85
+  },
+  {
+    "pattern": "(?i)garmin",
+    "device_type": "wearable",
+    "manufacturer": "Garmin",
+    "os_family": null,
+    "confidence": 85
+  },
+  {
+    "pattern": "(?i)withings",
+    "device_type": "wearable",
+    "manufacturer": "Withings",
+    "os_family": null,
+    "confidence": 85
+  },
+  {
+    "pattern": "(?i)oura",
+    "device_type": "wearable",
+    "manufacturer": "Oura",
+    "os_family": null,
+    "confidence": 85
+  },
+  {
+    "pattern": "(?i)whoop",
+    "device_type": "wearable",
+    "manufacturer": "WHOOP",
+    "os_family": null,
+    "confidence": 85
+  },
+  {
+    "pattern": "(?i)wyze.?(cam|plug|bulb|lock|sensor|thermostat)",
+    "device_type": "smart_home",
+    "manufacturer": "Wyze",
+    "os_family": null,
+    "confidence": 85
+  },
+  {
+    "pattern": "(?i)blink.?(cam|mini|outdoor|indoor)",
+    "device_type": "ip_camera",
+    "manufacturer": "Blink",
+    "os_family": null,
+    "confidence": 85
+  },
+  {
+    "pattern": "(?i)ring.?(doorbell|chime|cam|alarm|stick)",
+    "device_type": "doorbell",
+    "manufacturer": "Ring",
+    "os_family": null,
+    "confidence": 85
+  },
+  {
+    "pattern": "(?i)arlo.?(pro|ultra|essential|go|baby)",
+    "device_type": "ip_camera",
+    "manufacturer": "Arlo",
+    "os_family": null,
+    "confidence": 85
+  },
+  {
+    "pattern": "(?i)roomba",
+    "device_type": "robot_vacuum",
+    "manufacturer": "iRobot",
+    "os_family": null,
+    "confidence": 85
+  },
+  {
+    "pattern": "(?i)roborock",
+    "device_type": "robot_vacuum",
+    "manufacturer": "Roborock",
+    "os_family": null,
+    "confidence": 85
+  },
+  {
+    "pattern": "(?i)ecovacs|deebot",
+    "device_type": "robot_vacuum",
+    "manufacturer": "Ecovacs",
+    "os_family": null,
+    "confidence": 85
+  },
+  {
+    "pattern": "(?i)dyson",
+    "device_type": "smart_appliance",
+    "manufacturer": "Dyson",
+    "os_family": null,
+    "confidence": 80
+  },
+  {
+    "pattern": "(?i)tplink.?tapo",
+    "device_type": "smart_home",
+    "manufacturer": "TP-Link",
+    "os_family": null,
+    "confidence": 85
+  },
+  {
+    "pattern": "(?i)tplink.?kasa",
+    "device_type": "smart_plug",
+    "manufacturer": "TP-Link",
+    "os_family": null,
+    "confidence": 85
+  },
+  {
+    "pattern": "(?i)tuya",
+    "device_type": "smart_home",
+    "manufacturer": "Tuya",
+    "os_family": null,
+    "confidence": 80
+  },
+  {
+    "pattern": "(?i)shelly",
+    "device_type": "smart_home",
+    "manufacturer": "Shelly",
+    "os_family": null,
+    "confidence": 85
+  },
+  {
+    "pattern": "(?i)meross",
+    "device_type": "smart_plug",
+    "manufacturer": "Meross",
+    "os_family": null,
+    "confidence": 85
+  },
+  {
+    "pattern": "(?i)govee",
+    "device_type": "smart_lighting",
+    "manufacturer": "Govee",
+    "os_family": null,
+    "confidence": 85
+  },
+  {
+    "pattern": "(?i)yeelight",
+    "device_type": "smart_lighting",
+    "manufacturer": "Yeelight",
+    "os_family": null,
+    "confidence": 85
+  },
+  {
+    "pattern": "(?i)lxc[_-]",
+    "device_type": "lxc_container",
+    "manufacturer": null,
+    "os_family": "Linux",
+    "confidence": 75
+  },
+  {
+    "pattern": "(?i)incus[_-]",
+    "device_type": "lxc_container",
+    "manufacturer": null,
+    "os_family": "Linux",
+    "confidence": 75
+  },
+
+  {
+    "pattern": "^Cisco AP c\\d{3,4}",
+    "device_type": "access_point",
+    "manufacturer": "Cisco",
+    "os_family": null,
+    "confidence": 95
+  },
+  {
+    "pattern": "^Cisco AP c\\d{3,4}-ServiceProvider",
+    "device_type": "access_point",
+    "manufacturer": "Cisco",
+    "os_family": null,
+    "confidence": 95
+  },
+  {
+    "pattern": "^Cisco AP c9\\d{3}",
+    "device_type": "access_point",
+    "manufacturer": "Cisco",
+    "os_family": null,
+    "confidence": 95
+  },
+  {
+    "pattern": "^CiscoSB",
+    "device_type": "switch",
+    "manufacturer": "Cisco",
+    "os_family": null,
+    "confidence": 90
+  },
+  {
+    "pattern": "^Cisco.*Catalyst",
+    "device_type": "switch",
+    "manufacturer": "Cisco",
+    "os_family": "IOS",
+    "confidence": 90
+  },
+  {
+    "pattern": "^CiscoPnP",
+    "device_type": "switch",
+    "manufacturer": "Cisco",
+    "os_family": "IOS-XE",
+    "confidence": 90
+  },
+  {
+    "pattern": "^ArubaAP",
+    "device_type": "access_point",
+    "manufacturer": "Aruba",
+    "os_family": "ArubaOS",
+    "confidence": 95
+  },
+  {
+    "pattern": "^ArubaInstantAP",
+    "device_type": "access_point",
+    "manufacturer": "Aruba",
+    "os_family": "ArubaOS",
+    "confidence": 95
+  },
+  {
+    "pattern": "^Aruba JL\\d{3}",
+    "device_type": "switch",
+    "manufacturer": "Aruba",
+    "os_family": "ArubaOS-CX",
+    "confidence": 90
+  },
+  {
+    "pattern": "^Juniper-\\w+",
+    "device_type": "switch",
+    "manufacturer": "Juniper",
+    "os_family": "JunOS",
+    "confidence": 90
+  },
+  {
+    "pattern": "^Juniper-ex\\d{4}",
+    "device_type": "switch",
+    "manufacturer": "Juniper",
+    "os_family": "JunOS",
+    "confidence": 92
+  },
+  {
+    "pattern": "^Juniper-mx\\d+",
+    "device_type": "router",
+    "manufacturer": "Juniper",
+    "os_family": "JunOS",
+    "confidence": 92
+  },
+  {
+    "pattern": "^Ruckus CPE",
+    "device_type": "access_point",
+    "manufacturer": "Ruckus",
+    "os_family": null,
+    "confidence": 95
+  },
+  {
+    "pattern": "^MERAKI",
+    "device_type": "access_point",
+    "manufacturer": "Cisco Meraki",
+    "os_family": null,
+    "confidence": 95
+  },
+  {
+    "pattern": "^Cambium",
+    "device_type": "access_point",
+    "manufacturer": "Cambium Networks",
+    "os_family": null,
+    "confidence": 90
+  },
+  {
+    "pattern": "^Cambium-WiFi-AP",
+    "device_type": "access_point",
+    "manufacturer": "Cambium Networks",
+    "os_family": null,
+    "confidence": 92
+  },
+  {
+    "pattern": "^Cisco.*Viptela",
+    "device_type": "sdwan_appliance",
+    "manufacturer": "Cisco",
+    "os_family": "Viptela OS",
+    "confidence": 90
+  },
+  {
+    "pattern": "^VeloCloud",
+    "device_type": "sdwan_appliance",
+    "manufacturer": "VMware",
+    "os_family": null,
+    "confidence": 90
+  },
+  {
+    "pattern": "^Fortinet.*SD-WAN",
+    "device_type": "sdwan_appliance",
+    "manufacturer": "Fortinet",
+    "os_family": "FortiOS",
+    "confidence": 90
+  },
+  {
+    "pattern": "^Grandstream GXP\\d{4}",
+    "device_type": "voip_phone",
+    "manufacturer": "Grandstream",
+    "os_family": null,
+    "confidence": 95
+  },
+  {
+    "pattern": "^Grandstream GRP\\d{4}",
+    "device_type": "voip_phone",
+    "manufacturer": "Grandstream",
+    "os_family": null,
+    "confidence": 95
+  },
+  {
+    "pattern": "^Grandstream GXV\\d{4}",
+    "device_type": "voip_phone",
+    "manufacturer": "Grandstream",
+    "os_family": null,
+    "confidence": 95
+  },
+  {
+    "pattern": "^snom\\w+",
+    "device_type": "voip_phone",
+    "manufacturer": "Snom",
+    "os_family": null,
+    "confidence": 95
+  },
+  {
+    "pattern": "^snomD\\d{3}",
+    "device_type": "voip_phone",
+    "manufacturer": "Snom",
+    "os_family": null,
+    "confidence": 95
+  },
+  {
+    "pattern": "^Fanvil",
+    "device_type": "voip_phone",
+    "manufacturer": "Fanvil",
+    "os_family": null,
+    "confidence": 90
+  },
+  {
+    "pattern": "^Mitel.*\\d{4}",
+    "device_type": "voip_phone",
+    "manufacturer": "Mitel",
+    "os_family": null,
+    "confidence": 92
+  },
+  {
+    "pattern": "^Honeywell",
+    "device_type": "building_automation",
+    "manufacturer": "Honeywell",
+    "os_family": null,
+    "confidence": 85
+  },
+  {
+    "pattern": "^Honeywell.*Spyder",
+    "device_type": "hvac_controller",
+    "manufacturer": "Honeywell",
+    "os_family": null,
+    "confidence": 90
+  },
+  {
+    "pattern": "^Lenel",
+    "device_type": "access_control",
+    "manufacturer": "Lenel",
+    "os_family": null,
+    "confidence": 85
+  },
+  {
+    "pattern": "^HID",
+    "device_type": "access_control",
+    "manufacturer": "HID Global",
+    "os_family": null,
+    "confidence": 80
+  },
+  {
+    "pattern": "^Genetec",
+    "device_type": "access_control",
+    "manufacturer": "Genetec",
+    "os_family": null,
+    "confidence": 85
+  },
+  {
+    "pattern": "^APC",
+    "device_type": "ups",
+    "manufacturer": "APC",
+    "os_family": null,
+    "confidence": 90
+  },
+  {
+    "pattern": "^Eaton",
+    "device_type": "ups",
+    "manufacturer": "Eaton",
+    "os_family": null,
+    "confidence": 90
+  },
+  {
+    "pattern": "^Tripp Lite",
+    "device_type": "ups",
+    "manufacturer": "Tripp Lite",
+    "os_family": null,
+    "confidence": 90
+  },
+  {
+    "pattern": "^CyberPower",
+    "device_type": "ups",
+    "manufacturer": "CyberPower",
+    "os_family": null,
+    "confidence": 90
+  },
+  {
+    "pattern": "^Raritan",
+    "device_type": "pdu",
+    "manufacturer": "Raritan",
+    "os_family": null,
+    "confidence": 90
+  },
+  {
+    "pattern": "^Server Technology",
+    "device_type": "pdu",
+    "manufacturer": "Server Technology",
+    "os_family": null,
+    "confidence": 90
+  },
+  {
+    "pattern": "^ServerTech",
+    "device_type": "pdu",
+    "manufacturer": "Server Technology",
+    "os_family": null,
+    "confidence": 90
+  },
+  {
+    "pattern": "^iDRAC",
+    "device_type": "bmc",
+    "manufacturer": "Dell",
+    "os_family": null,
+    "confidence": 95
+  },
+  {
+    "pattern": "^iLO",
+    "device_type": "bmc",
+    "manufacturer": "HPE",
+    "os_family": null,
+    "confidence": 90
+  },
+  {
+    "pattern": "^XClarity",
+    "device_type": "bmc",
+    "manufacturer": "Lenovo",
+    "os_family": null,
+    "confidence": 90
+  },
+  {
+    "pattern": "^Meinberg",
+    "device_type": "ntp_server",
+    "manufacturer": "Meinberg",
+    "os_family": null,
+    "confidence": 90
+  },
+  {
+    "pattern": "^Spectracom",
+    "device_type": "ntp_server",
+    "manufacturer": "Spectracom",
+    "os_family": null,
+    "confidence": 90
+  },
+  {
+    "pattern": "^Symmetricom",
+    "device_type": "ntp_server",
+    "manufacturer": "Symmetricom",
+    "os_family": null,
+    "confidence": 90
+  },
+  {
+    "pattern": "^10ZiG",
+    "device_type": "thin_client",
+    "manufacturer": "10ZiG",
+    "os_family": null,
+    "confidence": 90
+  },
+  {
+    "pattern": "^PCoIP Endpoint",
+    "device_type": "thin_client",
+    "manufacturer": null,
+    "os_family": "PCoIP",
+    "confidence": 85
+  },
+  {
+    "pattern": "^Teradici",
+    "device_type": "thin_client",
+    "manufacturer": "Teradici",
+    "os_family": "PCoIP",
+    "confidence": 90
+  },
+  {
+    "pattern": "^igel-dhcp-1",
+    "device_type": "thin_client",
+    "manufacturer": "IGEL",
+    "os_family": "IGEL OS",
+    "confidence": 95
+  },
+  {
+    "pattern": "^Wyse",
+    "device_type": "thin_client",
+    "manufacturer": "Dell",
+    "os_family": "ThinOS",
+    "confidence": 90
+  },
+  {
+    "pattern": "^HP t\\d{3}",
+    "device_type": "thin_client",
+    "manufacturer": "HP",
+    "os_family": null,
+    "confidence": 90
+  },
+  {
+    "pattern": "^XCP-ng",
+    "device_type": "hypervisor",
+    "manufacturer": null,
+    "os_family": "XCP-ng",
+    "confidence": 90
+  },
+  {
+    "pattern": "^Harvester",
+    "device_type": "hypervisor",
+    "manufacturer": "SUSE",
+    "os_family": "Harvester",
+    "confidence": 85
+  },
+  {"pattern": "^BrightSign", "device_type": "digital_signage", "manufacturer": "BrightSign", "os_family": null, "confidence": 90},
+  {"pattern": "(?i)^Rachio", "device_type": "irrigation", "manufacturer": "Rachio", "os_family": null, "confidence": 88},
+  {"pattern": "(?i)^RainMachine", "device_type": "irrigation", "manufacturer": "RainMachine", "os_family": null, "confidence": 88},
+  {"pattern": "(?i)^Peloton", "device_type": "fitness_equipment", "manufacturer": "Peloton", "os_family": "Android", "confidence": 80},
+  {"pattern": "(?i)^Sonos", "device_type": "smart_speaker", "manufacturer": "Sonos", "os_family": null, "confidence": 90},
+  {"pattern": "(?i)^Bose", "device_type": "audio", "manufacturer": "Bose", "os_family": null, "confidence": 85},
+  {"pattern": "(?i)^Square", "device_type": "pos_terminal", "manufacturer": "Square", "os_family": null, "confidence": 85},
+  {"pattern": "(?i)^Clover", "device_type": "pos_terminal", "manufacturer": "Clover", "os_family": null, "confidence": 85},
+  {"pattern": "(?i)^Verifone", "device_type": "pos_terminal", "manufacturer": "Verifone", "os_family": null, "confidence": 90}
 ]

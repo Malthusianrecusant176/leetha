@@ -1087,6 +1087,12 @@ class SignatureMatcher:
             if he:
                 hits.append(he)
 
+        # Enterprise ID IANA fallback
+        if enterprise_id is not None and not any(h.source == "huginn_dhcpv6_enterprise" for h in hits):
+            ie = self._resolve_iana_enterprise(enterprise_id)
+            if ie:
+                hits.append(ie)
+
         return hits
 
     # Backward-compat alias
@@ -1125,6 +1131,120 @@ class SignatureMatcher:
             manufacturer=org or None,
             raw_data={"enterprise_id": eid, "organization": org},
         )
+
+    def _resolve_iana_enterprise(self, eid: int) -> FingerprintMatch | None:
+        """Check IANA Enterprise Numbers registry for vendor name."""
+        blob = self._fetch_json("iana_enterprise")
+        if not blob:
+            return None
+        rec = blob.get("entries", {}).get(str(eid))
+        if not rec:
+            return None
+        org = rec.get("organization") or rec.get("name") or ""
+        if not org:
+            return None
+        return FingerprintMatch(
+            source="iana_enterprise",
+            match_type="exact",
+            confidence=0.60,
+            manufacturer=org,
+            raw_data={"enterprise_id": eid, "organization": org,
+                       "source_db": "IANA Private Enterprise Numbers"},
+        )
+
+    # ------------------------------------------------------------------
+    # Satori fingerprint matching (generic across all Satori databases)
+    # ------------------------------------------------------------------
+
+    def _satori_index(self, source_name: str, test_field: str) -> dict[str, dict]:
+        """Build or return an indexed lookup for a Satori source.
+
+        Index maps lowercase match values to the best device metadata entry
+        (highest weight wins when multiple entries match the same value).
+        """
+        idx_key = f"_satori_idx_{source_name}"
+        if idx_key in self._store:
+            return self._store[idx_key] or {}
+
+        blob = self._fetch_json(source_name)
+        if not blob:
+            self._store[idx_key] = {}
+            return {}
+
+        entries = blob if isinstance(blob, list) else blob.get("entries", [])
+        idx: dict[str, dict] = {}
+        for entry in entries:
+            for test in entry.get("tests", []):
+                val = test.get(test_field)
+                if not val:
+                    continue
+                weight = int(test.get("weight", 0))
+                key = val.lower() if test.get("matchtype") != "exact" else val
+                existing = idx.get(key)
+                if not existing or weight > existing.get("_weight", 0):
+                    idx[key] = {
+                        "name": entry.get("name", ""),
+                        "os_family": entry.get("os_class") or entry.get("os_name") or None,
+                        "os_vendor": entry.get("os_vendor") or None,
+                        "device_type": entry.get("device_type") or None,
+                        "manufacturer": entry.get("device_vendor") or entry.get("os_vendor") or None,
+                        "matchtype": test.get("matchtype", "exact"),
+                        "_weight": weight,
+                    }
+        self._store[idx_key] = idx
+        _log.info("Satori index %s: %d entries", source_name, len(idx))
+        return idx
+
+    def _match_satori(self, source_name: str, test_field: str,
+                      value: str, confidence: float = 0.80) -> FingerprintMatch | None:
+        """Look up a value against a Satori fingerprint index."""
+        if not value:
+            return None
+        idx = self._satori_index(source_name, test_field)
+        if not idx:
+            return None
+
+        # Try exact match first, then partial (substring) matches
+        hit = idx.get(value) or idx.get(value.lower())
+        if not hit:
+            # Partial matching: check if any index key is a substring
+            val_lower = value.lower()
+            for pattern, entry in idx.items():
+                if entry.get("matchtype") == "partial" and pattern in val_lower:
+                    if not hit or entry.get("_weight", 0) > hit.get("_weight", 0):
+                        hit = entry
+            if not hit:
+                return None
+
+        return FingerprintMatch(
+            source=f"satori_{source_name.replace('satori_', '')}",
+            match_type=hit.get("matchtype", "exact"),
+            confidence=confidence,
+            manufacturer=hit.get("manufacturer"),
+            os_family=hit.get("os_family"),
+            device_type=hit.get("device_type"),
+            raw_data={"satori_name": hit.get("name"), "source_db": f"Satori {source_name}"},
+        )
+
+    def match_satori_dhcp(self, opt55: str) -> FingerprintMatch | None:
+        """Match DHCP Option 55 against Satori annotated DHCP fingerprints."""
+        return self._match_satori("satori_dhcp", "dhcpoption55", opt55, 0.85)
+
+    def match_satori_useragent(self, ua: str) -> FingerprintMatch | None:
+        """Match HTTP User-Agent against Satori UA fingerprints."""
+        return self._match_satori("satori_useragent", "webuseragent", ua, 0.80)
+
+    def match_satori_ssh(self, banner: str) -> FingerprintMatch | None:
+        """Match SSH banner against Satori SSH fingerprints."""
+        return self._match_satori("satori_ssh", "ssh", banner, 0.82)
+
+    def match_satori_smb(self, native_os: str) -> FingerprintMatch | None:
+        """Match SMB native OS string against Satori SMB fingerprints."""
+        return self._match_satori("satori_smb", "smbnativename", native_os, 0.82)
+
+    def match_satori_web(self, server: str) -> FingerprintMatch | None:
+        """Match HTTP Server header against Satori web fingerprints."""
+        return self._match_satori("satori_web", "webserver", server, 0.78)
 
     # ------------------------------------------------------------------
 

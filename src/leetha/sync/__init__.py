@@ -191,6 +191,14 @@ PARSER_MAP = {
     "iana_enterprise": "parse_iana_enterprise",
     "ja3_fingerprints": "parse_ja3_database",
     "ja4_fingerprints": "parse_ja4_database",
+    "satori_dhcp": "parse_satori",
+    "satori_useragent": "parse_satori",
+    "satori_tcp": "parse_satori",
+    "satori_smb": "parse_satori",
+    "satori_ssh": "parse_satori",
+    "satori_web": "parse_satori",
+    "satori_sip": "parse_satori",
+    "satori_ntp": "parse_satori",
 }
 
 CACHE_NAMES = {

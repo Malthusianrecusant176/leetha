@@ -1,0 +1,19 @@
+[Unit]
+Description=Leetha - passive network fingerprinting
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/leetha --service
+Restart=on-failure
+RestartSec=5
+User=leetha
+AmbientCapabilities=CAP_NET_RAW CAP_NET_ADMIN
+NoNewPrivileges=true
+ProtectSystem=strict
+ReadWritePaths=/home/leetha/.leetha
+ProtectHome=tmpfs
+
+[Install]
+WantedBy=multi-user.target

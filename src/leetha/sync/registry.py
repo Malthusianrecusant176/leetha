@@ -176,6 +176,63 @@ def _build_default_feeds() -> list[FeedSource]:
                 " identification"
             ),
         ),
+        # Satori fingerprints -- annotated device fingerprints from Huginn-Muninn
+        FeedSource(
+            key="satori_dhcp",
+            title="Satori DHCP Fingerprints",
+            endpoint="https://raw.githubusercontent.com/Ringmast4r/Huginn-Muninn/main/Satori_Fingerprints/json/dhcp.json",
+            kind="json",
+            summary="Satori annotated DHCP fingerprints with full device attribution (481 entries)",
+        ),
+        FeedSource(
+            key="satori_useragent",
+            title="Satori User-Agent Fingerprints",
+            endpoint="https://raw.githubusercontent.com/Ringmast4r/Huginn-Muninn/main/Satori_Fingerprints/json/webuseragent.json",
+            kind="json",
+            summary="Satori User-Agent to device mappings (899 entries)",
+        ),
+        FeedSource(
+            key="satori_tcp",
+            title="Satori TCP Fingerprints",
+            endpoint="https://raw.githubusercontent.com/Ringmast4r/Huginn-Muninn/main/Satori_Fingerprints/json/tcp.json",
+            kind="json",
+            summary="Satori TCP/IP stack fingerprints extending p0f coverage (184 entries)",
+        ),
+        FeedSource(
+            key="satori_smb",
+            title="Satori SMB Fingerprints",
+            endpoint="https://raw.githubusercontent.com/Ringmast4r/Huginn-Muninn/main/Satori_Fingerprints/json/smb.json",
+            kind="json",
+            summary="Satori SMB native OS and LanMan string fingerprints (89 entries)",
+        ),
+        FeedSource(
+            key="satori_ssh",
+            title="Satori SSH Fingerprints",
+            endpoint="https://raw.githubusercontent.com/Ringmast4r/Huginn-Muninn/main/Satori_Fingerprints/json/ssh.json",
+            kind="json",
+            summary="Satori SSH banner to device mapping (67 entries)",
+        ),
+        FeedSource(
+            key="satori_web",
+            title="Satori HTTP Server Fingerprints",
+            endpoint="https://raw.githubusercontent.com/Ringmast4r/Huginn-Muninn/main/Satori_Fingerprints/json/web.json",
+            kind="json",
+            summary="Satori HTTP Server header fingerprints (67 entries)",
+        ),
+        FeedSource(
+            key="satori_sip",
+            title="Satori SIP Fingerprints",
+            endpoint="https://raw.githubusercontent.com/Ringmast4r/Huginn-Muninn/main/Satori_Fingerprints/json/sip.json",
+            kind="json",
+            summary="Satori SIP User-Agent fingerprints for VoIP phones (25 entries)",
+        ),
+        FeedSource(
+            key="satori_ntp",
+            title="Satori NTP Fingerprints",
+            endpoint="https://raw.githubusercontent.com/Ringmast4r/Huginn-Muninn/main/Satori_Fingerprints/json/ntp.json",
+            kind="json",
+            summary="Satori NTP client fingerprints (25 entries)",
+        ),
     ]
 
 

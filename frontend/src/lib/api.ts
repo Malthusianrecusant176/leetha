@@ -746,3 +746,25 @@ export async function importPcap(file: File): Promise<{ status: string; filename
   }
   return res.json();
 }
+
+// --- Notification settings ---
+
+export interface NotificationSettings {
+  urls: string[];
+  min_severity: string;
+}
+
+export async function fetchNotificationSettings(): Promise<NotificationSettings> {
+  return apiFetch("/api/settings/notifications");
+}
+
+export async function updateNotificationSettings(settings: Partial<NotificationSettings>): Promise<NotificationSettings> {
+  return apiFetch("/api/settings/notifications", {
+    method: "PUT",
+    body: JSON.stringify(settings),
+  });
+}
+
+export async function testNotification(): Promise<{ status: string; message?: string }> {
+  return apiFetch("/api/settings/notifications/test", { method: "POST" });
+}
