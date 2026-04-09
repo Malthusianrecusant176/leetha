@@ -2605,8 +2605,8 @@ def run_web(interfaces: list | None = None, host: str = "0.0.0.0", port: int = 8
                     raw = load_admin_token()
                     if raw:
                         rc = RichConsole()
-                        rc.print(f"\n[bold green]Admin token:[/bold green] [dim]{raw[:8]}{'*' * 24}[/dim]")
-                        rc.print("[dim]Full token in ~/.leetha/admin-token[/dim]\n")
+                        rc.print("\n[bold green]Admin token is active.[/bold green]")
+                        rc.print("[dim]To view token use: leetha auth show-token[/dim]\n")
                 # Keep the event loop running so background tasks continue
                 loop.run_forever()
             except Exception as e:
@@ -2637,8 +2637,8 @@ async def run_web_async(interfaces: list | None = None, host: str = "0.0.0.0", p
         raw = load_admin_token()
         if raw:
             rc = RichConsole()
-            rc.print(f"\n[bold green]Admin token:[/bold green] [dim]{raw[:8]}{'*' * 24}[/dim]")
-            rc.print("[dim]Full token in ~/.leetha/admin-token[/dim]\n")
+            rc.print("\n[bold green]Admin token is active.[/bold green]")
+            rc.print("[dim]To view token use: leetha auth show-token[/dim]\n")
 
     config = uvicorn.Config(_wrapped_app, host=host, port=port, log_level="info")
     server = uvicorn.Server(config)
