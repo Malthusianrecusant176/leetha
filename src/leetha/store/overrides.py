@@ -42,37 +42,36 @@ class OverrideRepository:
         await self._conn.commit()
 
     async def upsert(self, hw_addr: str, fields: dict) -> dict:
-        """Insert or update an override. Merges new values into existing."""
+        """Insert or update an override. Merges new values into existing.
+
+        Uses a single atomic INSERT ... ON CONFLICT DO UPDATE with COALESCE
+        to preserve existing values for fields not provided in this call.
+        """
         filtered = {k: v for k, v in fields.items() if k in ALLOWED_FIELDS}
         now = datetime.now(timezone.utc).isoformat()
 
-        existing = await self.find_by_addr(hw_addr)
-        if existing is None:
-            # Insert new row
-            cols = ["hw_addr", "updated_at"] + list(filtered.keys())
-            vals = [hw_addr, now] + list(filtered.values())
-            placeholders = ", ".join("?" for _ in cols)
-            col_str = ", ".join(cols)
-            await self._conn.execute(
-                f"INSERT INTO device_overrides ({col_str}) VALUES ({placeholders})",
-                vals,
-            )
-        else:
-            # Merge: only overwrite fields that are provided
-            if filtered:
-                set_clause = ", ".join(f"{k} = ?" for k in filtered)
-                vals = list(filtered.values()) + [now, hw_addr]
-                await self._conn.execute(
-                    f"UPDATE device_overrides SET {set_clause}, updated_at = ? "
-                    f"WHERE hw_addr = ?",
-                    vals,
-                )
-            else:
-                # No valid fields, just touch updated_at
-                await self._conn.execute(
-                    "UPDATE device_overrides SET updated_at = ? WHERE hw_addr = ?",
-                    (now, hw_addr),
-                )
+        # Build values: use provided value or NULL for each allowed field
+        vals = {k: filtered.get(k) for k in ALLOWED_FIELDS}
+
+        await self._conn.execute("""
+            INSERT INTO device_overrides
+                (hw_addr, hostname, device_type, manufacturer, os_family,
+                 os_version, model, connection_type, disposition, notes, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ON CONFLICT(hw_addr) DO UPDATE SET
+                hostname        = COALESCE(excluded.hostname, device_overrides.hostname),
+                device_type     = COALESCE(excluded.device_type, device_overrides.device_type),
+                manufacturer    = COALESCE(excluded.manufacturer, device_overrides.manufacturer),
+                os_family       = COALESCE(excluded.os_family, device_overrides.os_family),
+                os_version      = COALESCE(excluded.os_version, device_overrides.os_version),
+                model           = COALESCE(excluded.model, device_overrides.model),
+                connection_type = COALESCE(excluded.connection_type, device_overrides.connection_type),
+                disposition     = COALESCE(excluded.disposition, device_overrides.disposition),
+                notes           = COALESCE(excluded.notes, device_overrides.notes),
+                updated_at      = excluded.updated_at
+        """, (hw_addr, vals["hostname"], vals["device_type"], vals["manufacturer"],
+              vals["os_family"], vals["os_version"], vals["model"],
+              vals["connection_type"], vals["disposition"], vals["notes"], now))
         await self._conn.commit()
         return await self.find_by_addr(hw_addr)
 
