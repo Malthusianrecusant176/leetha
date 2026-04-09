@@ -2037,6 +2037,7 @@ async def api_topology():
                 chassis_mac = raw.get("chassis_id")
                 sys_desc = raw.get("system_description", "")
                 sys_name = raw.get("system_name")
+                mgmt_ip = raw.get("management_ip")
                 if chassis_mac and sys_desc:
                     for d in devices:
                         if d["mac"] == chassis_mac:
@@ -2044,6 +2045,8 @@ async def api_topology():
                             d["model"] = model_str
                             if sys_name and not d.get("hostname"):
                                 d["hostname"] = sys_name
+                            if mgmt_ip and not d.get("ip_v4"):
+                                d["ip_v4"] = mgmt_ip
                             model_lower = model_str.lower()
                             if any(model_lower.startswith(p) for p in (
                                 "us-", "usw-", "us8", "us16", "us24", "us48",

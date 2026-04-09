@@ -17,7 +17,7 @@ def parse_lldp(packet) -> CapturedPacket | None:
     return CapturedPacket(
         protocol="lldp",
         hw_addr=packet.src if hasattr(packet, 'src') else "",
-        ip_addr="",
+        ip_addr=result.get("management_ip") or "",
         fields=result,
         raw=bytes(packet) if hasattr(packet, '__bytes__') else None,
     )
@@ -32,7 +32,7 @@ def parse_cdp(packet) -> CapturedPacket | None:
     return CapturedPacket(
         protocol="cdp",
         hw_addr=packet.src if hasattr(packet, 'src') else "",
-        ip_addr="",
+        ip_addr=result.get("management_ip") or "",
         fields=result,
         raw=bytes(packet) if hasattr(packet, '__bytes__') else None,
     )
