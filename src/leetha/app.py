@@ -109,11 +109,15 @@ class LeethaApp:
         self.capture_engine = CaptureEngine(interfaces=iface_configs)
         self.packet_queue: asyncio.Queue[ParsedPacket] = asyncio.Queue()
         self.event_subscribers: list[asyncio.Queue] = []
-        from leetha.notifications import NotificationDispatcher
-        self._notifier = NotificationDispatcher(
-            urls=self.config.notification_urls,
-            min_severity=self.config.notification_min_severity,
-        )
+        try:
+            from leetha.notifications import NotificationDispatcher
+            self._notifier = NotificationDispatcher(
+                urls=self.config.notification_urls,
+                min_severity=self.config.notification_min_severity,
+            )
+        except ImportError:
+            self._notifier = None
+            logger.debug("apprise not installed — notifications disabled")
         self._running = False
         # Local device MACs — populated at start() for self-identification
         self._local_macs: set[str] = set()
