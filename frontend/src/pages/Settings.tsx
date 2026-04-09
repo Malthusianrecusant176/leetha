@@ -11,6 +11,7 @@ import {
   fetchDbInfo,
   runQuery,
   clearDatabase,
+  exportDatabase,
   type LeethaSettings,
 } from "@/lib/api";
 import { Button } from "@/components/ui/button";
@@ -79,10 +80,9 @@ function formatBytes(bytes: number): string {
 const TABS = [
   { id: "general", label: "General", icon: Settings2 },
   { id: "capture", label: "Capture & Probing", icon: Crosshair },
+  { id: "database", label: "Database", icon: Database },
   { id: "notifications", label: "Notifications", icon: Bell },
   { id: "appearance", label: "Appearance", icon: Palette },
-  { id: "database", label: "Database", icon: Database },
-  { id: "console", label: "SQL Console", icon: Terminal },
   { id: "actions", label: "Import / Export", icon: Download },
 ] as const;
 
@@ -185,12 +185,29 @@ export default function Settings() {
   const [sql, setSql] = useState("SELECT mac, ip_v4, hostname FROM devices LIMIT 20");
   const [sqlResult, setSqlResult] = useState<{ columns: string[]; rows: unknown[][] } | null>(null);
   const [sqlRunning, setSqlRunning] = useState(false);
+  const [queryHistory, setQueryHistory] = useState<string[]>([]);
+  const [historyIndex, setHistoryIndex] = useState(-1);
+  const [queryTime, setQueryTime] = useState<number | null>(null);
 
   const handleRunQuery = useCallback(async () => {
     setSqlRunning(true);
-    try { setSqlResult(await runQuery(sql)); }
-    catch (err) { toast.error(err instanceof Error ? err.message : "Query failed"); setSqlResult(null); }
-    finally { setSqlRunning(false); }
+    setQueryTime(null);
+    const start = performance.now();
+    try {
+      const result = await runQuery(sql);
+      setQueryTime(performance.now() - start);
+      setSqlResult(result);
+      setQueryHistory((prev) => {
+        const filtered = prev.filter((q) => q !== sql);
+        return [sql, ...filtered].slice(0, 20);
+      });
+      setHistoryIndex(-1);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Query failed");
+      setSqlResult(null);
+    } finally {
+      setSqlRunning(false);
+    }
   }, [sql]);
 
   if (isLoading || !merged) {
@@ -250,16 +267,48 @@ export default function Settings() {
           <div className="space-y-6">
             <div>
               <h3 className="text-base font-semibold mb-1">General Settings</h3>
-              <p className="text-sm text-muted-foreground">Web server configuration and background worker settings.</p>
+              <p className="text-sm text-muted-foreground">Web server, background workers, and data pipeline configuration.</p>
             </div>
             <Separator />
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              <SettingField label="Web Host" hint="IP address to bind the web server to" value={merged.web_host ?? ""} onChange={(v) => updateField("web_host", v)} />
-              <SettingField label="Web Port" hint="Port for the web server" type="number" value={merged.web_port ?? ""} onChange={(v) => updateField("web_port", Number(v))} />
-              <SettingField label="Sync Interval (days)" hint="Days between fingerprint source syncs" type="number" value={merged.sync_interval ?? ""} onChange={(v) => updateField("sync_interval", Number(v))} />
-              <SettingField label="Worker Count" hint="Number of background workers" type="number" value={merged.worker_count ?? ""} onChange={(v) => updateField("worker_count", Number(v))} />
-              <SettingField label="DB Batch Size" hint="Records per database batch write" type="number" value={merged.db_batch_size ?? ""} onChange={(v) => updateField("db_batch_size", Number(v))} />
-              <SettingField label="DB Flush Interval (s)" hint="Seconds between database flushes" type="number" value={merged.db_flush_interval ?? ""} onChange={(v) => updateField("db_flush_interval", Number(v))} step="0.01" />
+
+            {/* Web Server */}
+            <div className="space-y-4">
+              <div>
+                <h4 className="text-sm font-semibold">Web Server</h4>
+                <p className="text-xs text-muted-foreground">Address and port the dashboard listens on.</p>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <SettingField label="Bind Address" hint="IP address to bind the web server to" value={merged.web_host ?? ""} onChange={(v) => updateField("web_host", v)} placeholder="0.0.0.0" />
+                <SettingField label="Port" hint="Port for the web server" type="number" value={merged.web_port ?? ""} onChange={(v) => updateField("web_port", Number(v))} />
+              </div>
+            </div>
+
+            <Separator />
+
+            {/* Background Workers */}
+            <div className="space-y-4">
+              <div>
+                <h4 className="text-sm font-semibold">Background Workers</h4>
+                <p className="text-xs text-muted-foreground">Controls how many workers process captured packets in parallel.</p>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <SettingField label="Worker Count" hint="Number of background workers" type="number" value={merged.worker_count ?? ""} onChange={(v) => updateField("worker_count", Number(v))} />
+                <SettingField label="Sync Interval (days)" hint="Days between fingerprint source syncs" type="number" value={merged.sync_interval ?? ""} onChange={(v) => updateField("sync_interval", Number(v))} />
+              </div>
+            </div>
+
+            <Separator />
+
+            {/* Database Pipeline */}
+            <div className="space-y-4">
+              <div>
+                <h4 className="text-sm font-semibold">Database Pipeline</h4>
+                <p className="text-xs text-muted-foreground">Tuning for how captured data is batched and flushed to the database.</p>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <SettingField label="Batch Size" hint="Records per database batch write" type="number" value={merged.db_batch_size ?? ""} onChange={(v) => updateField("db_batch_size", Number(v))} />
+                <SettingField label="Flush Interval (s)" hint="Seconds between database flushes" type="number" value={merged.db_flush_interval ?? ""} onChange={(v) => updateField("db_flush_interval", Number(v))} step="0.01" />
+              </div>
             </div>
           </div>
         )}
@@ -296,97 +345,184 @@ export default function Settings() {
         {activeTab === "database" && (
           <div className="space-y-6">
             <div>
-              <h3 className="text-base font-semibold mb-1">Database Information</h3>
-              <p className="text-sm text-muted-foreground">Storage statistics and database management.</p>
+              <h3 className="text-base font-semibold mb-1">Database</h3>
+              <p className="text-sm text-muted-foreground">Storage metrics, data export, and query console.</p>
             </div>
             <Separator />
-            {dbInfo && (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                <InfoCard icon={<Database size={16} />} label="Database Path" value={dbInfo.db_path} mono copyable />
-                <InfoCard icon={<HardDrive size={16} />} label="Database Size" value={formatBytes(dbInfo.db_size_bytes)} />
-                <InfoCard icon={<Settings2 size={16} />} label="Host Count" value={dbInfo.device_count.toLocaleString()} />
-                <InfoCard icon={<Database size={16} />} label="Cache Directory" value={dbInfo.cache_dir} mono copyable />
+
+            {/* Storage Overview */}
+            <div className="space-y-4">
+              <div>
+                <h4 className="text-sm font-semibold">Storage Overview</h4>
+                <p className="text-xs text-muted-foreground">Database size, table counts, and storage details.</p>
               </div>
-            )}
-            <Separator />
-            <div className="flex flex-wrap gap-3">
-              <ConfirmAction
-                trigger={
-                  <Button variant="outline" size="sm" className="text-destructive border-destructive/30 hover:bg-destructive/10">
-                    <Trash2 size={14} className="mr-1.5" /> Clear All Hosts
-                  </Button>
-                }
-                title="Clear Database"
-                description="This will permanently delete all identified hosts and associated data. This action cannot be undone."
-                onConfirm={handleClearDb}
-              />
-              <ConfirmAction
-                trigger={
-                  <Button variant="outline" size="sm" className="text-destructive border-destructive/30 hover:bg-destructive/10">
-                    <RotateCcw size={14} className="mr-1.5" /> Reset to Defaults
-                  </Button>
-                }
-                title="Reset Settings"
-                description="This will reset all settings to their default values. You will need to restart for changes to take effect."
-                onConfirm={handleReset}
-              />
-            </div>
-          </div>
-        )}
-
-        {activeTab === "console" && (
-          <div className="space-y-6">
-            <div>
-              <h3 className="text-base font-semibold mb-1">SQL Console</h3>
-              <p className="text-sm text-muted-foreground">Read-only database console. Only SELECT queries are allowed.</p>
-            </div>
-            <Separator />
-            <textarea
-              value={sql}
-              onChange={(e) => setSql(e.target.value)}
-              rows={4}
-              className="w-full rounded-lg border border-border bg-secondary px-3 py-2 text-sm font-mono text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring resize-vertical"
-              placeholder="SELECT * FROM devices LIMIT 10"
-            />
-            <div className="flex gap-2">
-              <Button size="sm" onClick={handleRunQuery} disabled={sqlRunning || !sql.trim()}>
-                <Play size={14} className="mr-1" />
-                {sqlRunning ? "Running..." : "Run Query"}
-              </Button>
-            </div>
-
-            {sqlResult && (
-              <div className="rounded-lg border border-border overflow-auto max-h-96">
-                <Table>
-                  <TableHeader>
-                    <TableRow className="border-border">
-                      {sqlResult.columns.map((col) => (
-                        <TableHead key={col} className="text-xs font-mono text-muted-foreground">{col}</TableHead>
+              {dbInfo && (
+                <>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <InfoCard icon={<Database size={16} />} label="Database Path" value={dbInfo.db_path} mono copyable />
+                    <InfoCard icon={<HardDrive size={16} />} label="Database Size" value={`${formatBytes(dbInfo.db_size_bytes)}${dbInfo.wal_size_bytes ? ` (+${formatBytes(dbInfo.wal_size_bytes)} WAL)` : ""}`} />
+                    <InfoCard icon={<Settings2 size={16} />} label="Pages" value={`${dbInfo.page_count.toLocaleString()} pages (${formatBytes(dbInfo.page_size)} each)`} />
+                    <InfoCard icon={<Database size={16} />} label="Last Modified" value={dbInfo.last_modified ? new Date(dbInfo.last_modified * 1000).toLocaleString() : "Unknown"} />
+                  </div>
+                  {dbInfo.table_counts && (
+                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+                      {Object.entries(dbInfo.table_counts).map(([table, count]) => (
+                        <div key={table} className="rounded-lg bg-secondary/50 border border-border px-3 py-2.5 text-center">
+                          <div className="text-lg font-semibold tabular-nums">{(count as number).toLocaleString()}</div>
+                          <div className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">{table}</div>
+                        </div>
                       ))}
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {sqlResult.rows.length === 0 ? (
-                      <TableRow>
-                        <TableCell colSpan={sqlResult.columns.length} className="text-center text-muted-foreground py-8">
-                          No rows returned
-                        </TableCell>
-                      </TableRow>
-                    ) : (
-                      sqlResult.rows.map((row, i) => (
-                        <TableRow key={i} className="border-border">
-                          {row.map((cell, j) => (
-                            <TableCell key={j} className="text-xs font-mono py-1.5">
-                              {cell === null ? <span className="text-muted-foreground italic">NULL</span> : String(cell)}
-                            </TableCell>
-                          ))}
-                        </TableRow>
-                      ))
-                    )}
-                  </TableBody>
-                </Table>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+
+            <Separator />
+
+            {/* Export */}
+            <div className="space-y-4">
+              <div>
+                <h4 className="text-sm font-semibold">Export Database</h4>
+                <p className="text-xs text-muted-foreground">Download a copy of the database for backup or analysis.</p>
               </div>
-            )}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="rounded-lg border border-border bg-secondary/30 p-5 space-y-3">
+                  <div className="flex items-center gap-2">
+                    <Download size={18} className="text-primary" />
+                    <h4 className="font-semibold text-sm">SQLite File</h4>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Download the raw SQLite database file. Use with any SQLite client for full access.
+                  </p>
+                  <Button variant="outline" size="sm" onClick={() => { exportDatabase("sqlite").catch((e) => toast.error(e.message)); }}>
+                    <Download size={14} className="mr-1.5" /> Download .db
+                  </Button>
+                </div>
+                <div className="rounded-lg border border-border bg-secondary/30 p-5 space-y-3">
+                  <div className="flex items-center gap-2">
+                    <Terminal size={18} className="text-primary" />
+                    <h4 className="font-semibold text-sm">SQL Dump</h4>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Export schema and data as a SQL text file with CREATE and INSERT statements.
+                  </p>
+                  <Button variant="outline" size="sm" onClick={() => { exportDatabase("sql").catch((e) => toast.error(e.message)); }}>
+                    <Download size={14} className="mr-1.5" /> Download .sql
+                  </Button>
+                </div>
+              </div>
+            </div>
+
+            <Separator />
+
+            {/* SQL Console */}
+            <div className="space-y-4">
+              <div>
+                <h4 className="text-sm font-semibold">SQL Console</h4>
+                <p className="text-xs text-muted-foreground">Read-only query console. Only SELECT statements are allowed. Press Up/Down to cycle query history.</p>
+              </div>
+              <textarea
+                value={sql}
+                onChange={(e) => setSql(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "ArrowUp" && queryHistory.length > 0) {
+                    e.preventDefault();
+                    const next = Math.min(historyIndex + 1, queryHistory.length - 1);
+                    setHistoryIndex(next);
+                    setSql(queryHistory[next]);
+                  } else if (e.key === "ArrowDown" && historyIndex > 0) {
+                    e.preventDefault();
+                    const next = historyIndex - 1;
+                    setHistoryIndex(next);
+                    setSql(queryHistory[next]);
+                  } else if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
+                    e.preventDefault();
+                    handleRunQuery();
+                  }
+                }}
+                rows={4}
+                className="w-full rounded-lg border border-border bg-black/40 px-4 py-3 text-sm font-mono text-green-400 placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-ring resize-vertical"
+                placeholder="SELECT * FROM hosts LIMIT 10"
+              />
+              <div className="flex items-center gap-3">
+                <Button size="sm" onClick={handleRunQuery} disabled={sqlRunning || !sql.trim()}>
+                  <Play size={14} className="mr-1" />
+                  {sqlRunning ? "Running..." : "Run Query"}
+                </Button>
+                <span className="text-xs text-muted-foreground">Ctrl+Enter to run</span>
+                {queryTime !== null && sqlResult && (
+                  <span className="text-xs text-muted-foreground ml-auto tabular-nums">
+                    {sqlResult.rows.length.toLocaleString()} row{sqlResult.rows.length !== 1 ? "s" : ""} in {queryTime.toFixed(0)}ms
+                  </span>
+                )}
+              </div>
+
+              {sqlResult && (
+                <div className="rounded-lg border border-border overflow-auto max-h-96">
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="border-border">
+                        {sqlResult.columns.map((col) => (
+                          <TableHead key={col} className="text-xs font-mono text-muted-foreground">{col}</TableHead>
+                        ))}
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {sqlResult.rows.length === 0 ? (
+                        <TableRow>
+                          <TableCell colSpan={sqlResult.columns.length} className="text-center text-muted-foreground py-8">
+                            No rows returned
+                          </TableCell>
+                        </TableRow>
+                      ) : (
+                        sqlResult.rows.map((row, i) => (
+                          <TableRow key={i} className="border-border">
+                            {row.map((cell, j) => (
+                              <TableCell key={j} className="text-xs font-mono py-1.5">
+                                {cell === null ? <span className="text-muted-foreground italic">NULL</span> : String(cell)}
+                              </TableCell>
+                            ))}
+                          </TableRow>
+                        ))
+                      )}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
+            </div>
+
+            <Separator />
+
+            {/* Danger Zone */}
+            <div className="space-y-4 rounded-lg border border-destructive/30 bg-destructive/[0.03] p-5">
+              <div>
+                <h4 className="text-sm font-semibold text-destructive">Danger Zone</h4>
+                <p className="text-xs text-muted-foreground">Destructive actions that cannot be undone.</p>
+              </div>
+              <div className="flex flex-wrap gap-3">
+                <ConfirmAction
+                  trigger={
+                    <Button variant="outline" size="sm" className="text-destructive border-destructive/30 hover:bg-destructive/10">
+                      <Trash2 size={14} className="mr-1.5" /> Clear All Hosts
+                    </Button>
+                  }
+                  title="Clear Database"
+                  description="This will permanently delete all identified hosts and associated data. This action cannot be undone."
+                  onConfirm={handleClearDb}
+                />
+                <ConfirmAction
+                  trigger={
+                    <Button variant="outline" size="sm" className="text-destructive border-destructive/30 hover:bg-destructive/10">
+                      <RotateCcw size={14} className="mr-1.5" /> Reset to Defaults
+                    </Button>
+                  }
+                  title="Reset Settings"
+                  description="This will reset all settings to their default values. You will need to restart for changes to take effect."
+                  onConfirm={handleReset}
+                />
+              </div>
+            </div>
           </div>
         )}
 
@@ -394,7 +530,7 @@ export default function Settings() {
           <div className="space-y-6">
             <div>
               <h3 className="text-base font-semibold mb-1">Import &amp; Export</h3>
-              <p className="text-sm text-muted-foreground">Backup and restore your Leetha configuration.</p>
+              <p className="text-sm text-muted-foreground">Backup and restore your Leetha settings configuration. For database exports, use the Database tab.</p>
             </div>
             <Separator />
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
