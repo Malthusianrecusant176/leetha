@@ -184,19 +184,24 @@ class VerdictEngine:
             from leetha.fingerprint.evidence import _guess_os_from_vendor
             chosen_platform = _guess_os_from_vendor(vendor[0], category[0])
 
-        # Clean mDNS hostname artifacts (service suffixes, UUIDs)
+        # Validate and clean hostname
         chosen_hostname = hostname[0]
         if chosen_hostname:
             import re
-            # Strip mDNS service type suffix: "Name._service._tcp.local" → "Name"
+            from leetha.evidence.hostname import is_valid_hostname
+            # Strip mDNS service type suffix: "Name._service._tcp.local" -> "Name"
             if "._" in chosen_hostname:
                 chosen_hostname = chosen_hostname.split("._")[0]
-            # Strip trailing hex UUIDs: "Google-Nest-Hub-Max-6aa3e8..." → "Google-Nest-Hub-Max"
-            chosen_hostname = re.sub(r'-[0-9a-f]{12,}$', '', chosen_hostname, flags=re.IGNORECASE)
+            # Strip trailing hex: "Google-Nest-Hub-Max-6aa3e8" -> "Google-Nest-Hub-Max"
+            chosen_hostname = re.sub(r'-[0-9a-f]{6,}$', '', chosen_hostname, flags=re.IGNORECASE)
             # Strip .local suffix
             if chosen_hostname.endswith(".local"):
                 chosen_hostname = chosen_hostname[:-6]
             chosen_hostname = chosen_hostname.strip(".-") or hostname[0]
+
+            # If the cleaned winner is still invalid, try the next-best candidate
+            if not is_valid_hostname(chosen_hostname):
+                chosen_hostname = self._next_valid_hostname(evidence)
 
         return Verdict(
             hw_addr=hw_addr,
@@ -254,3 +259,44 @@ class VerdictEngine:
         # Pick winner
         winner = max(candidates, key=candidates.get)  # type: ignore[arg-type]
         return (winner, min(candidates[winner], 1.0))
+
+    def _next_valid_hostname(self, evidence: list[Evidence]) -> str | None:
+        """Find the best valid hostname from evidence, skipping invalid ones."""
+        import re
+        from leetha.evidence.hostname import is_valid_hostname
+
+        candidates: dict[str, float] = {}
+        source_counts: dict[str, set] = {}
+
+        for e in evidence:
+            value = e.hostname
+            if value is None:
+                continue
+
+            # Clean before validating
+            if "._" in value:
+                value = value.split("._")[0]
+            value = re.sub(r'-[0-9a-f]{6,}$', '', value, flags=re.IGNORECASE)
+            if value.endswith(".local"):
+                value = value[:-6]
+            value = value.strip(".-")
+            if not value or not is_valid_hostname(value):
+                continue
+
+            weight = _SOURCE_WEIGHTS.get(e.source, 0.5)
+            score = e.certainty * weight
+            if value not in candidates:
+                candidates[value] = 0.0
+                source_counts[value] = set()
+            candidates[value] += score
+            source_counts[value].add(e.source)
+
+        if not candidates:
+            return None
+
+        for value in candidates:
+            n_sources = len(source_counts[value])
+            boost = _AGREEMENT_BONUS.get(min(n_sources, 4), 1.25)
+            candidates[value] *= boost
+
+        return max(candidates, key=candidates.get)  # type: ignore[arg-type]

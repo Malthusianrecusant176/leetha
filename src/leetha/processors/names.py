@@ -104,16 +104,16 @@ class NameResolutionProcessor(Processor):
 
     def _analyze_dns_answer(self, packet: CapturedPacket) -> list[Evidence]:
         evidence = []
-        query_name = packet.get("query_name")
-        hostname = packet.get("hostname")
-        name = hostname or query_name
+        hostname = packet.get("hostname")  # Only set by PTR records in DNS parser
 
-        if name:
-            evidence.append(Evidence(
-                source="dns_answer", method="exact", certainty=0.60,
-                hostname=name,
-                raw={"query_name": query_name, "hostname": hostname},
-            ))
+        if hostname:
+            from leetha.evidence.hostname import is_valid_hostname
+            if is_valid_hostname(hostname):
+                evidence.append(Evidence(
+                    source="dns_answer", method="exact", certainty=0.60,
+                    hostname=hostname,
+                    raw={"query_name": packet.get("query_name"), "hostname": hostname},
+                ))
         return evidence
 
     # Vendor-exclusive mDNS services that DEFINITIVELY identify the vendor.
@@ -148,6 +148,7 @@ class NameResolutionProcessor(Processor):
     }
 
     def _analyze_mdns(self, packet: CapturedPacket) -> list[Evidence]:
+        from leetha.evidence.hostname import is_valid_hostname
         evidence = []
         service_type = packet.get("service_type")
         name = packet.get("name")
@@ -190,18 +191,19 @@ class NameResolutionProcessor(Processor):
             model = txt_records.get("model") or txt_records.get("md")
             vendor = txt_records.get("manufacturer") or txt_records.get("vendor")
             friendly_name = txt_records.get("fn")
+            validated_fn = friendly_name if is_valid_hostname(friendly_name) else None
             if model or vendor:
                 evidence.append(Evidence(
                     source="mdns_txt", method="exact", certainty=0.80,
                     model=model,
                     vendor=vendor,
-                    hostname=friendly_name,
+                    hostname=validated_fn,
                     raw={"txt_records": txt_records},
                 ))
-            elif friendly_name:
+            elif validated_fn:
                 evidence.append(Evidence(
                     source="mdns_txt", method="exact", certainty=0.75,
-                    hostname=friendly_name,
+                    hostname=validated_fn,
                     raw={"txt_records": txt_records},
                 ))
 
@@ -242,13 +244,21 @@ class NameResolutionProcessor(Processor):
             except (ImportError, AttributeError):
                 pass
 
-        # Use mDNS name or TXT 'md' (model description) as hostname fallback
-        hostname = name or (txt_records.get("fn") if txt_records else None)
-        if hostname:
+        # Prefer friendly name (fn) over raw mDNS instance name, which is
+        # often a UUID for IoT devices.
+        friendly = txt_records.get("fn") if txt_records else None
+        mdns_hostname = None
+        if friendly and is_valid_hostname(friendly):
+            mdns_hostname = friendly
+        elif name and is_valid_hostname(name):
+            mdns_hostname = name
+
+        if mdns_hostname:
             evidence.append(Evidence(
                 source="mdns_name", method="exact", certainty=0.65,
-                hostname=hostname,
-                raw={"name": name, "service_type": service_type},
+                hostname=mdns_hostname,
+                raw={"name": name, "service_type": service_type,
+                     "friendly_name": friendly},
             ))
 
         return evidence

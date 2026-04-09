@@ -46,27 +46,29 @@ class NetworkDiscoveryProcessor(Processor):
         opt60 = packet.get("opt60")
 
         if hostname:
-            evidence.append(Evidence(
-                source="dhcpv4", method="exact", certainty=0.75,
-                hostname=hostname,
-                raw={"hostname": hostname},
-            ))
-            # Hostname pattern matching
-            from leetha.patterns.matching import match_hostname
-            host_match = match_hostname(hostname)
-            if host_match:
-                raw_conf = host_match.get("confidence", 75)
-                cert = raw_conf / 100.0 if raw_conf > 1 else raw_conf
+            from leetha.evidence.hostname import is_valid_hostname
+            if is_valid_hostname(hostname):
                 evidence.append(Evidence(
-                    source="hostname", method="pattern",
-                    certainty=cert,
-                    vendor=host_match.get("manufacturer"),
-                    category=host_match.get("device_type"),
-                    platform=host_match.get("os_family"),
-                    model=host_match.get("model"),
+                    source="dhcpv4", method="exact", certainty=0.75,
                     hostname=hostname,
-                    raw={"hostname": hostname, "match": host_match},
+                    raw={"hostname": hostname},
                 ))
+                # Hostname pattern matching
+                from leetha.patterns.matching import match_hostname
+                host_match = match_hostname(hostname)
+                if host_match:
+                    raw_conf = host_match.get("confidence", 75)
+                    cert = raw_conf / 100.0 if raw_conf > 1 else raw_conf
+                    evidence.append(Evidence(
+                        source="hostname", method="pattern",
+                        certainty=cert,
+                        vendor=host_match.get("manufacturer"),
+                        category=host_match.get("device_type"),
+                        platform=host_match.get("os_family"),
+                        model=host_match.get("model"),
+                        hostname=hostname,
+                        raw={"hostname": hostname, "match": host_match},
+                    ))
 
         if opt60:
             evidence.append(Evidence(
