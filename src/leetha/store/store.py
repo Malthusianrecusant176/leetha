@@ -15,6 +15,7 @@ from leetha.store.verdicts import VerdictRepository
 from leetha.store.identities import IdentityRepository
 from leetha.store.snapshots import SnapshotRepository
 from leetha.store.overrides import OverrideRepository
+from leetha.store.topology_overrides import TopologyOverrideRepository
 
 
 class Store:
@@ -30,6 +31,7 @@ class Store:
         self.identities: IdentityRepository | None = None
         self.snapshots: SnapshotRepository | None = None
         self.overrides: OverrideRepository | None = None
+        self.topology_overrides: TopologyOverrideRepository | None = None
 
     async def initialize(self):
         """Open connection and create all tables."""
@@ -38,7 +40,7 @@ class Store:
         # Match the legacy Database's performance pragmas
         await self._conn.execute("PRAGMA journal_mode=WAL")
         await self._conn.execute("PRAGMA synchronous=NORMAL")
-        await self._conn.execute("PRAGMA busy_timeout=5000")
+        await self._conn.execute("PRAGMA busy_timeout=30000")
         self.hosts = HostRepository(self._conn)
         self.findings = FindingRepository(self._conn)
         self.sightings = SightingRepository(self._conn)
@@ -53,6 +55,8 @@ class Store:
         await self.snapshots.create_tables()
         self.overrides = OverrideRepository(self._conn)
         await self.overrides.create_tables()
+        self.topology_overrides = TopologyOverrideRepository(self._conn)
+        await self.topology_overrides.create_tables()
 
         # One-time migration from file-based overrides
         data_dir = Path(self.db_path).parent
