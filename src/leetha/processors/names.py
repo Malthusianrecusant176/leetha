@@ -104,16 +104,16 @@ class NameResolutionProcessor(Processor):
 
     def _analyze_dns_answer(self, packet: CapturedPacket) -> list[Evidence]:
         evidence = []
-        query_name = packet.get("query_name")
-        hostname = packet.get("hostname")
-        name = hostname or query_name
+        hostname = packet.get("hostname")  # Only set by PTR records in DNS parser
 
-        if name:
-            evidence.append(Evidence(
-                source="dns_answer", method="exact", certainty=0.60,
-                hostname=name,
-                raw={"query_name": query_name, "hostname": hostname},
-            ))
+        if hostname:
+            from leetha.evidence.hostname import is_valid_hostname
+            if is_valid_hostname(hostname):
+                evidence.append(Evidence(
+                    source="dns_answer", method="exact", certainty=0.60,
+                    hostname=hostname,
+                    raw={"query_name": packet.get("query_name"), "hostname": hostname},
+                ))
         return evidence
 
     # Vendor-exclusive mDNS services that DEFINITIVELY identify the vendor.
