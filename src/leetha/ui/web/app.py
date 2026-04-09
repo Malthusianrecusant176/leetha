@@ -1874,6 +1874,41 @@ async def api_top_connections():
 _topology_cache: dict = {"data": None, "ts": 0}
 
 
+@fastapi_app.get("/api/topology/overrides")
+async def api_topology_overrides():
+    """List all manual topology connection overrides."""
+    overrides = await app_instance.store.topology_overrides.find_all()
+    return {"overrides": [{"child_mac": k, "parent_mac": v} for k, v in overrides.items()]}
+
+
+@fastapi_app.put("/api/topology/override")
+async def api_topology_override_upsert(request: Request):
+    """Create or update a manual topology connection."""
+    body = await request.json()
+    child_mac = body.get("child_mac", "").strip().lower()
+    parent_mac = body.get("parent_mac", "").strip().lower()
+    if not child_mac or not parent_mac:
+        return JSONResponse(status_code=400, content={"error": "child_mac and parent_mac required"})
+    if child_mac == parent_mac:
+        return JSONResponse(status_code=400, content={"error": "Cannot connect device to itself"})
+    await app_instance.store.topology_overrides.upsert(child_mac, parent_mac)
+    _topology_cache["data"] = None
+    _topology_cache["ts"] = 0
+    return {"status": "ok", "child_mac": child_mac, "parent_mac": parent_mac}
+
+
+@fastapi_app.delete("/api/topology/override/{mac}")
+async def api_topology_override_delete(mac: str):
+    """Remove a manual topology connection override."""
+    mac = mac.strip().lower()
+    deleted = await app_instance.store.topology_overrides.delete(mac)
+    _topology_cache["data"] = None
+    _topology_cache["ts"] = 0
+    if deleted:
+        return {"status": "ok", "deleted": mac}
+    return JSONResponse(status_code=404, content={"error": "No override found for this device"})
+
+
 @fastapi_app.get("/api/topology")
 async def api_topology():
     """Build and return the network topology graph."""
@@ -2070,12 +2105,14 @@ async def api_topology():
             except Exception:
                 pass
 
+        overrides = await app_instance.store.topology_overrides.find_all()
         result = build_topology_graph(
             devices=devices,
             gateways=gateways,
             arp_entries=arp_entries,
             lldp_neighbors=lldp_neighbors,
             device_mdns_services=device_mdns_services,
+            overrides=overrides,
         )
         _topology_cache["data"] = result
         _topology_cache["ts"] = now
