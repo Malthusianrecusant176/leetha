@@ -27,10 +27,9 @@ async def test_notify_sends_above_min_severity(finding):
     """Findings at or above min severity trigger notification."""
     from leetha.notifications import NotificationDispatcher
     d = NotificationDispatcher(urls=["json://localhost"], min_severity="warning")
-    with patch("leetha.notifications.apprise") as mock_mod:
-        mock_ap = MagicMock()
-        mock_ap.async_notify = AsyncMock(return_value=True)
-        mock_mod.Apprise.return_value = mock_ap
+    mock_ap = MagicMock()
+    mock_ap.async_notify = AsyncMock(return_value=True)
+    with patch("leetha.notifications.apprise.Apprise", return_value=mock_ap):
         await d.send(finding)
         mock_ap.async_notify.assert_called_once()
 
@@ -52,10 +51,9 @@ async def test_notify_rate_limits(finding):
     """Same rule+MAC within cooldown window is suppressed."""
     from leetha.notifications import NotificationDispatcher
     d = NotificationDispatcher(urls=["json://localhost"], min_severity="info")
-    with patch("leetha.notifications.apprise") as mock_mod:
-        mock_ap = MagicMock()
-        mock_ap.async_notify = AsyncMock(return_value=True)
-        mock_mod.Apprise.return_value = mock_ap
+    mock_ap = MagicMock()
+    mock_ap.async_notify = AsyncMock(return_value=True)
+    with patch("leetha.notifications.apprise.Apprise", return_value=mock_ap):
         await d.send(finding)
         await d.send(finding)  # duplicate within cooldown
         assert mock_ap.async_notify.call_count == 1
