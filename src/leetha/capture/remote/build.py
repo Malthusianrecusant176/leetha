@@ -139,6 +139,60 @@ class BuildRequest:
             )
 
 
+class BuildHistory:
+    """Persistent build history stored as JSON alongside the CA."""
+
+    def __init__(self, data_dir: Path):
+        self.path = data_dir / "sensor-builds.json"
+
+    def _load(self) -> list[dict]:
+        if self.path.exists():
+            try:
+                return json.loads(self.path.read_text())
+            except Exception:
+                return []
+        return []
+
+    def _save(self, entries: list[dict]) -> None:
+        self.path.parent.mkdir(parents=True, exist_ok=True)
+        self.path.write_text(json.dumps(entries, indent=2))
+
+    def record(self, request: BuildRequest, success: bool, download_id: str | None = None) -> dict:
+        entries = self._load()
+        entry = {
+            "id": uuid.uuid4().hex[:12],
+            "name": request.name,
+            "server": request.server,
+            "target": request.target,
+            "buffer_size_mb": request.buffer_size_mb,
+            "built_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+            "success": success,
+            "download_id": download_id,
+        }
+        entries.insert(0, entry)
+        # Keep last 50 builds
+        entries = entries[:50]
+        self._save(entries)
+        return entry
+
+    def list_builds(self) -> list[dict]:
+        return self._load()
+
+    def get_build(self, build_id: str) -> dict | None:
+        for entry in self._load():
+            if entry["id"] == build_id:
+                return entry
+        return None
+
+    def delete_build(self, build_id: str) -> bool:
+        entries = self._load()
+        filtered = [e for e in entries if e["id"] != build_id]
+        if len(filtered) == len(entries):
+            return False
+        self._save(filtered)
+        return True
+
+
 # Store for completed builds awaiting download
 _build_artifacts: dict[str, dict] = {}
 # Lock to prevent concurrent builds per target
@@ -171,9 +225,10 @@ def _get_build_lock(target: str) -> asyncio.Lock:
 class SensorBuilder:
     """Builds a sensor binary with embedded config and certs."""
 
-    def __init__(self, sensor_dir: Path, ca_dir: Path):
+    def __init__(self, sensor_dir: Path, ca_dir: Path, data_dir: Path | None = None):
         self.sensor_dir = sensor_dir
         self.ca_dir = ca_dir
+        self.history = BuildHistory(data_dir) if data_dir else None
 
     async def build(self, request: BuildRequest, progress_callback=None):
         """Build a sensor binary. Returns download_id on success, None on failure.
@@ -287,6 +342,10 @@ class SensorBuilder:
                     "target": request.target,
                 }
 
+                # Record successful build in history
+                if self.history:
+                    self.history.record(request, success=True, download_id=download_id)
+
                 await emit("done", json.dumps({
                     "message": "Build complete",
                     "download_id": download_id,
@@ -295,6 +354,9 @@ class SensorBuilder:
                 return download_id
 
             except Exception as e:
+                # Record failed build in history
+                if self.history:
+                    self.history.record(request, success=False)
                 await emit("error", f"Build failed: {e}")
                 return None
             finally:

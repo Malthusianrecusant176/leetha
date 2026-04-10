@@ -205,7 +205,7 @@ async def build_sensor(body: BuildRequestBody):
         buffer_size_mb=body.buffer_size_mb,
     )
 
-    builder = SensorBuilder(sensor_dir=sensor_dir, ca_dir=ca_dir)
+    builder = SensorBuilder(sensor_dir=sensor_dir, ca_dir=ca_dir, data_dir=data_dir)
 
     async def event_stream():
         queue: asyncio.Queue[str | None] = asyncio.Queue()
@@ -256,3 +256,25 @@ async def download_build(download_id: str):
         filename=artifact["filename"],
         media_type="application/octet-stream",
     )
+
+
+# --- Build History ---
+
+@router.get("/build-history")
+async def list_build_history():
+    """List past sensor builds."""
+    from leetha.capture.remote.build import BuildHistory
+    data_dir = _get_data_dir()
+    history = BuildHistory(data_dir)
+    return history.list_builds()
+
+
+@router.delete("/build-history/{build_id}")
+async def delete_build_history(build_id: str):
+    """Delete a build history entry."""
+    from leetha.capture.remote.build import BuildHistory
+    data_dir = _get_data_dir()
+    history = BuildHistory(data_dir)
+    if not history.delete_build(build_id):
+        raise HTTPException(404, "Build not found")
+    return {"status": "deleted"}

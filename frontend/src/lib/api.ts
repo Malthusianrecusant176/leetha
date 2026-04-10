@@ -891,3 +891,26 @@ export async function checkBuildPrerequisites(target: string): Promise<{ ok: boo
 export async function checkSensorName(name: string): Promise<{ exists: boolean; name: string }> {
   return apiFetch(`/api/remote/build/check-name?name=${encodeURIComponent(name)}`);
 }
+
+// --- Build History ---
+
+export interface BuildHistoryEntry {
+  id: string;
+  name: string;
+  server: string;
+  target: string;
+  buffer_size_mb: number;
+  built_at: string;
+  success: boolean;
+  download_id: string | null;
+}
+
+export async function fetchBuildHistory(): Promise<BuildHistoryEntry[]> {
+  return apiFetch<BuildHistoryEntry[]>("/api/remote/build-history");
+}
+
+export async function deleteBuildHistory(buildId: string): Promise<void> {
+  await apiFetch(`/api/remote/build-history/${encodeURIComponent(buildId)}`, {
+    method: "DELETE",
+  });
+}

@@ -13,12 +13,15 @@ import {
   fetchBuildTargets,
   fetchServerAddresses,
   checkSensorName,
+  fetchBuildHistory,
+  deleteBuildHistory,
   type NetworkInterface,
   type ProbeInfo,
   type RemoteSensor,
   type BuildTarget,
   type BuildRequestBody,
   type ServerAddress,
+  type BuildHistoryEntry,
 } from "@/lib/api";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
@@ -55,6 +58,11 @@ import {
   Hammer,
   Download,
   Loader2,
+  History,
+  RotateCcw,
+  Trash2,
+  CheckCircle2,
+  XCircle,
 } from "lucide-react";
 
 // --- Category classification ---
@@ -168,6 +176,11 @@ export default function Interfaces() {
     queryFn: fetchServerAddresses,
   });
 
+  const { data: buildHistory = [] } = useQuery({
+    queryKey: ["build-history"],
+    queryFn: fetchBuildHistory,
+  });
+
   // Build sensor state
   const [buildDialogOpen, setBuildDialogOpen] = useState(false);
   const [buildName, setBuildName] = useState("");
@@ -194,6 +207,28 @@ export default function Interfaces() {
       buildLogRef.current.scrollTop = buildLogRef.current.scrollHeight;
     }
   }, [buildLog]);
+
+  const handleRebuild = (entry: BuildHistoryEntry) => {
+    setBuildName(entry.name);
+    const [ip, port] = entry.server.split(":");
+    setBuildServerIp(ip || "");
+    setBuildServerPort(port || "8443");
+    setBuildTarget(entry.target);
+    setBuildBufferMb(entry.buffer_size_mb);
+    setBuildLog([]);
+    setBuildDownloadId(null);
+    setBuildDialogOpen(true);
+  };
+
+  const handleDeleteHistory = async (buildId: string) => {
+    try {
+      await deleteBuildHistory(buildId);
+      queryClient.invalidateQueries({ queryKey: ["build-history"] });
+      toast.success("Build history entry removed");
+    } catch (err) {
+      toast.error(`Failed: ${err}`);
+    }
+  };
 
   // Update buffer size when target changes
   const handleTargetChange = (targetId: string) => {
@@ -283,6 +318,7 @@ export default function Interfaces() {
               setBuildDownloadId(doneData.download_id);
               setBuildDownloadFilename(doneData.filename || "leetha-sensor");
               toast.success("Sensor build complete");
+              queryClient.invalidateQueries({ queryKey: ["build-history"] });
             } else if (event.stage === "error") {
               toast.error("Build failed");
             }
@@ -644,6 +680,59 @@ export default function Interfaces() {
                   )}
                 </div>
               ))}
+            </div>
+          )}
+
+          {/* Build History */}
+          {buildHistory.length > 0 && (
+            <div className="space-y-3">
+              <div className="flex items-center gap-2">
+                <History size={14} className="text-muted-foreground" />
+                <h3 className="text-sm font-semibold">Build History</h3>
+              </div>
+              <div className="rounded-xl bg-card border border-border overflow-hidden divide-y divide-border">
+                {buildHistory.map((entry) => (
+                  <div key={entry.id} className="flex items-center justify-between px-5 py-3 gap-4">
+                    <div className="flex items-center gap-3 min-w-0">
+                      {entry.success ? (
+                        <CheckCircle2 size={14} className="text-success shrink-0" />
+                      ) : (
+                        <XCircle size={14} className="text-destructive shrink-0" />
+                      )}
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="font-semibold text-sm">{entry.name}</span>
+                          <Badge variant="outline" className="text-[10px] font-mono">
+                            {entry.target}
+                          </Badge>
+                        </div>
+                        <div className="text-xs text-muted-foreground mt-0.5">
+                          {entry.server} &middot; {entry.buffer_size_mb} MB buffer &middot; {new Date(entry.built_at).toLocaleDateString()} {new Date(entry.built_at).toLocaleTimeString()}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-xs h-7 gap-1"
+                        onClick={() => handleRebuild(entry)}
+                      >
+                        <RotateCcw size={12} />
+                        Rebuild
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-xs h-7 text-muted-foreground hover:text-destructive"
+                        onClick={() => handleDeleteHistory(entry.id)}
+                      >
+                        <Trash2 size={12} />
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
         </TabsContent>
