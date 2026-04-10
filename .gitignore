@@ -58,3 +58,4 @@ docs/plans/
 
 # Frontend build deps (built assets are committed)
 frontend/node_modules/
+sensor/target/

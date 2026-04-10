@@ -1,0 +1,23 @@
+[package]
+name = "leetha-sensor"
+version = "0.1.0"
+edition = "2021"
+description = "Lightweight remote packet capture sensor for leetha"
+
+[dependencies]
+pcap = "2"
+tokio = { version = "1", features = ["full"] }
+tokio-tungstenite = { version = "0.26", features = ["rustls-tls-native-roots"] }
+rustls = "0.23"
+rustls-pemfile = "2"
+futures-util = "0.3"
+serde = { version = "1", features = ["derive"] }
+serde_yaml = "0.9"
+clap = { version = "4", features = ["derive"] }
+log = "0.4"
+env_logger = "0.11"
+
+[profile.release]
+lto = true
+strip = true
+opt-level = "z"
