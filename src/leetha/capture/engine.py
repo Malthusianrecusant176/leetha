@@ -264,16 +264,18 @@ class PacketCapture:
                 if halt.is_set():
                     break
                 restart_count += 1
-                log.warning("Sniff on %s exited (restart #%d), restarting in 3s...",
-                            dev_name, restart_count)
+                with open("/tmp/leetha_sniff.txt", "a") as _f:
+                    _f.write(f"sniff exited normally on {dev_name} (restart #{restart_count})\n")
                 import time
                 time.sleep(3)
             except Exception as exc:
                 if halt.is_set():
                     break
                 restart_count += 1
-                log.error("Sniff failure on %s (restart #%d): %s",
-                          dev_name, restart_count, exc)
+                with open("/tmp/leetha_sniff.txt", "a") as _f:
+                    import traceback
+                    _f.write(f"sniff CRASHED on {dev_name} (restart #{restart_count}): {exc}\n")
+                    _f.write(traceback.format_exc() + "\n")
                 import time
                 time.sleep(3)
 

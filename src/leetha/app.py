@@ -236,39 +236,14 @@ class LeethaApp:
         # Re-evaluate unknown devices 60s after capture starts
         self._tasks.append(asyncio.create_task(self._reevaluate_unknown_devices()))
 
-        if self.config.worker_count > 1:
-            self._router = PacketRouter(num_workers=self.config.worker_count)
-            self._tasks.append(asyncio.create_task(self._dispatch_loop()))
-            # Create per-worker pipeline instances to avoid shared-state
-            # race conditions (_evidence_buffer, _oui_vendors, etc.)
-            self._worker_pipelines = [
-                Pipeline(
-                    store=self.store,
-                    on_verdict=self._on_verdict_event,
-                    on_arp=self._on_arp_packet,
-                    on_dhcp=self._on_dhcp_packet,
-                    on_gateway_hint=self._on_gateway_hint,
-                    is_local_mac=self.is_local_device,
-                    on_new_host=self._on_new_host_discovered,
-                )
-                for _ in range(self.config.worker_count)
-            ]
-            for shard_id in range(self.config.worker_count):
-                self._tasks.append(asyncio.create_task(
-                    self._worker_loop(shard_id, self._router.workers[shard_id])
-                ))
-        else:
-            task = asyncio.create_task(self._process_loop())
-            task.add_done_callback(self._on_task_done)
-            self._tasks.append(task)
-            # Also start a thread-based consumer as a fallback — if the
-            # asyncio process_loop freezes (event loop contention), this
-            # thread drains the queue independently.
-            import threading
-            self._drain_thread = threading.Thread(
-                target=self._drain_queue_thread, daemon=True,
-                name="queue-drain")
-            self._drain_thread.start()
+        # All packet processing runs in a dedicated thread with its own
+        # event loop and DB connection. This is immune to event loop
+        # contention from analysis tasks and WebSocket handlers.
+        import threading
+        self._drain_thread = threading.Thread(
+            target=self._process_thread, daemon=True,
+            name="process-thread")
+        self._drain_thread.start()
 
         logger.info("Capture started on %s",
                      ", ".join(i.name for i in self.config.interfaces))
@@ -292,49 +267,57 @@ class LeethaApp:
         """
         import asyncio as _aio
         import queue as _queue_mod
+        import traceback as _tb
 
-        loop = _aio.new_event_loop()
-        _aio.set_event_loop(loop)
+        try:
+            loop = _aio.new_event_loop()
+            _aio.set_event_loop(loop)
 
-        # Create a separate Store + Pipeline for this thread — aiosqlite
-        # connections are NOT thread-safe and must be used from the thread
-        # that created them.
-        from leetha.store.store import Store
-        from leetha.core.pipeline import Pipeline
-        thread_store = Store(self.config.db_path)
-        loop.run_until_complete(thread_store.initialize())
+            from leetha.store.store import Store
+            from leetha.core.pipeline import Pipeline
+            thread_store = Store(self.config.db_path)
+            loop.run_until_complete(thread_store.initialize())
+            logger.info("Process thread initialized (db=%s)", self.config.db_path)
+        except Exception as e:
+            logger.error("Process thread init failed: %s", e, exc_info=True)
+            return
 
         import leetha.processors  # noqa: F401  — ensure all processors registered
+        # Don't pass async callbacks (on_verdict, on_new_host) — they
+        # belong to the main event loop and can't be awaited here.
+        # The thread pipeline only stores data; WebSocket events come
+        # from the main loop's polling.
         thread_pipeline = Pipeline(
             store=thread_store,
-            on_verdict=self._on_verdict_event,
-            on_arp=self._on_arp_packet,
-            on_dhcp=self._on_dhcp_packet,
-            on_gateway_hint=self._on_gateway_hint,
             is_local_mac=self.is_local_device,
-            on_new_host=self._on_new_host_discovered,
         )
 
         processed = 0
         errors = 0
-        while self._running:
-            try:
-                pkt = self.packet_queue.get(timeout=1.0)
-            except _queue_mod.Empty:
-                continue
-            except Exception:
-                continue
+        try:
+            while self._running:
+                try:
+                    pkt = self.packet_queue.get(timeout=1.0)
+                except _queue_mod.Empty:
+                    continue
+                except Exception:
+                    continue
 
+                try:
+                    loop.run_until_complete(thread_pipeline.process(pkt))
+                    processed += 1
+                except Exception:
+                    errors += 1
+                    if errors <= 5 or errors % 100 == 0:
+                        logger.warning("Process thread error #%d", errors, exc_info=True)
+        except Exception:
+            logger.error("Process thread crashed", exc_info=True)
+        finally:
             try:
-                loop.run_until_complete(thread_pipeline.process(pkt))
-                processed += 1
+                loop.run_until_complete(thread_store.close())
+                loop.close()
             except Exception:
-                errors += 1
-                if errors <= 5 or errors % 100 == 0:
-                    logger.warning("Pipeline thread error #%d", errors, exc_info=True)
-
-        loop.run_until_complete(thread_store.close())
-        loop.close()
+                pass
 
     async def _watchdog(self):
         """Monitor the process loop task and restart it if it dies.
