@@ -41,29 +41,24 @@ class NotificationDispatcher:
     async def send(self, finding: Finding) -> None:
         """Dispatch a notification if severity meets threshold and not rate-limited."""
         if not self._urls:
-            self._send_debug = "exit:no_urls"
             return
 
         sev_str = finding.severity.value if hasattr(finding.severity, "value") else str(finding.severity)
         level = _SEVERITY_ORDER.get(sev_str, 0)
         if level < self._min_level:
-            self._send_debug = f"exit:severity:{sev_str}:{level}<{self._min_level}"
             return
 
         # Rate limit: one notification per rule+MAC per cooldown window
         rule_str = finding.rule.value if hasattr(finding.rule, "value") else str(finding.rule)
         dedup_key = f"{rule_str}:{finding.hw_addr}"
         now = time.monotonic()
-        last = self._recent.get(dedup_key, 0)
-        if now - last < _COOLDOWN_SECONDS:
-            self._send_debug = f"exit:rate_limit:{dedup_key}"
+        last = self._recent.get(dedup_key)
+        if last is not None and (now - last) < _COOLDOWN_SECONDS:
             return
         self._recent[dedup_key] = now
 
         title, body = self.format(finding)
         try:
             await self._apprise.async_notify(title=title, body=body)
-            self._send_debug = "ok:notified"
-        except Exception as exc:
-            self._send_debug = f"ok:exception:{exc}"
+        except Exception:
             logger.debug("Notification dispatch failed", exc_info=True)

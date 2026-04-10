@@ -14,55 +14,33 @@ def finding():
     )
 
 
+def _make_fake_apprise():
+    """Create a tracker that records async_notify calls."""
+    calls = []
+    async def fake_notify(**kwargs):
+        calls.append(kwargs)
+    fake = types.SimpleNamespace(async_notify=fake_notify)
+    return fake, calls
+
+
 async def test_notify_skips_below_min_severity(finding):
     """Notifications below min severity are silently skipped."""
     from leetha.notifications import NotificationDispatcher
     d = NotificationDispatcher(urls=["json://localhost"], min_severity="high")
-    calls = []
-    async def fake_notify(**kwargs):
-        calls.append(kwargs)
-    d._apprise = types.SimpleNamespace(async_notify=fake_notify)
+    fake, calls = _make_fake_apprise()
+    d._apprise = fake
     await d.send(finding)
-    assert len(calls) == 0, f"Expected 0 calls, got {len(calls)}"
+    assert len(calls) == 0
 
 
 async def test_notify_sends_above_min_severity(finding):
     """Findings at or above min severity trigger notification."""
     from leetha.notifications import NotificationDispatcher
-
     d = NotificationDispatcher(urls=["json://localhost"], min_severity="warning")
-
-    # Verify construction succeeded and _apprise was set
-    assert hasattr(d, '_apprise'), "Constructor failed to set _apprise"
-    assert hasattr(d, '_urls'), "Constructor failed to set _urls"
-    assert d._urls == ["json://localhost"], f"urls wrong: {d._urls}"
-    assert d._min_level == 2, f"min_level wrong: {d._min_level}"
-
-    # Replace _apprise with a tracker
-    calls = []
-    async def fake_notify(**kwargs):
-        calls.append(kwargs)
-    d._apprise = types.SimpleNamespace(async_notify=fake_notify)
-
-    # Verify we can call it directly
-    await d._apprise.async_notify(title="test", body="test")
-    assert len(calls) == 1, f"Direct call failed: {len(calls)} calls"
-
-    # Reset and test through send()
-    calls.clear()
-    # Trace severity resolution exactly as send() does it
-    sev_str = finding.severity.value if hasattr(finding.severity, "value") else str(finding.severity)
-    from leetha.notifications import _SEVERITY_ORDER
-    level = _SEVERITY_ORDER.get(sev_str, 0)
+    fake, calls = _make_fake_apprise()
+    d._apprise = fake
     await d.send(finding)
-    assert len(calls) == 1, (
-        f"send() made {len(calls)} calls. "
-        f"debug={getattr(d, '_send_debug', 'NOT_SET')}, "
-        f"d._urls={d._urls}, d._min_level={d._min_level}, "
-        f"d._recent={d._recent}, "
-        f"finding.severity={finding.severity!r}, sev_str={sev_str!r}, "
-        f"level={level}, passes={level >= d._min_level}"
-    )
+    assert len(calls) == 1
 
 
 async def test_notify_skips_when_no_urls():
@@ -82,13 +60,11 @@ async def test_notify_rate_limits(finding):
     """Same rule+MAC within cooldown window is suppressed."""
     from leetha.notifications import NotificationDispatcher
     d = NotificationDispatcher(urls=["json://localhost"], min_severity="info")
-    calls = []
-    async def fake_notify(**kwargs):
-        calls.append(kwargs)
-    d._apprise = types.SimpleNamespace(async_notify=fake_notify)
+    fake, calls = _make_fake_apprise()
+    d._apprise = fake
     await d.send(finding)
     await d.send(finding)  # duplicate within cooldown
-    assert len(calls) == 1, f"Expected 1 call, got {len(calls)}"
+    assert len(calls) == 1
 
 
 async def test_format_message(finding):
