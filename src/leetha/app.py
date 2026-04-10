@@ -285,12 +285,50 @@ class LeethaApp:
         import leetha.processors  # noqa: F401  — ensure all processors registered
         # Don't pass async callbacks (on_verdict, on_new_host) — they
         # belong to the main event loop and can't be awaited here.
-        # The thread pipeline only stores data; WebSocket events come
-        # from the main loop's polling.
+        # Instead, push events to subscribers via call_soon_threadsafe.
         thread_pipeline = Pipeline(
             store=thread_store,
             is_local_mac=self.is_local_device,
         )
+
+        # Reference to the main event loop for thread-safe event dispatch
+        main_loop = getattr(self, "_app_loop", None)
+
+        def _sanitize(obj):
+            """Convert bytes to str for JSON serialization."""
+            if isinstance(obj, bytes):
+                return obj.decode("utf-8", errors="replace")
+            if isinstance(obj, dict):
+                return {k: _sanitize(v) for k, v in obj.items()}
+            if isinstance(obj, (list, tuple)):
+                return [_sanitize(v) for v in obj]
+            return obj
+
+        def _push_event(pkt, verdict=None):
+            """Thread-safe push of a packet event to WebSocket subscribers."""
+            if not self.event_subscribers or main_loop is None:
+                return
+            packet_info = {
+                "protocol": pkt.protocol,
+                "src_mac": pkt.hw_addr,
+                "src_ip": pkt.ip_addr,
+                "dst_ip": getattr(pkt, "target_ip", None),
+                "fields": _sanitize(pkt.fields),
+                "interface": pkt.interface,
+                "timestamp": pkt.captured_at.isoformat() if hasattr(pkt, "captured_at") and pkt.captured_at else None,
+            }
+            verdict_data = verdict.to_dict() if verdict and hasattr(verdict, "to_dict") else {}
+            event = {
+                "type": "device_update",
+                "mac": pkt.hw_addr,
+                "verdict": verdict_data,
+                "packet": packet_info,
+            }
+            for sub in list(self.event_subscribers):
+                try:
+                    main_loop.call_soon_threadsafe(sub.put_nowait, event)
+                except (RuntimeError, asyncio.QueueFull):
+                    pass
 
         processed = 0
         errors = 0
@@ -306,6 +344,13 @@ class LeethaApp:
                 try:
                     loop.run_until_complete(thread_pipeline.process(pkt))
                     processed += 1
+                    # Push event to WebSocket subscribers for live stream
+                    try:
+                        verdict = loop.run_until_complete(
+                            thread_store.verdicts.find_by_addr(pkt.hw_addr))
+                        _push_event(pkt, verdict)
+                    except Exception:
+                        _push_event(pkt)
                 except Exception:
                     errors += 1
                     if errors <= 5 or errors % 100 == 0:
