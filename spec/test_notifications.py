@@ -18,20 +18,20 @@ async def test_notify_skips_below_min_severity(finding):
     """Notifications below min severity are silently skipped."""
     from leetha.notifications import NotificationDispatcher
     d = NotificationDispatcher(urls=["json://localhost"], min_severity="high")
-    with patch("leetha.notifications.apprise") as mock_apprise:
-        await d.send(finding)
-        mock_apprise.Apprise.return_value.async_notify.assert_not_called()
+    d._apprise = MagicMock()
+    d._apprise.async_notify = AsyncMock(return_value=True)
+    await d.send(finding)
+    d._apprise.async_notify.assert_not_called()
 
 
 async def test_notify_sends_above_min_severity(finding):
     """Findings at or above min severity trigger notification."""
     from leetha.notifications import NotificationDispatcher
     d = NotificationDispatcher(urls=["json://localhost"], min_severity="warning")
-    mock_ap = MagicMock()
-    mock_ap.async_notify = AsyncMock(return_value=True)
-    with patch("leetha.notifications.apprise.Apprise", return_value=mock_ap):
-        await d.send(finding)
-        mock_ap.async_notify.assert_called_once()
+    d._apprise = MagicMock()
+    d._apprise.async_notify = AsyncMock(return_value=True)
+    await d.send(finding)
+    d._apprise.async_notify.assert_called_once()
 
 
 async def test_notify_skips_when_no_urls():
@@ -51,12 +51,11 @@ async def test_notify_rate_limits(finding):
     """Same rule+MAC within cooldown window is suppressed."""
     from leetha.notifications import NotificationDispatcher
     d = NotificationDispatcher(urls=["json://localhost"], min_severity="info")
-    mock_ap = MagicMock()
-    mock_ap.async_notify = AsyncMock(return_value=True)
-    with patch("leetha.notifications.apprise.Apprise", return_value=mock_ap):
-        await d.send(finding)
-        await d.send(finding)  # duplicate within cooldown
-        assert mock_ap.async_notify.call_count == 1
+    d._apprise = MagicMock()
+    d._apprise.async_notify = AsyncMock(return_value=True)
+    await d.send(finding)
+    await d.send(finding)  # duplicate within cooldown
+    assert d._apprise.async_notify.call_count == 1
 
 
 async def test_format_message(finding):

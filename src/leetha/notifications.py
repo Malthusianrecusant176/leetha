@@ -21,6 +21,10 @@ class NotificationDispatcher:
         self._urls = urls
         self._min_level = _SEVERITY_ORDER.get(min_severity, 2)
         self._recent: dict[str, float] = {}  # "rule:mac" -> last_sent timestamp
+        # Build the Apprise instance once at construction
+        self._apprise = apprise.Apprise()
+        for url in urls:
+            self._apprise.add(url)
 
     def format(self, finding: Finding) -> tuple[str, str]:
         """Return (title, body) for a finding notification."""
@@ -54,10 +58,7 @@ class NotificationDispatcher:
         self._recent[dedup_key] = now
 
         title, body = self.format(finding)
-        ap = apprise.Apprise()
-        for url in self._urls:
-            ap.add(url)
         try:
-            await ap.async_notify(title=title, body=body)
+            await self._apprise.async_notify(title=title, body=body)
         except Exception:
             logger.debug("Notification dispatch failed", exc_info=True)
