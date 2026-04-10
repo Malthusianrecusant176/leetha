@@ -24,6 +24,7 @@ dependencies = [
     "apprise>=1.7",
     "prometheus-client>=0.20",
     "cryptography>=42.0",
+    "asyncssh>=2.14",
 ]
 
 [project.scripts]

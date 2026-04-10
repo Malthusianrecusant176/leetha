@@ -115,6 +115,16 @@ console commands:
         default=False,
         help="Service mode: web UI + auto-capture on saved interfaces, no prompts",
     )
+    parser.add_argument(
+        "--remote",
+        default=None,
+        help="Remote capture via SSH (ssh://user@host[:port])",
+    )
+    parser.add_argument(
+        "--key",
+        default=None,
+        help="SSH private key path for --remote capture",
+    )
 
     sub = parser.add_subparsers(dest="command")
 
@@ -479,6 +489,45 @@ def main():
             )
         except (KeyboardInterrupt, SystemExit):
             print("\033[32m[+] Leetha stopped\033[0m")
+        return
+
+    if getattr(args, "remote", None):
+        from leetha.capture.remote.ssh import parse_ssh_url, ssh_capture
+        ssh_config = parse_ssh_url(args.remote)
+        if args.interface:
+            ssh_config.interface = parse_interface_arg(args.interface[0])[0]
+        if getattr(args, "key", None):
+            ssh_config.key_path = args.key
+
+        async def _run_ssh_capture():
+            from leetha.app import LeethaApp
+            app = LeethaApp(interfaces=iface_configs or None)
+            await app.start()
+            try:
+                async def _on_pcap_chunk(chunk, label):
+                    from scapy.utils import rdpcap
+                    import io
+                    try:
+                        pkts = rdpcap(io.BytesIO(chunk))
+                        for pkt in pkts:
+                            result = app.capture_engine._classify(pkt, label)
+                            if result is not None:
+                                result.interface = label
+                                app.packet_queue.put_nowait(result)
+                    except Exception:
+                        pass
+
+                await ssh_capture(ssh_config, _on_pcap_chunk)
+            except KeyboardInterrupt:
+                pass
+            finally:
+                await app.stop()
+
+        print(f"\033[36m[*] SSH capture: {ssh_config.user}@{ssh_config.host}:{ssh_config.interface}\033[0m")
+        try:
+            asyncio.run(_run_ssh_capture())
+        except KeyboardInterrupt:
+            print("\n\033[33m[*] SSH capture stopped\033[0m")
         return
 
     if args.live:
