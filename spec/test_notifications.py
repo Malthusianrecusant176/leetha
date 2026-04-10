@@ -34,8 +34,18 @@ async def test_notify_skips_below_min_severity(finding):
 
 async def test_notify_sends_above_min_severity(finding):
     """Findings at or above min severity trigger notification."""
-    from leetha.notifications import NotificationDispatcher
+    from leetha.notifications import NotificationDispatcher, _SEVERITY_ORDER
+
     d = NotificationDispatcher(urls=["json://localhost"], min_severity="warning")
+
+    # Diagnostic: verify preconditions
+    sev_str = finding.severity.value
+    level = _SEVERITY_ORDER.get(sev_str, 0)
+    assert d._urls == ["json://localhost"], f"urls={d._urls}"
+    assert d._min_level == 2, f"min_level={d._min_level}"
+    assert sev_str == "warning", f"sev_str={sev_str!r}"
+    assert level >= d._min_level, f"level={level} < min_level={d._min_level}"
+
     fake = _make_fake_apprise()
     d._apprise = fake
     await d.send(finding)
