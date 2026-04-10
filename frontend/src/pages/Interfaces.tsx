@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
@@ -10,9 +10,13 @@ import {
   fetchProbeStatus,
   fetchRemoteSensors,
   disconnectRemoteSensor,
+  fetchBuildTargets,
+  checkSensorName,
   type NetworkInterface,
   type ProbeInfo,
   type RemoteSensor,
+  type BuildTarget,
+  type BuildRequestBody,
 } from "@/lib/api";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
@@ -32,6 +36,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import {
   WifiOff,
@@ -42,6 +49,9 @@ import {
   Globe,
   Monitor,
   Radio,
+  Hammer,
+  Download,
+  Loader2,
 } from "lucide-react";
 
 // --- Category classification ---
@@ -144,6 +154,133 @@ export default function Interfaces() {
     queryFn: fetchRemoteSensors,
     refetchInterval: 5000,
   });
+
+  const { data: buildTargets = [] } = useQuery({
+    queryKey: ["build-targets"],
+    queryFn: fetchBuildTargets,
+  });
+
+  // Build sensor state
+  const [buildDialogOpen, setBuildDialogOpen] = useState(false);
+  const [buildName, setBuildName] = useState("");
+  const [buildServer, setBuildServer] = useState(
+    typeof window !== "undefined" ? `${window.location.hostname}:8443` : "127.0.0.1:8443"
+  );
+  const [buildInterface, setBuildInterface] = useState("eth0");
+  const [buildTarget, setBuildTarget] = useState("linux-x86_64");
+  const [buildBufferMb, setBuildBufferMb] = useState(100);
+  const [buildInProgress, setBuildInProgress] = useState(false);
+  const [buildLog, setBuildLog] = useState<Array<{ stage: string; message: string }>>([]);
+  const [buildDownloadId, setBuildDownloadId] = useState<string | null>(null);
+  const [buildDownloadFilename, setBuildDownloadFilename] = useState("leetha-sensor");
+  const buildLogRef = useRef<HTMLDivElement>(null);
+
+  // Auto-scroll build log
+  useEffect(() => {
+    if (buildLogRef.current) {
+      buildLogRef.current.scrollTop = buildLogRef.current.scrollHeight;
+    }
+  }, [buildLog]);
+
+  // Update buffer size when target changes
+  const handleTargetChange = (targetId: string) => {
+    setBuildTarget(targetId);
+    const target = buildTargets.find((t) => t.id === targetId);
+    if (target) setBuildBufferMb(target.default_buffer_mb);
+  };
+
+  const handleBuildSensor = async () => {
+    if (!buildName.trim()) {
+      toast.error("Sensor name is required");
+      return;
+    }
+
+    // Check for duplicate name
+    try {
+      const nameCheck = await checkSensorName(buildName);
+      if (nameCheck.exists) {
+        if (!confirm(`A certificate for '${buildName}' already exists. Building will revoke the old certificate and issue a new one. Continue?`)) {
+          return;
+        }
+      }
+    } catch {
+      // Ignore check failures, proceed with build
+    }
+
+    setBuildInProgress(true);
+    setBuildLog([]);
+    setBuildDownloadId(null);
+
+    const body: BuildRequestBody = {
+      name: buildName,
+      server: buildServer,
+      interface: buildInterface,
+      target: buildTarget,
+      buffer_size_mb: buildBufferMb,
+    };
+
+    try {
+      const token = localStorage.getItem("leetha_token");
+      const headers: Record<string, string> = { "Content-Type": "application/json" };
+      if (token) headers["Authorization"] = `Bearer ${token}`;
+
+      const resp = await fetch("/api/remote/build", {
+        method: "POST",
+        headers,
+        body: JSON.stringify(body),
+      });
+
+      if (!resp.ok) {
+        const err = await resp.json().catch(() => ({ detail: resp.statusText }));
+        toast.error(err.detail || "Build request failed");
+        setBuildInProgress(false);
+        return;
+      }
+
+      const reader = resp.body?.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+
+      if (!reader) {
+        toast.error("Failed to read build stream");
+        setBuildInProgress(false);
+        return;
+      }
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n\n");
+        buffer = lines.pop() || "";
+
+        for (const line of lines) {
+          const dataMatch = line.match(/^data:\s*(.+)$/m);
+          if (!dataMatch) continue;
+          try {
+            const event = JSON.parse(dataMatch[1]);
+            setBuildLog((prev) => [...prev, event]);
+
+            if (event.stage === "done") {
+              const doneData = JSON.parse(event.message);
+              setBuildDownloadId(doneData.download_id);
+              setBuildDownloadFilename(doneData.filename || "leetha-sensor");
+              toast.success("Sensor build complete");
+            } else if (event.stage === "error") {
+              toast.error("Build failed");
+            }
+          } catch {
+            // Skip unparseable lines
+          }
+        }
+      }
+    } catch (err) {
+      toast.error(`Build error: ${err}`);
+    } finally {
+      setBuildInProgress(false);
+    }
+  };
 
   const interfaces = data?.detected ?? [];
 
@@ -258,7 +395,18 @@ export default function Interfaces() {
             <h3 className="text-sm font-semibold">Remote Sensors</h3>
             <p className="text-[11px] text-muted-foreground">Persistent packet capture agents streaming over WebSocket</p>
           </div>
-          <span className="ml-auto text-xs text-muted-foreground">{sensors.length} connected</span>
+          <div className="ml-auto flex items-center gap-3">
+            <span className="text-xs text-muted-foreground">{sensors.length} connected</span>
+            <Button
+              variant="outline"
+              size="sm"
+              className="text-xs h-7 gap-1.5"
+              onClick={() => setBuildDialogOpen(true)}
+            >
+              <Hammer size={12} />
+              Build Sensor
+            </Button>
+          </div>
         </div>
         {sensors.length === 0 ? (
           <div className="px-5 py-6 text-center text-muted-foreground text-sm">
@@ -475,6 +623,142 @@ export default function Interfaces() {
             <Button variant="outline" onClick={() => setProbeDialogIface(null)}>Close</Button>
             <Button variant="outline" onClick={() => handleRunProbes(false)} disabled={probeLoading || selectedProbes.size === 0}>Run Selected</Button>
             <Button onClick={() => handleRunProbes(true)} disabled={probeLoading || probeList.length === 0}>Run All</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Build Sensor Dialog */}
+      <Dialog open={buildDialogOpen} onOpenChange={(open) => { if (!open && !buildInProgress) setBuildDialogOpen(false); }}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Build Sensor Binary</DialogTitle>
+            <DialogDescription>
+              Configure and compile a self-contained sensor with embedded certificates.
+            </DialogDescription>
+          </DialogHeader>
+
+          {buildLog.length === 0 ? (
+            <div className="space-y-4 py-2">
+              <div className="space-y-2">
+                <Label htmlFor="build-name">Sensor Name</Label>
+                <Input
+                  id="build-name"
+                  placeholder="pi-sensor"
+                  value={buildName}
+                  onChange={(e) => setBuildName(e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="build-server">Server Address (IP:PORT)</Label>
+                <Input
+                  id="build-server"
+                  placeholder="10.0.0.5:8443"
+                  value={buildServer}
+                  onChange={(e) => setBuildServer(e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="build-iface">Capture Interface</Label>
+                <Input
+                  id="build-iface"
+                  placeholder="eth0"
+                  value={buildInterface}
+                  onChange={(e) => setBuildInterface(e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Target Platform</Label>
+                <Select value={buildTarget} onValueChange={handleTargetChange}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {buildTargets.map((t) => (
+                      <SelectItem key={t.id} value={t.id}>
+                        {t.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="build-buffer">Ring Buffer Size (MB)</Label>
+                <Input
+                  id="build-buffer"
+                  type="number"
+                  min={1}
+                  value={buildBufferMb}
+                  onChange={(e) => setBuildBufferMb(parseInt(e.target.value) || 10)}
+                />
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-3 py-2">
+              <div
+                ref={buildLogRef}
+                className="h-64 overflow-y-auto rounded-lg bg-black/50 p-3 font-mono text-xs space-y-0.5"
+              >
+                {buildLog.map((entry, i) => (
+                  <div
+                    key={i}
+                    className={cn(
+                      entry.stage === "error" && "text-destructive",
+                      entry.stage === "done" && "text-success",
+                      entry.stage === "compile" && "text-muted-foreground",
+                      entry.stage === "certs" && "text-violet-400",
+                      entry.stage === "config" && "text-cyan-400",
+                    )}
+                  >
+                    <span className="text-muted-foreground/50">[{entry.stage}]</span>{" "}
+                    {entry.stage === "done" ? "Build complete" : entry.message}
+                  </div>
+                ))}
+                {buildInProgress && (
+                  <div className="flex items-center gap-2 text-muted-foreground pt-1">
+                    <Loader2 size={12} className="animate-spin" />
+                    Building...
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          <DialogFooter>
+            {buildLog.length === 0 ? (
+              <>
+                <Button variant="outline" onClick={() => setBuildDialogOpen(false)}>Cancel</Button>
+                <Button onClick={handleBuildSensor} disabled={buildInProgress || !buildName.trim()}>
+                  {buildInProgress ? (
+                    <><Loader2 size={14} className="animate-spin mr-2" /> Building...</>
+                  ) : (
+                    <><Hammer size={14} className="mr-2" /> Build</>
+                  )}
+                </Button>
+              </>
+            ) : (
+              <>
+                {buildDownloadId && (
+                  <Button asChild>
+                    <a href={`/api/remote/build/${buildDownloadId}`} download={buildDownloadFilename}>
+                      <Download size={14} className="mr-2" />
+                      Download {buildDownloadFilename}
+                    </a>
+                  </Button>
+                )}
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setBuildLog([]);
+                    setBuildDownloadId(null);
+                  }}
+                >
+                  {buildDownloadId ? "Build Another" : "Try Again"}
+                </Button>
+                <Button variant="outline" onClick={() => { setBuildDialogOpen(false); setBuildLog([]); setBuildDownloadId(null); }}>
+                  Close
+                </Button>
+              </>
+            )}
           </DialogFooter>
         </DialogContent>
       </Dialog>

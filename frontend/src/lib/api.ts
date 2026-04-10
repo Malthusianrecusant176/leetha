@@ -847,3 +847,32 @@ export async function disconnectRemoteSensor(name: string): Promise<void> {
     method: "DELETE",
   });
 }
+
+// --- Sensor Build ---
+
+export interface BuildTarget {
+  id: string;
+  label: string;
+  triple: string;
+  default_buffer_mb: number;
+}
+
+export interface BuildRequestBody {
+  name: string;
+  server: string;
+  interface: string;
+  target: string;
+  buffer_size_mb: number;
+}
+
+export async function fetchBuildTargets(): Promise<BuildTarget[]> {
+  return apiFetch<BuildTarget[]>("/api/remote/targets");
+}
+
+export async function checkBuildPrerequisites(target: string): Promise<{ ok: boolean; message: string }> {
+  return apiFetch(`/api/remote/build/check?target=${encodeURIComponent(target)}`);
+}
+
+export async function checkSensorName(name: string): Promise<{ exists: boolean; name: string }> {
+  return apiFetch(`/api/remote/build/check-name?name=${encodeURIComponent(name)}`);
+}
