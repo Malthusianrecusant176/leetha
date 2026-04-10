@@ -11,6 +11,60 @@ from pydantic import BaseModel
 router = APIRouter(prefix="/api/remote", tags=["remote"])
 
 
+def _find_sensor_dir() -> Path | None:
+    """Locate the sensor Rust source directory.
+
+    Search order:
+    1. LEETHA_SENSOR_DIR environment variable
+    2. Relative to the leetha data directory (~/.leetha/sensor)
+    3. Relative to the Python package (development installs)
+    4. Common project locations
+    """
+    import os
+
+    # 1. Environment variable override
+    env_dir = os.environ.get("LEETHA_SENSOR_DIR")
+    if env_dir:
+        p = Path(env_dir)
+        if (p / "Cargo.toml").exists():
+            return p
+
+    # 2. Next to the data directory
+    try:
+        data_dir = _get_data_dir()
+        candidate = data_dir / "sensor"
+        if (candidate / "Cargo.toml").exists():
+            return candidate
+    except Exception:
+        pass
+
+    # 3. Relative to Python package (works for editable/dev installs)
+    pkg_dir = Path(__file__).resolve().parents[4] / "sensor"
+    if (pkg_dir / "Cargo.toml").exists():
+        return pkg_dir
+
+    # 4. Walk up from CWD looking for sensor/Cargo.toml
+    cwd = Path.cwd()
+    for parent in [cwd, *cwd.parents]:
+        candidate = parent / "sensor"
+        if (candidate / "Cargo.toml").exists():
+            return candidate
+        # Stop at home directory
+        if parent == Path.home():
+            break
+
+    # 5. Check common project paths
+    for common in [
+        Path.home() / "Documents" / "scripts" / "leetha" / "sensor",
+        Path.home() / "leetha" / "sensor",
+        Path("/opt/leetha/sensor"),
+    ]:
+        if (common / "Cargo.toml").exists():
+            return common
+
+    return None
+
+
 def _get_manager():
     from leetha.ui.web.app import app_instance
     if not app_instance:
@@ -112,10 +166,10 @@ async def build_sensor(body: BuildRequestBody):
         from leetha.capture.remote.ca import init_ca
         init_ca(ca_dir)
 
-    # Find sensor directory relative to leetha package
-    sensor_dir = Path(__file__).resolve().parents[4] / "sensor"
-    if not (sensor_dir / "Cargo.toml").exists():
-        raise HTTPException(500, f"Sensor source not found at {sensor_dir}")
+    # Find sensor source directory — check multiple locations
+    sensor_dir = _find_sensor_dir()
+    if not sensor_dir:
+        raise HTTPException(500, "Sensor source not found. Set LEETHA_SENSOR_DIR or ensure the sensor/ directory is in the project root.")
 
     request = BuildRequest(
         name=body.name,
