@@ -42,3 +42,24 @@ def test_build_capture_commands():
 def test_build_capture_commands_interface_any():
     cmds = build_capture_commands("any")
     assert all("any" in cmd for cmd in cmds)
+
+
+def test_parse_ssh_url_ipv6():
+    cfg = parse_ssh_url("ssh://root@[::1]:22")
+    assert cfg.host == "::1"
+    assert cfg.port == 22
+
+
+def test_ssh_capture_config_defaults():
+    cfg = SSHCaptureConfig(user="root", host="10.0.0.1")
+    assert cfg.port == 22
+    assert cfg.interface == "any"
+    assert cfg.key_path is None
+
+
+def test_build_capture_commands_order():
+    """tcpdump should always be first (most common)."""
+    cmds = build_capture_commands("wlan0")
+    assert "tcpdump" in cmds[0]
+    assert "dumpcap" in cmds[1]
+    assert "tshark" in cmds[2]
