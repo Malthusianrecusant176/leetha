@@ -17,7 +17,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
+          python-version: "3.13"
       - run: pip install ruff
       - run: ruff check src/
 
@@ -28,7 +28,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
+          python-version: "3.13"
       - name: Create frontend dist placeholder
         run: python -c "import pathlib; d=pathlib.Path('src/leetha/ui/web/dist'); d.mkdir(parents=True,exist_ok=True); f=d/'index.html'; f.exists() or f.write_text('<html></html>')"
       - name: Install dependencies
@@ -48,7 +48,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
+          python-version: "3.13"
       - name: Create frontend dist placeholder
         run: python -c "import pathlib; d=pathlib.Path('src/leetha/ui/web/dist'); d.mkdir(parents=True,exist_ok=True); f=d/'index.html'; f.exists() or f.write_text('<html></html>')"
       - name: Install dependencies
@@ -68,7 +68,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
+          python-version: "3.13"
       - name: Create frontend dist placeholder
         run: python -c "import pathlib; d=pathlib.Path('src/leetha/ui/web/dist'); d.mkdir(parents=True,exist_ok=True); f=d/'index.html'; f.exists() or f.write_text('<html></html>')"
       - name: Install dependencies
@@ -102,7 +102,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
+          python-version: "3.13"
       - uses: actions/download-artifact@v4
         with:
           name: frontend-dist
@@ -140,7 +140,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
+          python-version: "3.13"
       - uses: actions/download-artifact@v4
         with:
           name: frontend-dist

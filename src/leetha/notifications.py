@@ -58,4 +58,7 @@ class NotificationDispatcher:
         self._recent[dedup_key] = now
 
         title, body = self.format(finding)
-        await self._apprise.async_notify(title=title, body=body)
+        try:
+            await self._apprise.async_notify(title=title, body=body)
+        except Exception:
+            logger.debug("Notification dispatch failed", exc_info=True)
