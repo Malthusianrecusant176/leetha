@@ -200,6 +200,10 @@ class LeethaApp:
             self._tasks.append(asyncio.create_task(
                 self.start_unix_socket(self.config.socket_path)))
 
+        # Start remote sensor listener (all modes — console, live, web)
+        from leetha.capture.remote.listener import start_sensor_listener
+        await start_sensor_listener(self, port=8443)
+
         # If interfaces were provided at construction time, start capture
         # immediately (CLI mode with -i flag).
         if self.config.interfaces:
@@ -477,6 +481,9 @@ class LeethaApp:
         """Stop capture and close DB. Designed for fast shutdown."""
         self._running = False
         self.capture_engine.stop()
+        # Stop remote sensor listener
+        from leetha.capture.remote.listener import stop_sensor_listener
+        await stop_sensor_listener()
         self._analysis_executor.shutdown(wait=False, cancel_futures=True)
         if self.probe_scheduler:
             try:

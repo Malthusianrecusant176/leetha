@@ -60,6 +60,7 @@ class _StatusBar:
         self.interface_name = ""
         self.seen_macs: set[str] = set()
         self.alert_count = 0
+        self.remote_sensor_count = 0
         self._timestamps: collections.deque[float] = collections.deque(maxlen=100)
 
     def record_event(self) -> None:
@@ -88,11 +89,13 @@ class _StatusBar:
             )
         rate_str = f"{self.max_rate}/s" if self.max_rate else "unlimited"
         eps = self.events_per_sec()
+        remote_str = f" | {self.remote_sensor_count} sensors" if self.remote_sensor_count else ""
         return (
             f"[LIVE]{iface}"
             f" | {self.total_events} events"
             f" | {device_count} devices"
             f" | {self.alert_count} alerts"
+            f"{remote_str}"
             f" | {eps}/s"
             f" | Space: pause"
             f" | Ctrl+C: stop"
@@ -214,6 +217,9 @@ async def run_live(
                 # Refresh status bar periodically
                 now = time.monotonic()
                 if now - last_status_update >= 1.0:
+                    # Update remote sensor count
+                    if hasattr(app, '_remote_sensor_manager'):
+                        status.remote_sensor_count = len(app._remote_sensor_manager.sensors)
                     status.print(console)
                     last_status_update = now
                 continue
@@ -347,6 +353,12 @@ def _render_event(console: Console, event: dict, decode: bool = False,
 
     # ── Header: timestamp + protocol + src MAC/IP + dst + verdict ──
     tag = _proto_tag(protocol)
+    # Tag remote sensor packets
+    iface = pkt.get("interface", "")
+    remote_tag = ""
+    if iface and iface.startswith("remote:"):
+        sensor_name = iface.split(":", 1)[1]
+        remote_tag = f" [bold violet]⬤ {sensor_name}[/bold violet]"
     mac_str = f"[bright_blue]{src_mac}[/bright_blue]"
     ip_str = f"  [white]{src_ip}[/white]" if src_ip else ""
     dst_str = f"  [dim]→[/dim] [white]{dst_ip}[/white]" if dst_ip else ""
@@ -368,7 +380,7 @@ def _render_event(console: Console, event: dict, decode: bool = False,
             f" [dim]|[/dim] [{style}]{conf}%[/{style}]"
         )
 
-    console.print(f"[dim white]{ts}[/dim white]  {tag}{mac_str}{ip_str}{dst_str}{verdict_str}")
+    console.print(f"[dim white]{ts}[/dim white]  {tag}{remote_tag}{mac_str}{ip_str}{dst_str}{verdict_str}")
 
     # Build evidence key for repeat detection
     evidence_chain = verdict.get("evidence_chain") or []

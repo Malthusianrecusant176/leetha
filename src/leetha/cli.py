@@ -256,6 +256,10 @@ console commands:
 
     ca_sub.add_parser("list", help="List issued certificates")
 
+    # Remote sensor status (non-interactive — queries running leetha via API)
+    remote_sub.add_parser("sensors", help="List connected remote sensors (requires running leetha)")
+    remote_sub.add_parser("builds", help="List sensor build history")
+
     return parser
 
 
@@ -435,6 +439,56 @@ def main():
                     console.print(table)
             else:
                 parser.parse_args(["remote", "ca", "--help"])
+        elif args.remote_action == "sensors":
+            import aiohttp
+            console = Console()
+            try:
+                async def _list_sensors():
+                    async with aiohttp.ClientSession() as session:
+                        async with session.get("http://localhost:8080/api/remote/sensors") as resp:
+                            if resp.status != 200:
+                                console.print("[red]Failed to query sensors — is leetha running?[/red]")
+                                return
+                            sensors = await resp.json()
+                    if not sensors:
+                        console.print("No remote sensors connected.")
+                        return
+                    table = Table(title="Connected Sensors")
+                    table.add_column("Name")
+                    table.add_column("Remote IP")
+                    table.add_column("Uptime")
+                    table.add_column("Packets", justify="right")
+                    table.add_column("Data", justify="right")
+                    for s in sensors:
+                        mins = int(s["uptime"] / 60)
+                        uptime = f"{mins // 60}h {mins % 60}m" if mins >= 60 else f"{mins}m"
+                        mb = s["bytes"] / 1024 / 1024
+                        data = f"{mb / 1024:.1f} GB" if mb >= 1024 else f"{mb:.1f} MB"
+                        table.add_row(s["name"], s["remote_ip"], uptime, f"{s['packets']:,}", data)
+                    console.print(table)
+                asyncio.run(_list_sensors())
+            except Exception as e:
+                console.print(f"[red]Error: {e}[/red]")
+
+        elif args.remote_action == "builds":
+            console = Console()
+            from leetha.capture.remote.build import BuildHistory
+            history = BuildHistory(Path(get_config().data_dir))
+            builds = history.list_builds()
+            if not builds:
+                console.print("No build history.")
+            else:
+                table = Table(title="Sensor Build History")
+                table.add_column("Name")
+                table.add_column("Target")
+                table.add_column("Server")
+                table.add_column("Built")
+                table.add_column("Status")
+                for b in builds:
+                    status_str = "[green]OK[/green]" if b["success"] else "[red]FAILED[/red]"
+                    table.add_row(b["name"], b["target"], b["server"], b["built_at"][:16], status_str)
+                console.print(table)
+
         else:
             parser.parse_args(["remote", "--help"])
         return

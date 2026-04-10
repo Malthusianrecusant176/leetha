@@ -92,6 +92,7 @@ _COMMANDS: list[tuple[str, list[str], str, str]] = [
     ("status",    ["st"],             "status",                            "Show system status"),
     ("start",     ["capture"],        "start | start web | start cli",     "Start capture, web dashboard, or live stream"),
     ("stop",      [],                 "stop",                              "Stop packet capture"),
+    ("sensors",   ["remote"],          "sensors",                           "List connected remote sensors"),
     ("probe",     [],                 "probe <status|enable|disable|run|list>", "Manage active probing"),
     ("clear",     ["cls"],            "clear",                             "Clear the terminal"),
     ("exit",      ["quit", "q"],      "exit",                              "Exit LEETHA (or Ctrl+C)"),
@@ -590,6 +591,7 @@ class LeethaConsole:
     # Group commands by category for the help display
     _HELP_CATEGORIES: list[tuple[str, list[str]]] = [
         ("Capture",    ["list", "use", "start", "stop"]),
+        ("Remote",     ["sensors"]),
         ("Data",       ["sync", "sources", "devices", "alerts"]),
         ("Probing",    ["probe"]),
         ("System",     ["status", "clear", "help", "exit"]),
@@ -985,6 +987,63 @@ class LeethaConsole:
         if self.app is not None and self.app.db is not None:
             return self.app.db
         return self.db
+
+    async def _cmd_sensors(self, args: list[str]) -> None:
+        """List connected remote sensors with stats and discovered interfaces."""
+        if not self.app:
+            self._error("App not started — start capture first")
+            return
+
+        manager = self.app._remote_sensor_manager
+        sensors = manager.list_sensors()
+
+        if not sensors:
+            self._hint("No remote sensors connected")
+            self._hint("Sensors connect on port 8443 — build one from the web UI or use the CLI")
+            return
+
+        self._section("Remote Sensors", f"{len(sensors)} connected")
+
+        table = Table(
+            show_header=True, show_edge=False, pad_edge=True, box=None,
+            expand=True, padding=(0, 1),
+        )
+        table.add_column("Name", style="bold violet", no_wrap=True, min_width=16)
+        table.add_column("Remote IP", style="white", no_wrap=True, width=16)
+        table.add_column("Uptime", style="white", width=10)
+        table.add_column("Packets", justify="right", style="cyan", width=12)
+        table.add_column("Data", justify="right", style="white", width=10)
+        table.add_column("Interfaces", style="dim", min_width=20)
+
+        for s in sensors:
+            uptime_min = int(s["uptime"] / 60)
+            if uptime_min >= 60:
+                uptime_str = f"{uptime_min // 60}h {uptime_min % 60}m"
+            else:
+                uptime_str = f"{uptime_min}m"
+
+            data_mb = s["bytes"] / 1024 / 1024
+            if data_mb >= 1024:
+                data_str = f"{data_mb / 1024:.1f} GB"
+            else:
+                data_str = f"{data_mb:.1f} MB"
+
+            ifaces = s.get("remote_interfaces", [])
+            if ifaces:
+                iface_str = ", ".join(i["name"] for i in ifaces)
+            else:
+                iface_str = "[dim]discovering...[/dim]"
+
+            table.add_row(
+                s["name"],
+                s["remote_ip"],
+                uptime_str,
+                f"{s['packets']:,}",
+                data_str,
+                iface_str,
+            )
+
+        self.console.print(table)
 
     async def _cmd_devices(self, args: list[str]) -> None:
         store = self._active_store
