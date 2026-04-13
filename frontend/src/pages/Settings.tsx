@@ -57,6 +57,7 @@ import {
   Plus,
   X,
   Send,
+  ShieldCheck,
 } from "lucide-react";
 import {
   Select,
@@ -281,6 +282,29 @@ export default function Settings() {
                 <SettingField label="Bind Address" hint="IP address to bind the web server to" value={merged.web_host ?? ""} onChange={(v) => updateField("web_host", v)} placeholder="0.0.0.0" />
                 <SettingField label="Port" hint="Port for the web server" type="number" value={merged.web_port ?? ""} onChange={(v) => updateField("web_port", Number(v))} />
               </div>
+            </div>
+
+            <Separator />
+
+            {/* TLS / HTTPS */}
+            <div className="space-y-4">
+              <div>
+                <h4 className="text-sm font-semibold flex items-center gap-1.5"><ShieldCheck className="h-4 w-4" /> TLS / HTTPS</h4>
+                <p className="text-xs text-muted-foreground">Encrypt web traffic with HTTPS. Auto-generates a self-signed certificate if no custom cert is provided.</p>
+              </div>
+              <div className="flex items-center justify-between rounded-lg bg-secondary/50 border border-border p-4">
+                <div>
+                  <div className="text-sm font-medium">HTTPS Enabled</div>
+                  <div className="text-xs text-muted-foreground">Serve the web UI over HTTPS (requires restart)</div>
+                </div>
+                <Switch checked={merged.web_tls ?? true} onCheckedChange={(c) => updateField("web_tls", c)} />
+              </div>
+              {merged.web_tls !== false && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <SettingField label="TLS Certificate Path" hint="Leave empty to auto-generate a self-signed cert" value={merged.web_tls_cert ?? ""} onChange={(v) => updateField("web_tls_cert", v)} mono placeholder="/path/to/cert.pem" />
+                  <SettingField label="TLS Key Path" hint="Leave empty to auto-generate" value={merged.web_tls_key ?? ""} onChange={(v) => updateField("web_tls_key", v)} mono placeholder="/path/to/key.pem" />
+                </div>
+              )}
             </div>
 
             <Separator />

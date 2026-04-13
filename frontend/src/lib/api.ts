@@ -787,6 +787,9 @@ export async function removeExclusion(type: string, value: string) {
 export interface LeethaSettings {
   web_host: string;
   web_port: number;
+  web_tls: boolean;
+  web_tls_cert: string;
+  web_tls_key: string;
   sync_interval: number;
   worker_count: number;
   db_batch_size: number;
