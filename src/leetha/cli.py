@@ -17,6 +17,33 @@ def parse_interface_arg(spec: str) -> tuple[str, str, str | None]:
     return name, itype, label
 
 
+_TRUE_STRINGS = ("1", "true", "yes", "on")
+_FALSE_STRINGS = ("0", "false", "no", "off")
+
+
+def _env_default(name: str, default, coerce=str):
+    """Read LEETHA_<name> and coerce it, or return default when unset.
+
+    CLI flags always take precedence — this only supplies the default
+    when the flag is omitted, so the config layering is:
+      docker/shell env → argparse default → CLI flag override.
+    """
+    raw = os.environ.get(f"LEETHA_{name}")
+    if raw is None or raw == "":
+        return default
+    if coerce is bool:
+        low = raw.strip().lower()
+        if low in _TRUE_STRINGS:
+            return True
+        if low in _FALSE_STRINGS:
+            return False
+        return default
+    try:
+        return coerce(raw)
+    except (TypeError, ValueError):
+        return default
+
+
 def build_parser() -> argparse.ArgumentParser:
     from leetha import __version__
     parser = argparse.ArgumentParser(
@@ -82,14 +109,14 @@ console commands:
     )
     parser.add_argument(
         "--host",
-        default="0.0.0.0",
-        help="Web UI bind address (default: 0.0.0.0)",
+        default=_env_default("HOST", "0.0.0.0"),
+        help="Web UI bind address (default: 0.0.0.0, env: LEETHA_HOST)",
     )
     parser.add_argument(
         "--port",
         type=int,
-        default=443,
-        help="Web UI port (default: 443)",
+        default=_env_default("PORT", 443, int),
+        help="Web UI port (default: 443, env: LEETHA_PORT)",
     )
     parser.add_argument(
         "--auth", action="store_true", default=None, dest="force_auth",
@@ -100,20 +127,21 @@ console commands:
         help="Force API authentication off (even on 0.0.0.0)",
     )
     parser.add_argument(
-        "--no-tls", action="store_true", default=False,
-        help="Disable HTTPS and serve over plain HTTP",
+        "--no-tls", action="store_true",
+        default=_env_default("NO_TLS", False, bool),
+        help="Disable HTTPS and serve over plain HTTP (env: LEETHA_NO_TLS)",
     )
     parser.add_argument(
         "--tls-cert",
-        default=None,
+        default=_env_default("TLS_CERT", None),
         metavar="PATH",
-        help="Path to TLS certificate file (default: auto-generated)",
+        help="Path to TLS certificate file (default: auto-generated, env: LEETHA_TLS_CERT)",
     )
     parser.add_argument(
         "--tls-key",
-        default=None,
+        default=_env_default("TLS_KEY", None),
         metavar="PATH",
-        help="Path to TLS private key file (default: auto-generated)",
+        help="Path to TLS private key file (default: auto-generated, env: LEETHA_TLS_KEY)",
     )
     parser.add_argument(
         "--probe", action="store_true", default=False,
@@ -335,6 +363,13 @@ async def _run_trust(args):
 def main():
     parser = build_parser()
     args = parser.parse_args()
+
+    # --auth/--no-auth is a tri-state (True/False/None) so it can't live in
+    # _env_default; apply LEETHA_AUTH here when neither flag was passed.
+    if args.force_auth is None:
+        env_auth = _env_default("AUTH", None, bool)
+        if env_auth is not None:
+            args.force_auth = env_auth
 
     # Only escalate privileges immediately for live mode (needs capture from
     # the start).  Web and console modes can start without privileges and

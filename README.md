@@ -130,6 +130,42 @@ The Docker image exposes port 443 (HTTPS) by default. All three capabilities abo
 docker compose up -d
 ```
 
+### Docker customization
+
+Leetha reads `LEETHA_*` environment variables as defaults for its CLI flags, so you can customize the web listener without rebuilding the image. CLI flags (passed after the image name, or via compose's `command:`) always take precedence.
+
+| Variable          | Equivalent flag | Default          |
+| ----------------- | --------------- | ---------------- |
+| `LEETHA_HOST`     | `--host`        | `0.0.0.0`        |
+| `LEETHA_PORT`     | `--port`        | `443`            |
+| `LEETHA_NO_TLS`   | `--no-tls`      | `false` (TLS on) |
+| `LEETHA_TLS_CERT` | `--tls-cert`    | auto-generated   |
+| `LEETHA_TLS_KEY`  | `--tls-key`     | auto-generated   |
+| `LEETHA_AUTH`     | `--auth` / `--no-auth` | auto (on for non-loopback binds) |
+
+Examples:
+
+```bash
+# docker run: env vars + extra flags passed through to leetha
+docker run --net=host \
+  --cap-add=NET_RAW --cap-add=NET_ADMIN --cap-add=NET_BIND_SERVICE \
+  -e LEETHA_PORT=8443 -e LEETHA_AUTH=on \
+  leetha --web
+
+# docker run: mount your own TLS cert/key
+docker run --net=host \
+  --cap-add=NET_RAW --cap-add=NET_ADMIN --cap-add=NET_BIND_SERVICE \
+  -v /etc/letsencrypt/live/example.com:/tls:ro \
+  -e LEETHA_TLS_CERT=/tls/fullchain.pem \
+  -e LEETHA_TLS_KEY=/tls/privkey.pem \
+  leetha --web
+
+# docker compose: override flags via `command:` (see commented examples
+# in docker-compose.yml)
+```
+
+Because the container uses `--net=host` (required for packet capture), Docker's `-p host:container` port mapping does **not** apply — change `LEETHA_PORT` to bind a different port on the host.
+
 ## Capture Privileges
 
 Leetha needs raw socket access to capture network traffic. There are three ways to grant this:

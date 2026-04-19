@@ -5,6 +5,11 @@
 #   docker compose logs -f        Follow logs
 #   docker compose exec leetha leetha sync   Update fingerprint databases
 #
+# Customization: leetha reads LEETHA_* environment variables as defaults
+# for its CLI flags, and any extra CLI flags you want can be added via
+# `command:`. CLI flags always win over env vars. See the commented-out
+# examples below.
+#
 # If you get "readonly database" errors after upgrading, remove the old volume:
 #   docker compose down && docker volume rm leetha_app-storage && docker compose up -d
 
@@ -18,14 +23,28 @@ services:
       - NET_RAW            # Required for packet capture
       - NET_ADMIN          # Required for promiscuous mode + file-capability exec
       - NET_BIND_SERVICE   # Required for binding port 443
-    network_mode: host    # Direct access to host network interfaces
+    network_mode: host    # Direct access to host network interfaces (required
+                          # for packet capture — `ports:` mapping does NOT work
+                          # with host networking; change LEETHA_PORT instead)
     volumes:
       - app-storage:/home/appuser/.leetha
+      # - ./tls:/tls:ro                       # mount your own TLS cert+key dir
     environment:
       - LEETHA_DATA_DIR=/home/appuser/.leetha
+      # - LEETHA_HOST=0.0.0.0                 # bind address
+      # - LEETHA_PORT=8443                    # listen port (requires NET_BIND_SERVICE for <1024)
+      # - LEETHA_NO_TLS=true                  # serve plain HTTP instead of HTTPS
+      # - LEETHA_TLS_CERT=/tls/fullchain.pem  # custom TLS cert (default: auto-generated)
+      # - LEETHA_TLS_KEY=/tls/privkey.pem     # custom TLS key
+      # - LEETHA_AUTH=on                      # force auth on (or "off" to force off)
+    # Override the default CMD (--web) with any extra leetha flags. All flags
+    # from `leetha --help` work here; CLI flags take precedence over env vars.
+    # command: ["--web", "--port", "8443", "--auth"]
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-sfk", "https://localhost:443/health"]
+      # Picks http vs https and the port from the same env vars leetha uses,
+      # so changing LEETHA_PORT / LEETHA_NO_TLS keeps the healthcheck valid.
+      test: ["CMD-SHELL", "curl -sfk \"$([ \"${LEETHA_NO_TLS:-false}\" = \"true\" ] && echo http || echo https)://localhost:${LEETHA_PORT:-443}/health\""]
       interval: 30s
       timeout: 5s
       retries: 3
